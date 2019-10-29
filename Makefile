@@ -19,12 +19,15 @@ $(RESULT): debug-code top
 clean:: nobackup
 
 # ↓もし実装を改造したら、それに合わせて変える
-SOURCES = float.c type.ml id.ml m.ml s.ml \
-syntax.ml parser.mly lexer.mll typing.mli typing.ml kNormal.mli kNormal.ml \
+SOURCES = float.c type.ml id.ml m.ml s.ml outputId.mli outputId.ml outputType.mli outputType.ml \
+syntax.ml outputSyntax.mli outputSyntax.ml parser.mly lexer.mll typing.mli typing.ml kNormal.mli kNormal.ml \
 alpha.mli alpha.ml beta.mli beta.ml assoc.mli assoc.ml \
 inline.mli inline.ml constFold.mli constFold.ml elim.mli elim.ml \
+outputKNormal.mli outputKNormal.ml commonSubexpressionElimination.mli commonSubexpressionElimination.ml \
 closure.mli closure.ml asm.mli asm.ml virtual.mli virtual.ml \
 simm.mli simm.ml regAlloc.mli regAlloc.ml emit.mli emit.ml \
+ \
+outputClosure.mli outputClosure.ml outputAsm.mli outputAsm.ml \
 main.mli main.ml
 
 # ↓テストプログラムが増えたら、これも増やす
@@ -32,24 +35,22 @@ TESTS = print sum-tail gcd sum fib ack even-odd \
 adder funcomp cls-rec cls-bug cls-bug2 cls-reg-bug \
 shuffle spill spill2 spill3 join-stack join-stack2 join-stack3 \
 join-reg join-reg2 non-tail-if non-tail-if2 \
-inprod inprod-rec inprod-loop matmul matmul-flat \
-manyargs
+inprod inprod-rec inprod-loop matmul matmul-flat
+# manyargs
+# TESTS = week2-1 week2-2 week2-3a1 week2-3a2 week2-3b1 week2-3b2
+# TESTS = week3-1 week3-3-1 week3-3-2 week3-3-3 week3-3-4 week3-3-5 week3-3-6 cls-bug cls-bug2 cls-rec cls-reg-bug
 
-do_test: $(TESTS:%=test/%.cmp)
+# ここから（SPARC, PowerPC, x86, MIPS, chahanによりコンパイル方法が異なる）
+do_test: $(TESTS:%=test/%.s) $(TESTS:%=test/%.ans)
 
-.PRECIOUS: test/%.s test/% test/%.res test/%.ans test/%.cmp
-TRASH = $(TESTS:%=test/%.s) $(TESTS:%=test/%) $(TESTS:%=test/%.res) $(TESTS:%=test/%.ans) $(TESTS:%=test/%.cmp)
+.PRECIOUS: test/%.txt test/%.s test/% test/%.res test/%.ans test/%.cmp
+TRASH = $(TESTS:%=test/%.txt) $(TESTS:%=test/%.s) $(TESTS:%=test/%) $(TESTS:%=test/%.res) $(TESTS:%=test/%.ans) $(TESTS:%=test/%.cmp)
 
-test/%.s: $(RESULT) test/%.ml
+test/%.txt test/%.s: $(RESULT) test/%.ml
 	./$(RESULT) test/$*
-test/%: test/%.s libmincaml.S stub.c
-	$(CC) $(CFLAGS) -m32 $^ -lm -o $@
-test/%.res: test/%
-	$< > $@
 test/%.ans: test/%.ml
 	ocaml $< > $@
-test/%.cmp: test/%.res test/%.ans
-	diff $^ > $@
+# ここまで
 
 min-caml.html: main.mli main.ml id.ml m.ml s.ml \
 		syntax.ml type.ml parser.mly lexer.mll typing.mli typing.ml kNormal.mli kNormal.ml \

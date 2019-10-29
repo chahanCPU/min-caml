@@ -3,7 +3,6 @@
 open Syntax
 
 exception Unify of Type.t * Type.t
-exception Error of t * Type.t * Type.t
 
 let extenv = ref M.empty
 
@@ -148,7 +147,11 @@ let rec g env e = (* 型推論ルーチン (caml2html: typing_g) *)
         unify (Type.Array(t)) (g env e1);
         unify Type.Int (g env e2);
         Type.Unit
-  with Unify(t1, t2) -> raise (Error(deref_term e, deref_typ t1, deref_typ t2))
+  with Unify(t1, t2) -> 
+    let s = OutputSyntax.string_of_t (deref_term e) in
+    let t1 = OutputType.string_of_t (deref_typ t1) in
+    let t2 = OutputType.string_of_t (deref_typ t2) in
+    failwith ("[" ^ s ^ "] " ^ t1 ^ " ---> " ^ t2)
 
 let f e =
   extenv := M.empty;
@@ -158,6 +161,14 @@ let f e =
   | _ -> Format.eprintf "warning: final result does not have type unit@.");
 *)
   (try unify Type.Unit (g M.empty e)
-  with Unify _ -> failwith "top level does not have type unit");
+  with Unify _ -> 
+  (try extenv := M.empty; unify Type.Int (g M.empty e)
+  with Unify _ -> 
+  (try extenv := M.empty; unify (Type.Fun([Type.Int],Type.Int)) (g M.empty e)
+  with Unify _ -> 
+  (try extenv := M.empty; unify (Type.Fun([Type.Fun([Type.Int],Type.Int)],Type.Fun([Type.Int],Type.Int))) (g M.empty e)
+  with Unify _ ->
+  (try extenv := M.empty; unify (Type.Tuple([Type.Fun([Type.Int],Type.Int);Type.Int])) (g M.empty e)
+  with Unify _ -> failwith "top level does not have type unit")))));
   extenv := M.map deref_typ !extenv;
   deref_term e

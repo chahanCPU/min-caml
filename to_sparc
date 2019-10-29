@@ -4,3 +4,5 @@ cd test; ln -sf SPARC/{,too}manyargs.ml .; cd ..
 cd shootout; ln -sf SPARC/Makefile .; cd ..
 cd bytemark; ln -sf SPARC/Makefile .; cd ..
 cd min-rt; ln -sf SPARC/globals.s .; cd ..
+sed -i -e '/do_test:/,/# ここまで/d' Makefile
+sed -i -e '/# ここから/r SPARC/compile.txt' Makefile

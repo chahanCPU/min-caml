@@ -55,3 +55,15 @@ included in this distribution.
 
 - The register allocator now uses a simpler algorithm.  It omits the
   backtracking (ToSpill and NoSpill) in previous versions.
+
+
+x86はアセンブリが実行。
+それ以外はされない。
+具体的に生成されるファイルを書く。
+
+MIPSは未対応。shootout, bytemark, min-rt
+https://sourceforge.net/projects/spimsimulator/files/
+$ sudo apt install spim
+
+
+spim -file aaaa.S | sed -e '1,5d' > a.res

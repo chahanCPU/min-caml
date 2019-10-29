@@ -4,3 +4,5 @@ cd test; ln -sf x86/{,too}manyargs.ml .; cd ..
 cd shootout; ln -sf x86/Makefile .; cd ..
 cd bytemark; ln -sf x86/Makefile .; cd ..
 cd min-rt; ln -sf x86/globals.s .; cd ..
+sed -i -e '/do_test:/,/# ここまで/d' Makefile
+sed -i -e '/# ここから/r x86/compile.txt' Makefile
