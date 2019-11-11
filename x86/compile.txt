@@ -13,4 +13,4 @@ test/%.ans: test/%.ml
 	ocaml $< > $@
 test/%.cmp: test/%.res test/%.ans
 	diff $^ > $@
-# ¤³¤³¤Ş¤Ç
+# ã“ã“ã¾ã§

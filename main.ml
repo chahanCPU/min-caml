@@ -1,13 +1,13 @@
 let limit = ref 1000
 
-let rec iter n e = (* ºÇÅ¬²½½èÍı¤ò¤¯¤ê¤«¤¨¤¹ (caml2html: main_iter) *)
+let rec iter n e = (* æœ€é©åŒ–å‡¦ç†ã‚’ãã‚Šã‹ãˆã™ (caml2html: main_iter) *)
   Format.eprintf "iteration %d@." n;
   if n = 0 then e else
   let e' = Elim.f (ConstFold.f (Inline.f (Assoc.f (Beta.f e)))) in
   if e = e' then e else
   iter (n - 1) e'
 
-let lexbuf debugchan outchan l = (* ¥Ğ¥Ã¥Õ¥¡¤ò¥³¥ó¥Ñ¥¤¥ë¤·¤Æ¥Á¥ã¥ó¥Í¥ë¤Ø½ĞÎÏ¤¹¤ë (caml2html: main_lexbuf) *)
+let lexbuf debugchan outchan l = (* ãƒãƒƒãƒ•ã‚¡ã‚’ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã—ã¦ãƒãƒ£ãƒ³ãƒãƒ«ã¸å‡ºåŠ›ã™ã‚‹ (caml2html: main_lexbuf) *)
   Id.counter := 0;
   Typing.extenv := M.empty;
   let hoge1 = Parser.exp Lexer.token l in
@@ -33,9 +33,9 @@ let lexbuf debugchan outchan l = (* ¥Ğ¥Ã¥Õ¥¡¤ò¥³¥ó¥Ñ¥¤¥ë¤·¤Æ¥Á¥ã¥ó¥Í¥ë¤Ø½ĞÎÏ¤¹¤ë
   Printf.fprintf debugchan "<****** RegAlloc ******>\n"; OutputAsm.output_prog debugchan hoge9;
   Emit.f outchan hoge9
 
-let string s = lexbuf stdout stdout (Lexing.from_string s) (* Ê¸»úÎó¤ò¥³¥ó¥Ñ¥¤¥ë¤·¤ÆÉ¸½à½ĞÎÏ¤ËÉ½¼¨¤¹¤ë (caml2html: main_string) *)
+let string s = lexbuf stdout stdout (Lexing.from_string s) (* æ–‡å­—åˆ—ã‚’ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã—ã¦æ¨™æº–å‡ºåŠ›ã«è¡¨ç¤ºã™ã‚‹ (caml2html: main_string) *)
 
-let file f = (* ¥Õ¥¡¥¤¥ë¤ò¥³¥ó¥Ñ¥¤¥ë¤·¤Æ¥Õ¥¡¥¤¥ë¤Ë½ĞÎÏ¤¹¤ë (caml2html: main_file) *)
+let file f = (* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã—ã¦ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã™ã‚‹ (caml2html: main_file) *)
   let inchan = open_in (f ^ ".ml") in
   let debugchan = open_out (f ^ ".txt") in
   let outchan = open_out (f ^ ".s") in
@@ -48,7 +48,7 @@ let file f = (* ¥Õ¥¡¥¤¥ë¤ò¥³¥ó¥Ñ¥¤¥ë¤·¤Æ¥Õ¥¡¥¤¥ë¤Ë½ĞÎÏ¤¹¤ë (caml2html: main_file
     (Printf.fprintf debugchan "%s\n" (Printexc.to_string e);
      close_in inchan; close_out debugchan; close_out outchan)
 
-let () = (* ¤³¤³¤«¤é¥³¥ó¥Ñ¥¤¥é¤Î¼Â¹Ô¤¬³«»Ï¤µ¤ì¤ë (caml2html: main_entry) *)
+let () = (* ã“ã“ã‹ã‚‰ã‚³ãƒ³ãƒ‘ã‚¤ãƒ©ã®å®Ÿè¡ŒãŒé–‹å§‹ã•ã‚Œã‚‹ (caml2html: main_entry) *)
   let files = ref [] in
   Arg.parse
     [("-inline", Arg.Int(fun i -> Inline.threshold := i), "maximum size of functions inlined");

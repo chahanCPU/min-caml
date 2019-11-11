@@ -1,7 +1,7 @@
 # Sumii's Makefile for Min-Caml (for GNU Make)
 # 
-# ack.ml¤Ê¤É¤Î¥Æ¥¹¥È¥×¥í¥°¥é¥à¤òtest/¤ËÍÑ°Õ¤·¤Æmake do_test¤ò¼Â¹Ô¤¹¤ë¤È¡¢
-# min-caml¤Èocaml¤Ç¥³¥ó¥Ñ¥¤¥ë¡¦¼Â¹Ô¤·¤¿·ë²Ì¤ò¼«Æ°¤ÇÈæ³Ó¤·¤Ş¤¹¡£
+# ack.mlãªã©ã®ãƒ†ã‚¹ãƒˆãƒ—ãƒ­ã‚°ãƒ©ãƒ ã‚’test/ã«ç”¨æ„ã—ã¦make do_testã‚’å®Ÿè¡Œã™ã‚‹ã¨ã€
+# min-camlã¨ocamlã§ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ãƒ»å®Ÿè¡Œã—ãŸçµæœã‚’è‡ªå‹•ã§æ¯”è¼ƒã—ã¾ã™ã€‚
 
 RESULT = min-caml
 NCSUFFIX = .opt
@@ -11,14 +11,14 @@ OCAMLLDFLAGS=-warn-error -31
 
 default: debug-code top $(RESULT) do_test
 $(RESULT): debug-code top
-## [¼«Ê¬¡Ê½»°æ¡ËÍÑ¤ÎÃí]
-## ¡¦OCamlMakefile¤ä¸Å¤¤GNU Make¤Î¥Ğ¥°(?)¤Ç¾å¤Î¤è¤¦¤ÊÄêµÁ¤¬É¬Í×(??)
-## ¡¦OCamlMakefile¤Ç¤Ïdebug-code¤Ènative-code¤Î¤½¤ì¤¾¤ì¤Ç
-##   .mli¤¬¥³¥ó¥Ñ¥¤¥ë¤µ¤ì¤Æ¤·¤Ş¤¦¤Î¤Ç¡¢Î¾Êı¤È¤âdefault:¤Î±¦ÊÕ¤ËÆş¤ì¤ë¤È
-##   ºÆmake»ş¤Ë¡Ê.mli¤¬ÊÑ¹¹¤µ¤ì¤Æ¤¤¤ë¤Î¤Ç¡Ë.ml¤âºÆ¥³¥ó¥Ñ¥¤¥ë¤µ¤ì¤ë
+## [è‡ªåˆ†ï¼ˆä½äº•ï¼‰ç”¨ã®æ³¨]
+## ãƒ»OCamlMakefileã‚„å¤ã„GNU Makeã®ãƒã‚°(?)ã§ä¸Šã®ã‚ˆã†ãªå®šç¾©ãŒå¿…è¦(??)
+## ãƒ»OCamlMakefileã§ã¯debug-codeã¨native-codeã®ãã‚Œãã‚Œã§
+##   .mliãŒã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã•ã‚Œã¦ã—ã¾ã†ã®ã§ã€ä¸¡æ–¹ã¨ã‚‚default:ã®å³è¾ºã«å…¥ã‚Œã‚‹ã¨
+##   å†makeæ™‚ã«ï¼ˆ.mliãŒå¤‰æ›´ã•ã‚Œã¦ã„ã‚‹ã®ã§ï¼‰.mlã‚‚å†ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ã•ã‚Œã‚‹
 clean:: nobackup
 
-# ¢­¤â¤·¼ÂÁõ¤ò²şÂ¤¤·¤¿¤é¡¢¤½¤ì¤Ë¹ç¤ï¤»¤ÆÊÑ¤¨¤ë
+# â†“ã‚‚ã—å®Ÿè£…ã‚’æ”¹é€ ã—ãŸã‚‰ã€ãã‚Œã«åˆã‚ã›ã¦å¤‰ãˆã‚‹
 SOURCES = float.c type.ml id.ml m.ml s.ml outputId.mli outputId.ml outputType.mli outputType.ml \
 syntax.ml outputSyntax.mli outputSyntax.ml parser.mly lexer.mll typing.mli typing.ml kNormal.mli kNormal.ml \
 alpha.mli alpha.ml beta.mli beta.ml assoc.mli assoc.ml \
@@ -30,7 +30,7 @@ simm.mli simm.ml regAlloc.mli regAlloc.ml emit.mli emit.ml \
 outputClosure.mli outputClosure.ml outputAsm.mli outputAsm.ml \
 main.mli main.ml
 
-# ¢­¥Æ¥¹¥È¥×¥í¥°¥é¥à¤¬Áı¤¨¤¿¤é¡¢¤³¤ì¤âÁı¤ä¤¹
+# â†“ãƒ†ã‚¹ãƒˆãƒ—ãƒ­ã‚°ãƒ©ãƒ ãŒå¢—ãˆãŸã‚‰ã€ã“ã‚Œã‚‚å¢—ã‚„ã™
 TESTS = print sum-tail gcd sum fib ack even-odd \
 adder funcomp cls-rec cls-bug cls-bug2 cls-reg-bug \
 shuffle spill spill2 spill3 join-stack join-stack2 join-stack3 \
@@ -41,7 +41,7 @@ inprod inprod-rec inprod-loop matmul matmul-flat
 # TESTS = week3-1 week3-3-1 week3-3-2 week3-3-3 week3-3-4 week3-3-5 week3-3-6 cls-bug cls-bug2 cls-rec cls-reg-bug
 # TESTS = week4-2
 
-# ¤³¤³¤«¤é¡ÊSPARC, PowerPC, x86, MIPS, chahan¤Ë¤è¤ê¥³¥ó¥Ñ¥¤¥ëÊıË¡¤¬°Û¤Ê¤ë¡Ë
+# ã“ã“ã‹ã‚‰ï¼ˆSPARC, PowerPC, x86, MIPS, chahanã«ã‚ˆã‚Šã‚³ãƒ³ãƒ‘ã‚¤ãƒ«æ–¹æ³•ãŒç•°ãªã‚‹ï¼‰
 do_test: $(TESTS:%=test/%.s) $(TESTS:%=test/%.ans)
 
 .PRECIOUS: test/%.txt test/%.s test/% test/%.res test/%.ans test/%.cmp
@@ -51,7 +51,7 @@ test/%.txt test/%.s: $(RESULT) test/%.ml
 	./$(RESULT) test/$*
 test/%.ans: test/%.ml
 	ocaml $< > $@
-# ¤³¤³¤Ş¤Ç
+# ã“ã“ã¾ã§
 
 min-caml.html: main.mli main.ml id.ml m.ml s.ml \
 		syntax.ml type.ml parser.mly lexer.mll typing.mli typing.ml kNormal.mli kNormal.ml \

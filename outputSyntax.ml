@@ -172,4 +172,4 @@ let string_of_t = function
   | Get _ -> "Get"
   | Put _ -> "Put"
 
-let string_of_fundef fundef = "Ì¤¼ÂÁõ"
+let string_of_fundef fundef = "fundef"

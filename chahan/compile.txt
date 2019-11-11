@@ -7,4 +7,4 @@ test/%.txt test/%.s: $(RESULT) test/%.ml
 	./$(RESULT) test/$*
 test/%.ans: test/%.ml
 	ocaml $< > $@
-# ¤³¤³¤Ş¤Ç
+# ã“ã“ã¾ã§

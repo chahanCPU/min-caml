@@ -4,5 +4,5 @@ cd test; ln -sf PowerPC/{,too}manyargs.ml .; cd ..
 cd shootout; ln -sf PowerPC/Makefile .; cd ..
 cd bytemark; ln -sf PowerPC/Makefile .; cd ..
 cd min-rt; ln -sf PowerPC/globals.s .; cd ..
-sed -i -e '/do_test:/,/# ¤³¤³¤Ş¤Ç/d' Makefile
-sed -i -e '/# ¤³¤³¤«¤é/r PowerPC/compile.txt' Makefile
+sed -i -e '/do_test:/,/# ã“ã“ã¾ã§/d' Makefile
+sed -i -e '/# ã“ã“ã‹ã‚‰/r PowerPC/compile.txt' Makefile
