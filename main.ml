@@ -16,6 +16,7 @@ let lexbuf debugchan outchan l = (* バッファをコンパイルしてチャンネルへ出力する
   let hoge4 = Alpha.f hoge3 in
   (* let hoge = CommonSubexpressionElimination.f hoge4 in *)
   let hoge5 = iter !limit hoge4 in
+  (* let hoge5 = iter 0 hoge4 in *)
   let hoge6 = Closure.f hoge5 in
   let hoge7 = Virtual.f hoge6 in
   let hoge8 = Simm.f hoge7 in

@@ -39,6 +39,7 @@ inprod inprod-rec inprod-loop matmul matmul-flat
 # manyargs
 # TESTS = week2-1 week2-2 week2-3a1 week2-3a2 week2-3b1 week2-3b2
 # TESTS = week3-1 week3-3-1 week3-3-2 week3-3-3 week3-3-4 week3-3-5 week3-3-6 cls-bug cls-bug2 cls-rec cls-reg-bug
+# TESTS = week4-2
 
 # ここから（SPARC, PowerPC, x86, MIPS, chahanによりコンパイル方法が異なる）
 do_test: $(TESTS:%=test/%.s) $(TESTS:%=test/%.ans)
