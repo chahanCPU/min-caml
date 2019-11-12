@@ -31,12 +31,13 @@ outputClosure.mli outputClosure.ml outputAsm.mli outputAsm.ml \
 main.mli main.ml
 
 # ↓テストプログラムが増えたら、これも増やす
-TESTS = print sum-tail gcd sum fib ack even-odd \
-adder funcomp cls-rec cls-bug cls-bug2 cls-reg-bug \
-shuffle spill spill2 spill3 join-stack join-stack2 join-stack3 \
-join-reg join-reg2 non-tail-if non-tail-if2 \
-inprod inprod-rec inprod-loop matmul matmul-flat
+# TESTS = print sum-tail gcd sum fib ack even-odd \
+# adder funcomp cls-rec cls-bug cls-bug2 cls-reg-bug \
+# shuffle spill spill2 spill3 join-stack join-stack2 join-stack3 \
+# join-reg join-reg2 non-tail-if non-tail-if2 \
+# inprod inprod-rec inprod-loop matmul matmul-flat
 # manyargs
+TESTS = fib float float1 float2 mandelbrot
 # TESTS = week2-1 week2-2 week2-3a1 week2-3a2 week2-3b1 week2-3b2
 # TESTS = week3-1 week3-3-1 week3-3-2 week3-3-3 week3-3-4 week3-3-5 week3-3-6 cls-bug cls-bug2 cls-rec cls-reg-bug
 # TESTS = week4-2
