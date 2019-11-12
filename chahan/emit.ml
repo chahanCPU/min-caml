@@ -61,10 +61,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(x), FSetD(d) -> Printf.fprintf oc "\tori\t%s, $zero, 0x%lx\t! %f\n" x (getfloat d) d
   (* 要注意 *)
   (* SetLは浮動小数点即値以外にもClosure.ExtArray(Id.L(x))で使われるので、区別のために新しい命令FSetDを追加しました *)
-  | NonTail(x), SetL(Id.L(y)) -> 
-      (* Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y *)
-      let imm = List.assoc (Id.L(y)) !rodata in
-      Printf.fprintf oc "\tori\t%s, $zero, 0x%lx\t! %f\n" x (getfloat imm) imm
+  | NonTail(x), SetL(Id.L(y)) -> Printf.fprintf oc "\tor\t%s, $zero, %s\t! 実機で引数にラベルが取れるか注意\n" x y
   | NonTail(x), Mov(y) when x = y -> ()
   | NonTail(x), Mov(y) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y
   | NonTail(x), Neg(y) -> Printf.fprintf oc "\tsub\t%s, $zero, %s\n" x y
