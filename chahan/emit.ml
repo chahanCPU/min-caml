@@ -4,6 +4,8 @@ external getfloat : float -> int32 = "getfloat"
 (* external gethi : float -> int32 = "gethi" *)
 (* external getlo : float -> int32 = "getlo" *)
 
+let rodata = ref [] (* 浮動小数点数の定数テーブル : 「グローバルなラベル(アドレス)」と「浮動小数点数即値」との連想配列 *)
+
 let stackset = ref S.empty (* すでにSaveされた変数の集合 (caml2html: emit_stackset) *)
 let stackmap = ref [] (* Saveされた変数の、スタックにおける位置 (caml2html: emit_stackmap) *)
 let save x =
@@ -57,7 +59,10 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   (* 全般的に即値の値が大きい場合を考えていないよね *)
   | NonTail(x), Set(i) -> Printf.fprintf oc "\tori\t%s, $zero, %d\n" x i
   (* 要注意 *)
-  | NonTail(x), SetL(Id.L(y)) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y
+  | NonTail(x), SetL(Id.L(y)) -> 
+      (* Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y *)
+      let imm = List.assoc (Id.L(y)) !rodata in
+      Printf.fprintf oc "\tori\t%s, $zero, 0x%lx\t! %f\n" x (getfloat imm) imm
   | NonTail(x), Mov(y) when x = y -> ()
   | NonTail(x), Mov(y) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y
   | NonTail(x), Neg(y) -> Printf.fprintf oc "\tsub\t%s, $zero, %s\n" x y
@@ -360,16 +365,18 @@ let h oc { name = Id.L(x); args = _; fargs = _; body = e; ret = _ } =
 
 let f oc (Prog(data, fundefs, e)) =
   Format.eprintf "generating assembly...@.";
-  Printf.fprintf oc ".section \".rodata\"\n";
+
+  rodata := data;
+  (* Printf.fprintf oc ".section \".rodata\"\n"; *)
   (* Printf.fprintf oc ".align\t8\n"; *)
   (* Printf.fprintf oc ".align\t4\n"; *)
-  List.iter
+  (* List.iter
     (fun (Id.L(x), d) ->
       Printf.fprintf oc "%s:\t! %f\n" x d;
       Printf.fprintf oc "\t0x%lx\n" (getfloat d))
       (* Printf.fprintf oc "\t.long\t0x%lx\n" (gethi d);
       Printf.fprintf oc "\t.long\t0x%lx\n" (getlo d)) *)
-    data;
+    data; *)
 
   Printf.fprintf oc ".section \".text\"\n";
 
