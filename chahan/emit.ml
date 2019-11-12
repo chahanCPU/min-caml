@@ -391,7 +391,8 @@ let f oc (Prog(data, fundefs, e)) =
   (* Printf.fprintf oc "\tsave\t$sp, -120, $sp\n"; *)
   stackset := S.empty;
   stackmap := [];
-  g oc (NonTail("%g0"), e)    (* why? *)
+  g oc (Tail, e)
+  (* g oc (NonTail("%g0"), e) *)    (* why? "%g0"とは? main(min_caml_start)が他のルーチンから呼び出されてると考える必要なさそう *)
 
   (* 要確認 終了動作 *)
   (* Printf.fprintf oc "\tret\n"; *)
