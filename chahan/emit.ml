@@ -58,7 +58,9 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(_), Nop -> ()
   (* 全般的に即値の値が大きい場合を考えていないよね *)
   | NonTail(x), Set(i) -> Printf.fprintf oc "\tori\t%s, $zero, %d\n" x i
+  | NonTail(x), FSetD(d) -> Printf.fprintf oc "\tori\t%s, $zero, 0x%lx\t! %f\n" x (getfloat d) d
   (* 要注意 *)
+  (* SetLは浮動小数点即値以外にもClosure.ExtArray(Id.L(x))で使われるので、区別のために新しい命令FSetDを追加しました *)
   | NonTail(x), SetL(Id.L(y)) -> 
       (* Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y *)
       let imm = List.assoc (Id.L(y)) !rodata in
@@ -149,7 +151,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | Tail, (Set _ | SetL _ | Mov _ | Neg _ | Add _ | Sub _ | SLL _ | Ld _ as exp) ->
       g' oc (NonTail(regs.(0)), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
-  | Tail, (FMovD _ | FNegD _ | FAddD _ | FSubD _ | FMulD _ | FDivD _ | LdDF _ as exp) ->
+  | Tail, (FSetD _ | FMovD _ | FNegD _ | FAddD _ | FSubD _ | FMulD _ | FDivD _ | LdDF _ as exp) ->
       g' oc (NonTail(fregs.(0)), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
   | Tail, (Restore(x) as exp) ->
@@ -363,22 +365,10 @@ let h oc { name = Id.L(x); args = _; fargs = _; body = e; ret = _ } =
   stackmap := [];
   g oc (Tail, e)
 
-let f oc (Prog(data, fundefs, e)) =
+let f oc (Prog(fundefs, e)) =
   Format.eprintf "generating assembly...@.";
 
-  rodata := data;
-  (* Printf.fprintf oc ".section \".rodata\"\n"; *)
-  (* Printf.fprintf oc ".align\t8\n"; *)
-  (* Printf.fprintf oc ".align\t4\n"; *)
-  (* List.iter
-    (fun (Id.L(x), d) ->
-      Printf.fprintf oc "%s:\t! %f\n" x d;
-      Printf.fprintf oc "\t0x%lx\n" (getfloat d))
-      (* Printf.fprintf oc "\t.long\t0x%lx\n" (gethi d);
-      Printf.fprintf oc "\t.long\t0x%lx\n" (getlo d)) *)
-    data; *)
-
-  Printf.fprintf oc ".section \".text\"\n";
+  (* Printf.fprintf oc ".section \".text\"\n"; *)
 
   (* outの付け足し  後でインライン化してね *)
   Printf.fprintf oc "min_caml_print_int:\n";
@@ -392,7 +382,7 @@ let f oc (Prog(data, fundefs, e)) =
 
   List.iter (fun fundef -> h oc fundef) fundefs;
 
-  Printf.fprintf oc ".global min_caml_start\n";
+  (* Printf.fprintf oc ".global min_caml_start\n"; *)
   Printf.fprintf oc "min_caml_start:\n";
   (* Printf.fprintf oc "\tsave\t$sp, -112, $sp\n"; (* from gcc; why 112? *) *)
   (* Printf.fprintf oc "\tsave\t$sp, -120, $sp\n"; *)
