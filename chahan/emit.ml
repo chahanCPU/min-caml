@@ -4,8 +4,6 @@ external getfloat : float -> int32 = "getfloat"
 (* external gethi : float -> int32 = "gethi" *)
 (* external getlo : float -> int32 = "getlo" *)
 
-let rodata = ref [] (* 浮動小数点数の定数テーブル : 「グローバルなラベル(アドレス)」と「浮動小数点数即値」との連想配列 *)
-
 let stackset = ref S.empty (* すでにSaveされた変数の集合 (caml2html: emit_stackset) *)
 let stackmap = ref [] (* Saveされた変数の、スタックにおける位置 (caml2html: emit_stackmap) *)
 let save x =
@@ -73,7 +71,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(x), Add(y, V(z)) -> Printf.fprintf oc "\tadd\t%s, %s, %s\n" x y z
   | NonTail(x), Add(y, C(z)) -> Printf.fprintf oc "\taddi\t%s, %s, %d\n" x y z
   | NonTail(x), Sub(y, V(z)) -> Printf.fprintf oc "\tsub\t%s, %s, %s\n" x y z
-  | NonTail(x), Sub(y, C(z)) -> Printf.fprintf oc "\tsubi\t%s, %s, %d\n" x y z
+  | NonTail(x), Sub(y, C(z)) -> Printf.fprintf oc "\taddi\t%s, %s, %d\n" x y (-z)
   | NonTail(x), SLL(y, V(z)) -> Printf.fprintf oc "\tsllv\t%s, %s, %s\n" x y z
   | NonTail(x), SLL(y, C(z)) -> Printf.fprintf oc "\tsll\t%s, %s, %d\n" x y z
   | NonTail(x), Ld(y, V(z)) -> 
@@ -262,7 +260,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tlw\t%s, 0(%s)\n" reg_sw reg_cl;
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp ss;
       Printf.fprintf oc "\tjal\t%s\n" reg_sw;
-      Printf.fprintf oc "\tsubi\t%s, %s, %d\n" reg_sp reg_sp ss;
+      Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp (-ss);
       Printf.fprintf oc "\tlw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       if List.mem a allregs && a <> regs.(0) then
         Printf.fprintf oc "\tor\t%s, $zero, %s\n" a regs.(0)
@@ -277,7 +275,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tsw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp ss;
       Printf.fprintf oc "\tjal\t%s\n" x;
-      Printf.fprintf oc "\tsubi\t%s, %s, %d\n" reg_sp reg_sp ss;
+      Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp (-ss);
       Printf.fprintf oc "\tlw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       if List.mem a allregs && a <> regs.(0) then
         Printf.fprintf oc "\tor\t%s, $zero, %s\n" a regs.(0)
@@ -368,8 +366,40 @@ let f oc (Prog(fundefs, e)) =
   (* Printf.fprintf oc ".section \".text\"\n"; *)
 
   (* outの付け足し  後でインライン化してね *)
+  (* Printf.fprintf oc "min_caml_print_int:\n"; *)
+  (* Printf.fprintf oc "\tout\t$2\n"; *)
+  (* Printf.fprintf oc "\tjr\t%s\n" reg_ra; *)
   Printf.fprintf oc "min_caml_print_int:\n";
-  Printf.fprintf oc "\tout\t$2\n";
+	Printf.fprintf oc "\tslti\t$at, $2, 0\n";
+  Printf.fprintf oc "\tblez\t$at, min_caml_print_int_loop\n";
+  Printf.fprintf oc "\tori\t$3, $zero, 45\t! '-'\n";
+  Printf.fprintf oc "\tout\t$3\n";
+  Printf.fprintf oc "\tsub\t$2, $zero, $2\n";
+	Printf.fprintf oc "min_caml_print_int_loop:\n";
+  Printf.fprintf oc "\tslti\t$at, $2, 10\n";
+  Printf.fprintf oc "\tbgtz\t$at, min_caml_print_int_loop_end\n";
+  Printf.fprintf oc "\tori\t$3, $zero, $2\n";
+  Printf.fprintf oc "\tori\t$4, $zero, 1\n";
+	Printf.fprintf oc "min_caml_print_int_subloop:\n";
+  Printf.fprintf oc "\tori\t$5, $zero, 10\n";
+  Printf.fprintf oc "\tmult\t$4, $4, $5\n";  (* multu?? *)
+  Printf.fprintf oc "\tdiv\t$3, $3, $5\n";  (* divu?? *)
+  Printf.fprintf oc "\tslti\t$at, $3, 10\n";
+  Printf.fprintf oc "\tblez\t$at, min_caml_print_int_subloop\n";
+  Printf.fprintf oc "\taddi\t$5, $3, 48\n";
+  Printf.fprintf oc "\tout\t$5\n";
+  Printf.fprintf oc "\tmult\t$3, $3, $4\n";
+  Printf.fprintf oc "\tsub\t$2, $2, $3\n";
+  Printf.fprintf oc "\tj\tmin_caml_print_int_loop\n";
+	Printf.fprintf oc "min_caml_print_int_loop_end:\n";
+  Printf.fprintf oc "\taddi\t$3, $2, 48\n";
+  Printf.fprintf oc "\tout\t$3\n";
+  Printf.fprintf oc "\tjr\t$ra\n";
+
+	(* print_newline  アセンブラじゃなくてmin-camlで書きたい↑↓ *)
+	Printf.fprintf oc "min_caml_print_newline:\n";
+	Printf.fprintf oc "\tori\t$2, $zero, 10\n";
+	Printf.fprintf oc "\tout\t$2\n";
   Printf.fprintf oc "\tjr\t%s\n" reg_ra;
 
   (* float_of_intは関数呼び出しで対応  後でインライン化すること *)
@@ -386,7 +416,8 @@ let f oc (Prog(fundefs, e)) =
   stackset := S.empty;
   stackmap := [];
   g oc (Tail, e)
-  (* g oc (NonTail("%g0"), e) *)    (* why? "%g0"とは? main(min_caml_start)が他のルーチンから呼び出されてると考える必要なさそう *)
+  (* g oc (NonTail("%g0"), e) *)    (* why? "%g0"とは? dummy
+                                        main(min_caml_start)が他のルーチンから呼び出されてると考える必要なさそう *)
 
   (* 要確認 終了動作 *)
   (* Printf.fprintf oc "\tret\n"; *)
