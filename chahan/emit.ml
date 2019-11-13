@@ -370,17 +370,17 @@ let f oc (Prog(fundefs, e)) =
   (* Printf.fprintf oc "\tout\t$2\n"; *)
   (* Printf.fprintf oc "\tjr\t%s\n" reg_ra; *)
   Printf.fprintf oc "min_caml_print_int:\n";
-	Printf.fprintf oc "\tslti\t$at, $2, 0\n";
+  Printf.fprintf oc "\tslti\t$at, $2, 0\n";
   Printf.fprintf oc "\tblez\t$at, min_caml_print_int_loop\n";
   Printf.fprintf oc "\tori\t$3, $zero, 45\t! '-'\n";
   Printf.fprintf oc "\tout\t$3\n";
   Printf.fprintf oc "\tsub\t$2, $zero, $2\n";
-	Printf.fprintf oc "min_caml_print_int_loop:\n";
+  Printf.fprintf oc "min_caml_print_int_loop:\n";
   Printf.fprintf oc "\tslti\t$at, $2, 10\n";
   Printf.fprintf oc "\tbgtz\t$at, min_caml_print_int_loop_end\n";
   Printf.fprintf oc "\tori\t$3, $zero, $2\n";
   Printf.fprintf oc "\tori\t$4, $zero, 1\n";
-	Printf.fprintf oc "min_caml_print_int_subloop:\n";
+  Printf.fprintf oc "min_caml_print_int_subloop:\n";
   Printf.fprintf oc "\tori\t$5, $zero, 10\n";
   Printf.fprintf oc "\tmult\t$4, $4, $5\n";  (* multu?? *)
   Printf.fprintf oc "\tdiv\t$3, $3, $5\n";  (* divu?? *)
@@ -391,15 +391,15 @@ let f oc (Prog(fundefs, e)) =
   Printf.fprintf oc "\tmult\t$3, $3, $4\n";
   Printf.fprintf oc "\tsub\t$2, $2, $3\n";
   Printf.fprintf oc "\tj\tmin_caml_print_int_loop\n";
-	Printf.fprintf oc "min_caml_print_int_loop_end:\n";
+  Printf.fprintf oc "min_caml_print_int_loop_end:\n";
   Printf.fprintf oc "\taddi\t$3, $2, 48\n";
   Printf.fprintf oc "\tout\t$3\n";
   Printf.fprintf oc "\tjr\t$ra\n";
 
-	(* print_newline  アセンブラじゃなくてmin-camlで書きたい↑↓ *)
-	Printf.fprintf oc "min_caml_print_newline:\n";
-	Printf.fprintf oc "\tori\t$2, $zero, 10\n";
-	Printf.fprintf oc "\tout\t$2\n";
+  (* print_newline  アセンブラじゃなくてmin-camlで書きたい↑↓ *)
+  Printf.fprintf oc "min_caml_print_newline:\n";
+  Printf.fprintf oc "\tori\t$2, $zero, 10\n";
+  Printf.fprintf oc "\tout\t$2\n";
   Printf.fprintf oc "\tjr\t%s\n" reg_ra;
 
   (* float_of_intは関数呼び出しで対応  後でインライン化すること *)
