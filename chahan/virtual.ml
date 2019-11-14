@@ -158,4 +158,5 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts; Closure.formal_fv = zts
 let f (Closure.Prog(fundefs, e)) =
   let fundefs = List.map h fundefs in
   let e = g M.empty e in
+  (* let e = concat e (Id.genid "main", Type.Unit) (Ans(Nop)) in *)    (* コア係より末尾にNopが欲しい *)
   Prog(fundefs, e)

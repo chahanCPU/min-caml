@@ -56,10 +56,10 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(_), Nop -> ()
   (* 全般的に即値の値が大きい場合を考えていないよね *)
   | NonTail(x), Set(i) -> Printf.fprintf oc "\tori\t%s, $zero, %d\n" x i
-  | NonTail(x), FSetD(d) -> Printf.fprintf oc "\tori\t%s, $zero, 0x%lx\t! %f\n" x (getfloat d) d
+  | NonTail(x), FSetD(d) -> Printf.fprintf oc "\tori\t%s, $zero, 0x%lx\t# %f\n" x (getfloat d) d
   (* 要注意 *)
   (* SetLは浮動小数点即値以外にもClosure.ExtArray(Id.L(x))で使われるので、区別のために新しい命令FSetDを追加しました *)
-  | NonTail(x), SetL(Id.L(y)) -> Printf.fprintf oc "\tor\t%s, $zero, %s\t! 実機で引数にラベルが取れるか注意\n" x y
+  | NonTail(x), SetL(Id.L(y)) -> Printf.fprintf oc "\tor\t%s, $zero, %s\t# 実機で引数にラベルが取れるか注意\n" x y
   | NonTail(x), Mov(y) when x = y -> ()
   | NonTail(x), Mov(y) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y
   | NonTail(x), Neg(y) -> Printf.fprintf oc "\tsub\t%s, $zero, %s\n" x y
@@ -119,7 +119,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tsw\t%s, 0($at)\n" x
   | NonTail(_), StDF(x, y, C(z)) -> Printf.fprintf oc "\tsw\t%s, %d(%s)\n" x z y
 
-  | NonTail(_), Comment(s) -> Printf.fprintf oc "\t! %s\n" s
+  | NonTail(_), Comment(s) -> Printf.fprintf oc "\t# %s\n" s
 
   (* 要確認　もとのsparcと *)
   (* 退避の仮想命令の実装 (caml2html: emit_save) *)
@@ -372,7 +372,7 @@ let f oc (Prog(fundefs, e)) =
   Printf.fprintf oc "min_caml_print_int:\n";
   Printf.fprintf oc "\tslti\t$at, $2, 0\n";
   Printf.fprintf oc "\tblez\t$at, min_caml_print_int_loop\n";
-  Printf.fprintf oc "\tori\t$3, $zero, 45\t! '-'\n";
+  Printf.fprintf oc "\tori\t$3, $zero, 45\t# '-'\n";
   Printf.fprintf oc "\tout\t$3\n";
   Printf.fprintf oc "\tsub\t$2, $zero, $2\n";
   Printf.fprintf oc "min_caml_print_int_loop:\n";
@@ -410,15 +410,21 @@ let f oc (Prog(fundefs, e)) =
   List.iter (fun fundef -> h oc fundef) fundefs;
 
   (* Printf.fprintf oc ".global min_caml_start\n"; *)
-  Printf.fprintf oc "min_caml_start:\n";
+  Printf.fprintf oc "min_caml_start:\n";    (* "main"の方が良い? *)
   (* Printf.fprintf oc "\tsave\t$sp, -112, $sp\n"; (* from gcc; why 112? *) *)
   (* Printf.fprintf oc "\tsave\t$sp, -120, $sp\n"; *)
   stackset := S.empty;
   stackmap := [];
-  g oc (Tail, e)
+
+  (* メイン関数を末尾再帰最適すると、少し怖そうなので今はやめときます。
+     noop命令も追加したし、関数呼び出しで命令が終わったら$raがundefinedになっちゃうので *)
+  (* g oc (Tail, e); *)
   (* g oc (NonTail("%g0"), e) *)    (* why? "%g0"とは? dummy
                                         main(min_caml_start)が他のルーチンから呼び出されてると考える必要なさそう *)
+  g oc (NonTail("%dummy"), e);
 
   (* 要確認 終了動作 *)
   (* Printf.fprintf oc "\tret\n"; *)
   (* Printf.fprintf oc "\trestore\n" *)
+
+  Printf.fprintf oc "\tnoop\n"    (**コア係より末尾にNopが欲しい *)

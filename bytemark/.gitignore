@@ -1,0 +1,7 @@
+*
+!Makefile
+!/.gitignore
+!/huffman.int
+!/huffman.txt
+!/readme
+!/txt2int.ml
