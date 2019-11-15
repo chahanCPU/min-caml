@@ -1,8 +1,10 @@
 open Asm
 
-external getfloat : float -> int32 = "getfloat"
-(* external gethi : float -> int32 = "gethi" *)
-(* external getlo : float -> int32 = "getlo" *)
+(* 64-bit platform を前提 *)
+(* Ocaml   int 63bits, float 64bits *)
+(* chahan  int 32bits, float 64bits *)
+(* C       int 64bits, float 64bits *)
+(* external binary32_of_float : float -> int32 = "double_to_binary32"  (* float.cを参照 *) *)
 
 let stackset = ref S.empty (* すでにSaveされた変数の集合 (caml2html: emit_stackset) *)
 let stackmap = ref [] (* Saveされた変数の、スタックにおける位置 (caml2html: emit_stackmap) *)
@@ -55,11 +57,35 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   (* 末尾でなかったら計算結果をdestにセット (caml2html: emit_nontail) *)
   | NonTail(_), Nop -> ()
   (* 全般的に即値の値が大きい場合を考えていないよね *)
-  | NonTail(x), Set(i) -> Printf.fprintf oc "\tori\t%s, $zero, %d\n" x i
-  | NonTail(x), FSetD(d) -> Printf.fprintf oc "\tori\t%s, $zero, 0x%lx\t# %f\n" x (getfloat d) d
+  (* 命令長 32bit *)
+  (* 16bitで扱えるsigned数 : -2^15 から 2^15-1   -32678 32767 *)
+  | NonTail(x), Set(i) when -32678 <= i && i < 32678 -> 
+      Printf.fprintf oc "\tori\t%s, $zero, %d\n" x i
+	(* 32bitで扱えるsigned数 : -2^31 から 2^31-1 *)
+  | NonTail(x), Set(i) when -2147483648 <= i && i < 2147483647 -> 
+      (* let i = Int32.to_int i in *)    (* 64-bit platform を前提 *)
+      let hi = (i land 0xFFFF0000) lsr 16 in
+      let lo = i land 0xFFFF in
+      Printf.fprintf oc "\tlui\t%s, 0x%x\t\t# %dの上位16bits\n" x hi i;
+      Printf.fprintf oc "\tori\t%s, %s, 0x%x\t\t# %dの下位16bits\n" x x lo i
+  | NonTail(x), Set(i) -> failwith("数が大きすぎ")
+  (* 即値を取る命令について、上のような感じで確認すること！！！！！！！！！！！！ *)
+  | NonTail(x), FSetD(0.) ->    (* もっと効率化したい *)
+      Printf.fprintf oc "\tori\t%s, $zero, 0\n" x
+  | NonTail(x), FSetD(d) ->    (* もっと効率化したい *)
+      (* Printf.fprintf oc "\tori\t%s, $zero, 0x%lx\t\t# %f\n" x (binary32_of_float d) d *)
+      (* let i = binary32_of_float d in *)
+      (* let i = Int32.to_int i in *)   (* 64-bit platform を前提 *)
+      let i = Int32.bits_of_float d in
+      let d = Int32.float_of_bits i in    (* 倍精度と、倍精度->単精度->倍精度とは異なるので *)
+      let i = Int32.to_int i in
+      let hi = (i land 0xFFFF0000) lsr 16 in
+      let lo = i land 0xFFFF in
+      (* if hi <> 0 then *) Printf.fprintf oc "\tlui\t%s, 0x%x\t\t# %fの上位16bits\n" x hi d;
+      if lo <> 0 then Printf.fprintf oc "\tori\t%s, %s, 0x%x\t\t# %fの下位16bits\n" x x lo d
   (* 要注意 *)
   (* SetLは浮動小数点即値以外にもClosure.ExtArray(Id.L(x))で使われるので、区別のために新しい命令FSetDを追加しました *)
-  | NonTail(x), SetL(Id.L(y)) -> Printf.fprintf oc "\tor\t%s, $zero, %s\t# 実機で引数にラベルが取れるか注意\n" x y
+  | NonTail(x), SetL(Id.L(y)) -> Printf.fprintf oc "\tor\t%s, $zero, %s\t\t# 実機で引数にラベルが取れるか注意\n" x y
   | NonTail(x), Mov(y) when x = y -> ()
   | NonTail(x), Mov(y) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y
   | NonTail(x), Neg(y) -> Printf.fprintf oc "\tsub\t%s, $zero, %s\n" x y
@@ -363,6 +389,12 @@ let h oc { name = Id.L(x); args = _; fargs = _; body = e; ret = _ } =
 let f oc (Prog(fundefs, e)) =
   Format.eprintf "generating assembly...@.";
 
+  Printf.fprintf oc "min_caml_start:\n";    (* "main"の方が良い? *)
+  g oc (NonTail("%dummy"), e);
+  Printf.fprintf oc "\tnoop\n";    (**コア係より末尾にNopが欲しい *)
+
+  List.iter (fun fundef -> h oc fundef) fundefs;
+
   (* Printf.fprintf oc ".section \".text\"\n"; *)
 
   (* outの付け足し  後でインライン化してね *)
@@ -372,13 +404,13 @@ let f oc (Prog(fundefs, e)) =
   Printf.fprintf oc "min_caml_print_int:\n";
   Printf.fprintf oc "\tslti\t$at, $2, 0\n";
   Printf.fprintf oc "\tblez\t$at, min_caml_print_int_loop\n";
-  Printf.fprintf oc "\tori\t$3, $zero, 45\t# '-'\n";
+  Printf.fprintf oc "\tori\t$3, $zero, 45\t\t# '-'\n";
   Printf.fprintf oc "\tout\t$3\n";
   Printf.fprintf oc "\tsub\t$2, $zero, $2\n";
   Printf.fprintf oc "min_caml_print_int_loop:\n";
   Printf.fprintf oc "\tslti\t$at, $2, 10\n";
   Printf.fprintf oc "\tbgtz\t$at, min_caml_print_int_loop_end\n";
-  Printf.fprintf oc "\tori\t$3, $zero, $2\n";
+  Printf.fprintf oc "\tor\t$3, $zero, $2\n";
   Printf.fprintf oc "\tori\t$4, $zero, 1\n";
   Printf.fprintf oc "min_caml_print_int_subloop:\n";
   Printf.fprintf oc "\tori\t$5, $zero, 10\n";
@@ -407,10 +439,10 @@ let f oc (Prog(fundefs, e)) =
   Printf.fprintf oc "\titof\t$f0, $2\n";
   Printf.fprintf oc "\tjr\t%s\n" reg_ra;
 
-  List.iter (fun fundef -> h oc fundef) fundefs;
+  (* List.iter (fun fundef -> h oc fundef) fundefs; *)
 
   (* Printf.fprintf oc ".global min_caml_start\n"; *)
-  Printf.fprintf oc "min_caml_start:\n";    (* "main"の方が良い? *)
+  (* Printf.fprintf oc "min_caml_start:\n"; *)   (* "main"の方が良い? *)
   (* Printf.fprintf oc "\tsave\t$sp, -112, $sp\n"; (* from gcc; why 112? *) *)
   (* Printf.fprintf oc "\tsave\t$sp, -120, $sp\n"; *)
   stackset := S.empty;
@@ -421,10 +453,10 @@ let f oc (Prog(fundefs, e)) =
   (* g oc (Tail, e); *)
   (* g oc (NonTail("%g0"), e) *)    (* why? "%g0"とは? dummy
                                         main(min_caml_start)が他のルーチンから呼び出されてると考える必要なさそう *)
-  g oc (NonTail("%dummy"), e);
+  (* g oc (NonTail("%dummy"), e); *)
 
   (* 要確認 終了動作 *)
   (* Printf.fprintf oc "\tret\n"; *)
   (* Printf.fprintf oc "\trestore\n" *)
 
-  Printf.fprintf oc "\tnoop\n"    (**コア係より末尾にNopが欲しい *)
+  (* Printf.fprintf oc "\tnoop\n" *)   (**コア係より末尾にNopが欲しい *)
