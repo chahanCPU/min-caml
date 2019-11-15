@@ -403,29 +403,31 @@ let f oc (Prog(fundefs, e)) =
   (* Printf.fprintf oc "\tjr\t%s\n" reg_ra; *)
   Printf.fprintf oc "min_caml_print_int:\n";
   Printf.fprintf oc "\tslti\t$at, $2, 0\n";
-  Printf.fprintf oc "\tblez\t$at, min_caml_print_int_loop\n";
+  Printf.fprintf oc "\tblez\t$at, min_caml_print_int_label0\n";
   Printf.fprintf oc "\tori\t$3, $zero, 45\t\t# '-'\n";
   Printf.fprintf oc "\tout\t$3\n";
   Printf.fprintf oc "\tsub\t$2, $zero, $2\n";
-  Printf.fprintf oc "min_caml_print_int_loop:\n";
-  Printf.fprintf oc "\tslti\t$at, $2, 10\n";
-  Printf.fprintf oc "\tbgtz\t$at, min_caml_print_int_loop_end\n";
+  Printf.fprintf oc "min_caml_print_int_label0:\n";
   Printf.fprintf oc "\tor\t$3, $zero, $2\n";
   Printf.fprintf oc "\tori\t$4, $zero, 1\n";
-  Printf.fprintf oc "min_caml_print_int_subloop:\n";
   Printf.fprintf oc "\tori\t$5, $zero, 10\n";
-  Printf.fprintf oc "\tmult\t$4, $4, $5\n";  (* multu?? *)
-  Printf.fprintf oc "\tdiv\t$3, $3, $5\n";  (* divu?? *)
-  Printf.fprintf oc "\tslti\t$at, $3, 10\n";
-  Printf.fprintf oc "\tblez\t$at, min_caml_print_int_subloop\n";
-  Printf.fprintf oc "\taddi\t$5, $3, 48\n";
+  Printf.fprintf oc "min_caml_print_int_label1:\n";
+  Printf.fprintf oc "\tdiv\t$3, $3, $5\n";  (* divu???? *)
+  Printf.fprintf oc "\tmult\t$4, $4, $5\n";  (* multu???? *)
+  Printf.fprintf oc "\tslti\t$at, $3, 1\n";
+  Printf.fprintf oc "\tblez\t$at, min_caml_print_int_label1\n";
+  Printf.fprintf oc "min_caml_print_int_label2:\n";
+  Printf.fprintf oc "\tori\t$5, $zero, 10\n";
+  Printf.fprintf oc "\tdiv\t$4, $4, $5\n";  (* divu???? *)
+  Printf.fprintf oc "\tdiv\t$3, $2, $4\n";  (* divu???? *)
+  Printf.fprintf oc "\taddi\t$5, $3, 48\n";  
   Printf.fprintf oc "\tout\t$5\n";
-  Printf.fprintf oc "\tmult\t$3, $3, $4\n";
+  Printf.fprintf oc "\tslti\t$at, $4, 2\n";
+  Printf.fprintf oc "\tbgtz\t$at, min_caml_print_int_label3\n";
+  Printf.fprintf oc "\tmult\t$3, $3, $4\n";  (* multu???? *)
   Printf.fprintf oc "\tsub\t$2, $2, $3\n";
-  Printf.fprintf oc "\tj\tmin_caml_print_int_loop\n";
-  Printf.fprintf oc "min_caml_print_int_loop_end:\n";
-  Printf.fprintf oc "\taddi\t$3, $2, 48\n";
-  Printf.fprintf oc "\tout\t$3\n";
+  Printf.fprintf oc "\tj\tmin_caml_print_int_label2\n";
+  Printf.fprintf oc "min_caml_print_int_label3:\n";
   Printf.fprintf oc "\tjr\t$ra\n";
 
   (* print_newline  アセンブラじゃなくてmin-camlで書きたい↑↓ *)
