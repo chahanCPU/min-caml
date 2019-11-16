@@ -7,4 +7,3 @@ test/%.txt test/%.s: $(RESULT) test/%.ml
 	./$(RESULT) test/$*
 test/%.ans: test/%.ml
 	ocaml $< > $@
-# ここまで

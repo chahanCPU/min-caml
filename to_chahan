@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-ln -sf chahan/{*.ml{,i},libmincaml.S} .
+ln -sf chahan/{*.ml{,i},libmincaml.S,make.mk} .
 cd test; ln -sf chahan/{,too}manyargs.ml .; cd ..
 cd shootout; ln -sf chahan/Makefile .; cd ..
 cd bytemark; ln -sf chahan/Makefile .; cd ..
 cd min-rt; ln -sf chahan/globals.s .; cd ..
-sed -i -e '/do_test:/,/# ここまで/d' Makefile
-sed -i -e '/# ここから/r chahan/compile.txt' Makefile

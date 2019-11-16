@@ -61,15 +61,18 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   (* 16bitで扱えるsigned数 : -2^15 から 2^15-1   -32678 32767 *)
   | NonTail(x), Set(i) when -32678 <= i && i < 32678 -> 
       Printf.fprintf oc "\tori\t%s, $zero, %d\n" x i
+      (* ori, $2, $zero, -1 って、$2 <- 0xFFFFFFFF になるよな *)
+      (* 即値16ビットやから、0x0000FFFF とはならんよな====願望 *)
 	(* 32bitで扱えるsigned数 : -2^31 から 2^31-1 *)
-  | NonTail(x), Set(i) when -2147483648 <= i && i < 2147483647 -> 
+  | NonTail(x), Set(i) when -2147483648 <= i && i < 2147483648 -> 
       (* let i = Int32.to_int i in *)    (* 64-bit platform を前提 *)
       let hi = (i land 0xFFFF0000) lsr 16 in
       let lo = i land 0xFFFF in
       Printf.fprintf oc "\tlui\t%s, 0x%x\t\t# %dの上位16bits\n" x hi i;
-      Printf.fprintf oc "\tori\t%s, %s, 0x%x\t\t# %dの下位16bits\n" x x lo i
+      if lo <> 0 then Printf.fprintf oc "\tori\t%s, %s, 0x%x\t\t# %dの下位16bits\n" x x lo i
   | NonTail(x), Set(i) -> failwith("数が大きすぎ")
   (* 即値を取る命令について、上のような感じで確認すること！！！！！！！！！！！！ *)
+  (* 整数用命令と浮動小数点用命令で使えるレジスタを区別しなきゃいけない？ *)
   | NonTail(x), FSetD(0.) ->    (* もっと効率化したい *)
       Printf.fprintf oc "\tori\t%s, $zero, 0\n" x
   | NonTail(x), FSetD(d) ->    (* もっと効率化したい *)

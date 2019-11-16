@@ -31,27 +31,30 @@ outputClosure.mli outputClosure.ml outputAsm.mli outputAsm.ml \
 main.mli main.ml
 
 # ↓テストプログラムが増えたら、これも増やす
+# TESTS_ = $(wildcard test/*.ml)
+# TESTS = $(TESTS_:test/%.ml=%)
+# 上をちゃんと書いて
 # TESTS = print sum-tail gcd sum fib ack even-odd \
 # adder funcomp cls-rec cls-bug cls-bug2 cls-reg-bug \
 # shuffle spill spill2 spill3 join-stack join-stack2 join-stack3 \
 # join-reg join-reg2 non-tail-if non-tail-if2 \
 # inprod inprod-rec inprod-loop matmul matmul-flat
 # manyargs
-TESTS = fib float float1 float2 mandelbrot
+TESTS = print sum-tail fib float float1 float2 mandelbrot
 # TESTS = week2-1 week2-2 week2-3a1 week2-3a2 week2-3b1 week2-3b2
 # TESTS = week3-1 week3-3-1 week3-3-2 week3-3-3 week3-3-4 week3-3-5 week3-3-6 cls-bug cls-bug2 cls-rec cls-reg-bug
 # TESTS = week5-1 fib ack
 
 # ここから（SPARC, PowerPC, x86, MIPS, chahanによりコンパイル方法が異なる）
-do_test: $(TESTS:%=test/%.s) $(TESTS:%=test/%.ans)
+# do_test: $(TESTS:%=test/%.s) $(TESTS:%=test/%.ans)
 
-.PRECIOUS: test/%.txt test/%.s test/% test/%.res test/%.ans test/%.cmp
-TRASH = $(TESTS:%=test/%.txt) $(TESTS:%=test/%.s) $(TESTS:%=test/%) $(TESTS:%=test/%.res) $(TESTS:%=test/%.ans) $(TESTS:%=test/%.cmp)
+# .PRECIOUS: test/%.txt test/%.s test/% test/%.res test/%.ans test/%.cmp
+# TRASH = $(TESTS:%=test/%.txt) $(TESTS:%=test/%.s) $(TESTS:%=test/%) $(TESTS:%=test/%.res) $(TESTS:%=test/%.ans) $(TESTS:%=test/%.cmp)
 
-test/%.txt test/%.s: $(RESULT) test/%.ml
-	./$(RESULT) test/$*
-test/%.ans: test/%.ml
-	ocaml $< > $@
+# test/%.txt test/%.s: $(RESULT) test/%.ml
+# 	./$(RESULT) test/$*
+# test/%.ans: test/%.ml
+# 	ocaml $< > $@
 # ここまで
 
 min-caml.html: main.mli main.ml id.ml m.ml s.ml \
@@ -73,4 +76,5 @@ release: min-caml.html
 	rm -fr tmp ; mkdir tmp ; cd tmp ; cvs -d:ext:sumii@min-caml.cvs.sf.net://cvsroot/min-caml export -Dtomorrow min-caml ; tar cvzf ../min-caml.tar.gz min-caml ; cd .. ; rm -fr tmp
 	cp Makefile stub.c SPARC/libmincaml.S min-caml.html min-caml.tar.gz ../htdocs/
 
+include make.mk    
 include OCamlMakefile
