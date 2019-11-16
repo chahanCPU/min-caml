@@ -76,5 +76,5 @@ release: min-caml.html
 	rm -fr tmp ; mkdir tmp ; cd tmp ; cvs -d:ext:sumii@min-caml.cvs.sf.net://cvsroot/min-caml export -Dtomorrow min-caml ; tar cvzf ../min-caml.tar.gz min-caml ; cd .. ; rm -fr tmp
 	cp Makefile stub.c SPARC/libmincaml.S min-caml.html min-caml.tar.gz ../htdocs/
 
-include make.mk    
+include make.mk    # make -f make.mk にしても良かった?? でも、コード生成とdo_testを区別できないか
 include OCamlMakefile
