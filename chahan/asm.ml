@@ -51,8 +51,11 @@ let regs = (* Array.init 16 (fun i -> Printf.sprintf "%%r%d" i) *)
      "$24"; "$25"; 
      "$26"; "$27";
      "$30" |]
+(* よく考えて *)
+(* $f0はゼロ、$f1は$atのノリで使ってる *)
 let fregs = (* Array.init 16 (fun i -> Printf.sprintf "%%f%d" (i * 2)) *)
-  Array.init 32 (fun i -> Printf.sprintf "$f%d" i)
+  Array.init 30 (fun i -> Printf.sprintf "$f%d" (i + 2))
+(* 浮動小数は班員と要相談 *)
 let allregs = Array.to_list regs
 let allfregs = Array.to_list fregs
 let reg_cl = regs.(Array.length regs - 1) (* closure address (caml2html: sparcasm_regcl) *)

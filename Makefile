@@ -78,3 +78,6 @@ release: min-caml.html
 
 include make.mk    # make -f make.mk にしても良かった?? でも、コード生成とdo_testを区別できないか
 include OCamlMakefile
+
+# https://qiita.com/uni-3/items/f7d7d7004cde146b6547
+# https://qiita.com/Shigets/items/27170827707e5136ee89

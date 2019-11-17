@@ -1,5 +1,5 @@
-do_test: $(TESTS:%=test/%.s.binary) $(TESTS:%=test/%.s.bintext) $(TESTS:%=test/%.ans)
-# do_test: $(TESTS:%=test/%.s) $(TESTS:%=test/%.ans)
+# do_test: $(TESTS:%=test/%.s.binary) $(TESTS:%=test/%.s.bintext) $(TESTS:%=test/%.ans)
+do_test: $(TESTS:%=test/%.s) $(TESTS:%=test/%.ans)
 
 .PRECIOUS: test/%.txt test/%.s test/% test/%.res test/%.ans test/%.cmp
 TRASH = $(TESTS:%=test/%.txt) $(TESTS:%=test/%.s) $(TESTS:%=test/%) $(TESTS:%=test/%.res) $(TESTS:%=test/%.ans) $(TESTS:%=test/%.cmp)

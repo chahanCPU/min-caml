@@ -63,6 +63,8 @@ An educational compiler for a minimal subset of OCaml, written in
    though it takes time because of OCaml bytecode (for testing by
    comparison), not MinCaml
 
+### FAQ
+
 [FAQ 1] Is there an x86_64 version?
 
 [A] There is, but it is left as an exercise for students and _not_
@@ -79,6 +81,8 @@ included in this distribution.
 
 - Merged the Mac OS patch by shinh
   https://twitter.com/shinh/status/322043108021907458
+
+### Updates
 
 [Update on July 24, 2012]
 
