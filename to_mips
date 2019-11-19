@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-ln -sf MIPS/{*.ml{,i},libmincaml.S} .
-cd test; ln -sf MIPS/{,too}manyargs.ml .; cd ..
-cd shootout; ln -sf MIPS/Makefile .; cd ..
-cd bytemark; ln -sf MIPS/Makefile .; cd ..
-cd min-rt; ln -sf MIPS/globals.s .; cd ..
-sed -i -e '/do_test:/,/# ここまで/d' Makefile
-sed -i -e '/# ここから/r MIPS/compile.txt' Makefile

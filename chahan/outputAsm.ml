@@ -107,6 +107,7 @@ and output_exp oc exp =
   match exp with
   | Nop -> print_string "Nop\n"
   | Set i -> Printf.fprintf oc "Set %d\n" i
+  | FSetD d -> Printf.fprintf oc "FSetD %f\n" d
   | SetL x ->
       print_string "SetL ";
       print_idl x;
@@ -201,19 +202,12 @@ and output_prog oc prog =
   let print_TABs = output_TABs oc in
   let print_t = output_t oc in
   let print_fundef = output_fundef oc in
-  let Prog (l1,l2,x) = prog in
+  let Prog (l2,x) = prog in
   print_string "Prog\n";
   nTAB := !nTAB + 1;
   List.iter 
-    (fun (id,f) -> print_TABs !nTAB; 
-                  print_idl id; 
-                  print_string " = ";
-                  print_float f;
-                  print_string "\n")
-    l1;
-  List.iter 
     (fun fundef -> print_TABs !nTAB; 
-                  print_fundef fundef)
+                   print_fundef fundef)
     l2;
   print_TABs !nTAB;
   print_t x;

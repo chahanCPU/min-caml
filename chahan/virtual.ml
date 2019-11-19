@@ -2,8 +2,6 @@
 
 open Asm
 
-let data = ref [] (* 浮動小数点数の定数テーブル (caml2html: virtual_data) *)
-
 let classify xts ini addf addi =
   List.fold_left
     (fun acc (x, t) ->
@@ -34,8 +32,8 @@ let expand xts ini addf addi =
 let rec g env = function (* 式の仮想マシンコード生成 (caml2html: virtual_g) *)
   | Closure.Unit -> Ans(Nop)
   | Closure.Int(i) -> Ans(Set(i))
-  | Closure.Float(d) ->
-      let l =
+  | Closure.Float(d) -> Ans(FSetD(d))
+      (* let l =
         try
           (* すでに定数テーブルにあったら再利用 *)
           let (l, _) = List.find (fun (_, d') -> d = d') !data in
@@ -45,7 +43,7 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           data := (l, d) :: !data;
           l in
       let x = Id.genid "l" in
-      Let((x, Type.Int), SetL(l), Ans(LdDF(x, C(0))))
+      Let((x, Type.Int), SetL(l), Ans(LdDF(x, C(0)))) *)
   | Closure.Neg(x) -> Ans(Neg(x))
   | Closure.Add(x, y) -> Ans(Add(x, V(y)))
   | Closure.Sub(x, y) -> Ans(Sub(x, V(y)))
@@ -158,7 +156,7 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts; Closure.formal_fv = zts
 
 (* プログラム全体の仮想マシンコード生成 (caml2html: virtual_f) *)
 let f (Closure.Prog(fundefs, e)) =
-  data := [];
   let fundefs = List.map h fundefs in
   let e = g M.empty e in
-  Prog(!data, fundefs, e)
+  (* let e = concat e (Id.genid "main", Type.Unit) (Ans(Nop)) in *)    (* コア係より末尾にNopが欲しい *)
+  Prog(fundefs, e)

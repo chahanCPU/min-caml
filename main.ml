@@ -15,8 +15,8 @@ let lexbuf debugchan outchan l = (* バッファをコンパイルしてチャ�
   let hoge3 = KNormal.f hoge2 in
   let hoge4 = Alpha.f hoge3 in
   (* let hoge = CommonSubexpressionElimination.f hoge4 in *)
-  (* let hoge5 = iter !limit hoge4 in *)
-  let hoge5 = iter 0 hoge4 in
+  let hoge5 = iter !limit hoge4 in
+  (* let hoge5 = iter 0 hoge4 in *)
   let hoge6 = Closure.f hoge5 in
   let hoge7 = Virtual.f hoge6 in
   let hoge8 = Simm.f hoge7 in
@@ -37,7 +37,7 @@ let string s = lexbuf stdout stdout (Lexing.from_string s) (* 文字列をコン
 
 let file f = (* ファイルをコンパイルしてファイルに出力する (caml2html: main_file) *)
   let inchan = open_in (f ^ ".ml") in
-  let debugchan = open_out (f ^ ".txt") in
+  let debugchan = open_out (f ^ ".txt") in    (* 本当に.txtで良いの? *)
   let outchan = open_out (f ^ ".s") in
   try
     lexbuf debugchan outchan (Lexing.from_channel inchan);
@@ -50,6 +50,11 @@ let file f = (* ファイルをコンパイルしてファイルに出力する 
 
 let () = (* ここからコンパイラの実行が開始される (caml2html: main_entry) *)
   let files = ref [] in
+  (* globals.ml（グローバル変数(ExtArrayとか)を宣言）とかlib.ml（外部関数の定義）とかを取り込むか ←別にファイル分けてもわけなくてもよさそうよね
+     オプションで選択したいね、Makefileでもいいけど *)
+  (* asm.mlにすべて命令を対応させれば、lib.mlだけでlib.sみたいなのは不要になる?????
+     そうした方が、外部変数呼出がなくなってスタックの確保等がなくなり、
+     インライン化とかされてレジスタ割当も上手く行きそう *)
   Arg.parse
     [("-inline", Arg.Int(fun i -> Inline.threshold := i), "maximum size of functions inlined");
      ("-iter", Arg.Int(fun i -> limit := i), "maximum number of optimizations iterated")]

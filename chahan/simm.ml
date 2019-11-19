@@ -1,5 +1,6 @@
 open Asm
 
+(* FSetDはどうしよう? *)
 let rec g env = function (* 命令列の13bit即値最適化 (caml2html: simm13_g) *)
   | Ans(exp) -> Ans(g' env exp)
   | Let((x, t), Set(i), e) when -4096 <= i && i < 4096 ->
@@ -37,5 +38,5 @@ and g' env = function (* 各命令の13bit即値最適化 (caml2html: simm13_gpr
 let h { name = l; args = xs; fargs = ys; body = e; ret = t } = (* トップレベル関数の13bit即値最適化 *)
   { name = l; args = xs; fargs = ys; body = g M.empty e; ret = t }
 
-let f (Prog(data, fundefs, e)) = (* プログラム全体の13bit即値最適化 *)
-  Prog(data, List.map h fundefs, g M.empty e)
+let f (Prog(fundefs, e)) = (* プログラム全体の13bit即値最適化 *)
+  Prog(List.map h fundefs, g M.empty e)

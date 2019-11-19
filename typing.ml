@@ -1,4 +1,6 @@
 (* type inference/reconstruction *)
+(* 多相に対応させたい *)
+(* 最後unitでなくても良くしたい *)
 
 open Syntax
 

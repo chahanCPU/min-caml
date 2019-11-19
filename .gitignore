@@ -1,0 +1,35 @@
+# .gitignoreの書き方
+# https://qiita.com/anqooqie/items/110957797b3d5280c44f
+# http://www-creators.com/archives/1662
+
+# /の意味とか（ノートに書いとく）サブディレクトリ
+# 親ディレクトリは見ない
+
+# .gitignore に記載されたファイルは、記載された時点で「Git の追跡対象から除外される」のではなく
+# 「まだ追跡されていないファイルが指定されていれば、git addの実行時にも、追跡開始しないようになる」
+
+# 結果ファイル
+/._bcdi/
+/._d/
+/*.cmi
+/*.cmo
+/*.o
+/lexer.ml
+/min-caml
+/min-caml.top
+/parser.ml
+/parser.mli
+
+# サブディレクトリ bytemark, min-rt, shootout, test 内にそれぞれ .gitignore があるので、確認すること
+
+
+# /test/*.ans
+# /test/*.s
+# /test/*.txt
+
+# test他にも
+# 全ての.cmi, .cmo, .oや.ans, .resを無視!?
+# .sや.txtは場合に依る
+# /test/*.txtはtxt形式じゃないほうが良い? .log .dumpとか
+
+# /shootout/とかは
