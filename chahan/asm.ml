@@ -1,10 +1,14 @@
-(* SPARC assembly with a few virtual instructions *)
+(* chahan assembly with a few virtual instructions *)
 
 type id_or_imm = V of Id.t | C of int
 type t = (* 命令の列 (caml2html: sparcasm_t) *)
   | Ans of exp
   | Let of (Id.t * Type.t) * exp * t
 and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *)
+(* outとかしっかり自分たちのアーキテクチャに対応したいよなん。
+   外部関数を呼ぶといちいちスタックフレームの確保・退避が起こって無駄だし、
+   インライン化したら適切なレジスタ割当もできるから、良いことしかなさそう。
+   今は一時レジスタ$atみたいな感じで無理やり辻褄を合わせてるけど、それも効率的に使いたいし *)
   | Nop
   | Set of int
   | FSetD of float
