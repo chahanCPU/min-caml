@@ -22,6 +22,6 @@ test/%.res: test/%.s simulator
 test/%.ans: test/%.ml
 	ocaml $< > $@
 test/%.cmp: test/%.res test/%.ans
-	diff -a $^ > $@
+	diff $^ > $@
 # -によりmakeに失敗しても引き続きmakeが行われる
 # mandelbrotで何故か失敗する。中身は正しそうだが

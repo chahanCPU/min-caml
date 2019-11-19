@@ -1,4 +1,4 @@
-(* Not Completed *)
+(* もっとわかりやすくして *)
 
 open Asm
 
