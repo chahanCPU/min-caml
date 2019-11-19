@@ -4,31 +4,53 @@ Ocamlのサブセットである言語MinCaml用のコンパイラです。
 
 chahan(自作アーキテクチャ), x86, PowerPC, SPARCに対応しています。
 
+## 想定環境
+
+- x86_64
+
+- Install OCaml (http://caml.inria.fr/)
+
+- Download (and expand) MinCaml, e.g.
+
+    ```git clone https://github.com/chahanCPU/min-caml.git```
+
+- chahan用のsimulator (https://github.com/chahanCPU/ASM.git) をインストール
+<!-- submoduleはgit cloneのときにインストールされない? -->
+
 ## 使い方
 
-1. Install OCaml (http://caml.inria.fr/) if you haven't
+1. ```cd min-caml/```
 
-2. Download (and expand) MinCaml, e.g.
+2. Execute ```./to_chahan``` for chahan
 
-   ```git clone https://github.com/chahanCPU/min-caml.git```
+    (or ```./to_x86``` for x86, ```./to_ppc``` for PowerPC, ```./to_sparc``` for SPARC)
 
-3. ```cd min-caml/```
+3. ディレクトリtestの下に、コンパイルしたいMinCamlのプログラムhoge.mlをおく
 
-4. Execute ```./to_chahan``` for chahan
+4. ```make assembly TESTS=hoge``` もしくは ```make do_test TESTS=hoge``` を実行
 
-   (or ```./to_sparc``` for SPARC, ```./to_ppc``` for PowerPC, ```./to_x86``` for x86)
+    - ```make assembly TESTS=hoge``` により、ディレクトリtestの下に以下のファイルが生成される
 
-5. test/に書いて、MakefileをTESTS=に更新
+        - hoge.txt : コンパイルの中間結果
+        - hoge.s : hoge.mlをMinCamlでコンパイルしたアセンブリ
 
-6. ```make```
+    - ```make do_test TESTS=hoge``` により、ディレクトリtestの下に上記のファイルとともに以下のファイルが生成される
 
-   - ```make do_test``` ※作成中
+        <!-- 今は無理やりコマンドで名前変えてます。simulatorで変えたいが -->
+        <!-- x86は実行ファイルhogeも -->
+        - hoge.bin : hoge.sをバイナリに変換したもの (chahanのみ)  <!-- 上に持っていきたい。アセンブラとシミュレータを分けてくれれば -->
+        - hoge.res : hoge.sをchahan用のsimulatorもしくはx86で実行した結果 (PowerPC, SPARCは未対応)
+        - hoge.ans : hoge.sをOcamlで実行した結果
+        - hoge.cmp : hoge.resとhoge.ansのdiff (PowerPC, SPARCは未対応)
+        <!-- simulatorの標準出力も欲しい -->
 
-     ppc, SPARCは例外
+    - ```make```のオプションについて
 
-   - ```make asm``` ※作成中
+        - ```assembly```も```do_test```も指定しなかった場合は、後者が実行される
+        - ```TESTS=hoge```を省略した場合は、MakefileのTESTS=…に書かれたプログラムを実行する
+        - 複数のファイルを指定したいときは、```TESTS="hoge1 hoge2"```とする
 
-7. If you like, try the ray tracer ※編集中
+<!-- 5. If you like, try the ray tracer ※編集中 -->
 
 
 ## 原作者注
