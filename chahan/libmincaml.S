@@ -1,108 +1,74 @@
-.section ".text"
-.global min_caml_print_newline
+# 全部.mlにしたい。このためだけにスタックの確保・退避を行うのはコストが高い。
+# asm.mlのexpに命令を追加して、インライン化・レジスタ割当ができるように。
+# ライブラリ
 min_caml_print_newline:
-	set	10, %o0
-	st	%o7, [%i0]
-	call	putchar
-	nop
-	ld	[%i0], %o7
-	retl
-	nop
-.global min_caml_print_int
+	ori	$2, $zero, 10		# LF
+	out	$2
+	jr	$ra
 min_caml_print_int:
-	set	format_int, %o0
-	mov	%i2, %o1
-	st	%o7, [%i0]
-	call	printf
-	nop
-	ld	[%i0], %o7
-	retl
-	nop
-.global min_caml_print_byte
+	slti	$at, $2, 0
+	blez	$at, print_int_label0
+	ori	$3, $zero, 45		# '-'
+	out	$3
+	sub	$2, $zero, $2
+print_int_label0:
+	or	$3, $zero, $2
+	ori	$4, $zero, 1
+	ori	$5, $zero, 10
+print_int_label1:
+	div	$3, $3, $5		# divu?
+	mult	$4, $4, $5		# multu?
+	slti	$at, $3, 1
+	blez	$at, print_int_label1
+print_int_label2:
+	ori	$5, $zero, 10
+	div	$4, $4, $5		# divu?
+	div	$3, $2, $4		# divu?
+	addi	$5, $3, 48
+	out	$5
+	slti	$at, $4, 2
+	bgtz	$at, print_int_label3
+	mult	$3, $3, $4		# multu?
+	sub	$2, $2, $3
+	j	print_int_label2
+print_int_label3:
+	jr	$ra
 min_caml_print_byte:
-	mov	%i2, %o0
-	st	%o7, [%i0]
-	call	putchar
-	nop
-	ld	[%i0], %o7
-	retl
-	nop
-.global min_caml_prerr_int
-min_caml_prerr_int:
-	set	min_caml_stderr, %o0
-	set	format_int, %o1
-	mov	%i2, %o2
-	st	%o7, [%i0]
-	call	fprintf
-	nop
-	ld	[%i0], %o7
-	retl
-	nop
-.global min_caml_prerr_byte
-min_caml_prerr_byte:
-	mov	%i2, %o0
-	set	min_caml_stderr, %o1
-	st	%o7, [%i0]
-	call	fputc
-	nop
-	ld	[%i0], %o7
-	retl
-	nop
-.global min_caml_prerr_float
-min_caml_prerr_float:
-	set	min_caml_stderr, %o0
-	set	format_float, %o1
-	std	%f0, [%i0]
-	ldd	[%i0], %o2
-	st	%o7, [%i0]
-	call	fprintf
-	nop
-	ld	[%i0], %o7
-	retl
-	nop
-.global min_caml_read_int
-min_caml_read_int:
-	set	format_int, %o0
-	st	%o7, [%i0]
-	call	scanf, 0
-	add	%fp, -20, %o1	! delay slot
-	ld	[%i0], %o7
-	ld	[%fp-20], %i2
-	retl
-	nop
-.global min_caml_read_float
-min_caml_read_float:
-	set	format_float, %o0
-	st	%o7, [%i0]
-	call	scanf, 0
-	add	%fp, -24, %o1	! delay slot
-	ld	[%i0], %o7
-	ldd	[%fp-24], %f0
-	retl
-	nop
-.global min_caml_create_array
-min_caml_create_array:
-	mov	%i2, %i4
-	mov	%i1, %i2
+	out	$2
+	jr	$ra
+# min_caml_prerr_int:		# 未実装
+# min_caml_prerr_byte:		# 未実装
+# min_caml_prerr_float:		# 未実装
+min_caml_read_int:		# 動作確認をすること
+	in	$2
+	jr	$ra
+min_caml_read_float:		# 動作確認をすること
+	in	$at
+	sw	$at, 16($sp)		# 16?
+	lw.s	$f2, 16($sp)		# 16?
+	jr	$ra
+min_caml_create_array:		# まだできていない
+	# mov	%i2, %i4		# 引数は%i2(配列の要素数)と%i3	(SPARC)
+	# mov	%i1, %i2		# %i1はヒープポインタ	(SPARC)
+	or	$4, $zero, $2
+	or	$2, $zero, $gp
 create_array_loop:
-	tst	%i4
-	bnz	create_array_cont
-	nop
+	# tst	%i4
+	# bnz	create_array_cont
+	bgtz	$4, create_array_cont
 	andcc	%i1, 4, %g0
 	bz	create_array_exit
 	nop
 	add	%i1, 4, %i1
 create_array_exit:
-	retl
-	nop
+	jr	$ra
 create_array_cont:
 	st	%i3, [%i1]
 	dec	%i4
 	add	%i1, 4, %i1
 	b	create_array_loop
 	nop
-.global min_caml_create_float_array
-min_caml_create_float_array:
+min_caml_create_float_array:		# まだできていない
 	mov	%i2, %i3
 	mov	%i1, %i2
 create_float_array_loop:
@@ -117,81 +83,18 @@ create_float_array_cont:
 	add	%i1, 8, %i1
 	b	create_float_array_loop
 	nop
-.global min_caml_abs_float
-min_caml_abs_float:
-	fabss	%f0, %f0
-	retl
-	nop
-.global min_caml_sqrt
+# min_caml_abs_float:		# libmincaml.mlを参照
 min_caml_sqrt:
-	fsqrtd	%f0, %f0
-	retl
-	nop
-.global min_caml_floor
-min_caml_floor:
-	std	%f0, [%i0]
-	ldd	[%i0], %o0
-	st	%o7, [%i0]
-	call	floor
-	nop
-	ld	[%i0], %o7
-	retl
-	nop
-.global min_caml_int_of_float
+	fsqrt	$f2, $f2
+	jr	$ra
+# min_caml_floor:		# libmincaml.mlを参照
 min_caml_int_of_float:
-.global min_caml_truncate
 min_caml_truncate:
-	fdtoi	%f0, %f0
-	st	%f0, [%i0]
-	ld	[%i0], %i2
-	retl
-	nop
-.global min_caml_float_of_int
+	ftoi	$2, $f2
+	jr	$ra
 min_caml_float_of_int:
-	st	%i2, [%i0]
-	ld	[%i0], %f0
-	fitod	%f0, %f0
-	retl
-	nop
-.global min_caml_cos
-min_caml_cos:
-	std	%f0, [%i0]
-	ldd	[%i0], %o0
-	st	%o7, [%i0]
-	call	cos
-	nop
-	ld	[%i0], %o7
-	retl
-	nop
-.global min_caml_sin
-min_caml_sin:
-	std	%f0, [%i0]
-	ldd	[%i0], %o0
-	st	%o7, [%i0]
-	call	sin
-	nop
-	ld	[%i0], %o7
-	retl
-	nop
-.global min_caml_atan
-min_caml_atan:
-	std	%f0, [%i0]
-	ldd	[%i0], %o0
-	st	%o7, [%i0]
-	call	atan
-	nop
-	ld	[%i0], %o7
-	retl
-	nop
-.section ".rodata"
-format_int:
-	.asciz	"%d"
-format_float:
-	.asciz	"%lf"
-.align 8
-float_0:
-	.long	0x0
-	.long	0x0
-float_1:
-	.long	0x3ff00000
-	.long	0x0
+	itof	$f2, $2
+	jr	$ra
+# min_caml_cos:		# libmincaml.mlを参照
+# min_caml_sin:		# libmincaml.mlを参照
+# min_caml_atan:		# libmincaml.mlを参照

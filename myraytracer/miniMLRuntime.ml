@@ -1,59 +1,61 @@
 (* float (1) *)
-external fequal : float -> float -> bool = "%equal"
-external fless : float -> float -> bool = "%lessthan"
+let rec fequal x y = (x = y) in
+let rec fless x y = (x < y) in
 
-let fispos x = x > 0.0
-let fisneg x = x < 0.0
-let fiszero x = (x = 0.0)
+let rec fispos x = (x > 0.) in
+let rec fisneg x = (x < 0.) in
+let rec fiszero x = (x = 0.) in
 
 (* int *)
-external (=) : int -> int -> bool = "%equal"
-external (<>) : int -> int -> bool = "%notequal"
-external (<) : int -> int -> bool = "%lessthan"
-external (>) : int -> int -> bool = "%greaterthan"
-external (<=) : int -> int -> bool = "%lessequal"
-external (>=) : int -> int -> bool = "%greaterequal"
+(* external (=) : int -> int -> bool = "%equal" *)
+(* external (<>) : int -> int -> bool = "%notequal" *)
+(* external (<) : int -> int -> bool = "%lessthan" *)
+(* external (>) : int -> int -> bool = "%greaterthan" *)
+(* external (<=) : int -> int -> bool = "%lessequal" *)
+(* external (>=) : int -> int -> bool = "%greaterequal" *)
 
-external (+) : int -> int -> int = "%addint"
-external (-) : int -> int -> int = "%subint"
-external ( * ) : int -> int -> int = "%mulint"
-external (/) : int -> int -> int = "%divint"
+(* external (+) : int -> int -> int = "%addint" *)
+(* external (-) : int -> int -> int = "%subint" *)
+(* external ( * ) : int -> int -> int = "%mulint" *)
+(* external (/) : int -> int -> int = "%divint" *)
 
 (* logic *)
-external xor : bool -> bool -> bool = "%notequal"
-external not : bool -> bool = "%boolnot"
+let rec xor x y = (x <> y) in
+let rec not x = if x then false else true in
 
 (* float (2) *)
-let fhalf x = x *. 0.5
-let fsqr x = x *. x
-external (+.) : float -> float -> float = "%addfloat"
-external (-.) : float -> float -> float = "%subfloat"
-external ( *. ) : float -> float -> float = "%mulfloat"
-external (/.) : float -> float -> float = "%divfloat"
+let rec fhalf x = x *. 0.5 in
+let rec fsqr x = x *. x in
+(* external (+.) : float -> float -> float = "%addfloat" *)
+(* external (-.) : float -> float -> float = "%subfloat" *)
+(* external ( *. ) : float -> float -> float = "%mulfloat" *)
+(* external (/.) : float -> float -> float = "%divfloat" *)
 
-external fabs : float -> float = "%absfloat"
-external fneg : float -> float = "%negfloat"
-external sqrt : float -> float = "sqrt_float" "sqrt" "float"
-external floor : float -> float = "floor_float" "floor" "float"
+let rec fabs x = if x >= 0. then x else -x in
+let rec fneg x = -x in
+(* external sqrt : float -> float = "sqrt_float" "sqrt" "float" *)
+let rec floor x = 
+  let y = float_of_int (int_of_float x) in
+  if x >= 0. then y else if x = y then x else y -. 1.    (* 怪しいかも。x=yは整数であることを意図 *)
 
-external int_of_float : float -> int = "%intoffloat"
-external float_of_int : int -> float = "%floatofint"
+(* external int_of_float : float -> int = "%intoffloat" *)
+(* external float_of_int : int -> float = "%floatofint" *)
 
 external cos : float -> float = "cos_float" "cos" "float"
 external sin : float -> float = "sin_float" "sin" "float"
 external atan : float -> float = "atan_float" "atan" "float"
 
-external int_of_float : float -> int = "%intoffloat"
-external float_of_int : int -> float = "%floatofint"
+(* external int_of_float : float -> int = "%intoffloat" *)
+(* external float_of_int : int -> float = "%floatofint" *)
 
-external create_array : int -> 'a -> 'a array = "caml_make_vect"
+(* external create_array : int -> 'a -> 'a array = "caml_make_vect" *)
 
 (* I/O *)
 
-let print_char x = Pervasives.print_char (char_of_int x)
-let print_int = Pervasives.print_int
+let rec print_char x = print_byte x in
+(* let print_int = Pervasives.print_int *)
 
-let buf = Buffer.create 16
+(* let buf = Buffer.create 16
 
 let rec read_token in_token =
   try
@@ -83,5 +85,6 @@ let read_int () =
   try
     int_of_string (Buffer.contents buf)
   with
-    Failure _ -> failwith ((Buffer.contents buf) ^ ": int conversion failed.")
+    Failure _ -> failwith ((Buffer.contents buf) ^ ": int conversion failed.") *)
 
+();
