@@ -109,7 +109,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   (* 要注意 *)
   (* SetLは浮動小数点即値以外にもClosure.ExtArray(Id.L(x))で使われるので、区別のために新しい命令FSetDを追加しました *)
   | NonTail(x), SetL(Id.L(y)) -> (* Printf.fprintf oc "\tor\t%s, $zero, %s\t\t# 実機で引数にラベルが取れるか注意\n" x y *)
-      failwith("外部配列ExtArrayはchahanで対応してません。ソースコードで配列" ^ y ^ "をしてしてください") 
+      failwith("外部配列ExtArrayはchahanで対応してません。ソースコードで配列" ^ y ^ "をしてしてください")
+      (* 関数呼び出しでもこれを用いることが判明。至急要修正 *)
     (* そもそもラベル32bitだからだめじゃん、外部配列を使わないようにお願いします(raytracerで普通使ってるけど) *)
   | NonTail(x), Mov(y) when x = y -> ()
   | NonTail(x), Mov(y) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y
@@ -476,7 +477,7 @@ let f oc (Prog(fundefs, e)) =
   (* float_of_intは関数呼び出しで対応  後でインライン化すること *)
   Printf.fprintf oc "min_caml_float_of_int:\n";
   Printf.fprintf oc "\titof\t$f2, $2\n";
-  Printf.fprintf oc "\tjr\t%s\n" reg_ra;
+  Printf.fprintf oc "\tjr\t%s\n" reg_ra
 
   (* List.iter (fun fundef -> h oc fundef) fundefs; *)
 

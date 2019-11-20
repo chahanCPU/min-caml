@@ -41,10 +41,11 @@ main.mli main.ml
 # join-reg join-reg2 non-tail-if non-tail-if2 \
 # inprod inprod-rec inprod-loop matmul matmul-flat
 # manyargs
-TESTS = print sum-tail gcd sum fib ack even-odd float1 float2 mandelbrot
+# TESTS = print sum-tail gcd sum fib ack even-odd float1 float2 mandelbrot
 # TESTS = week2-1 week2-2 week2-3a1 week2-3a2 week2-3b1 week2-3b2
 # TESTS = week3-1 week3-3-1 week3-3-2 week3-3-3 week3-3-4 week3-3-5 week3-3-6 cls-bug cls-bug2 cls-rec cls-reg-bug
 # TESTS = week5-1 fib ack
+TESTS = week6-4-1 week6-4-2 week6-4-3 week6-4-4 week6-4-5 week6-4-6 week6-4-7
 
 # ここから（SPARC, PowerPC, x86, MIPS, chahanによりコンパイル方法が異なる）
 # do_test: $(TESTS:%=test/%.s) $(TESTS:%=test/%.ans)

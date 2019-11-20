@@ -120,22 +120,35 @@ exp: /* (* 一般の式 (caml2html: parser_exp) *) */
 | LET IDENT EQUAL exp IN exp
     %prec prec_let
     { Let(addtyp $2, $4, $6) }
-| LET REC fundef IN exp
+/* | LET REC fundef IN exp
     %prec prec_let
-    { LetRec($3, $5) }
+    { LetRec($3, $5) } */
+/* 関数の引数を1つに限定する */
+| LET REC IDENT formal_args EQUAL exp IN exp
+    %prec prec_let
+    { match $4 with
+        [] -> failwith("formal_argsの要素数は必ず1以上なので、parserでこんなエラーは発生しない") 
+      | arg::args -> LetRec({ name = addtyp $3; args = [arg]; body = List.fold_right (fun arg exp -> let f = Id.genid "f" in LetRec({ name = addtyp f; args = [arg]; body = exp }, Var(f))) args $6 }, $8) }
+/* 関数の実引数を1つに限定する */
 | simple_exp actual_args
     %prec prec_app
-    { App($1, $2) }
+    /* { App($1, $2) } */
+    /* 関数適用は左結合 */
+    { List.fold_left (fun exp arg -> App(exp, [arg])) $1 $2 }
+    /* "f"じゃない方がわかりやすそう */
 | elems
     %prec prec_tuple
     { Tuple($1) }
 | LET LPAREN pat RPAREN EQUAL exp IN exp
     { LetTuple($3, $6, $8) }
+/* 関数の引数を1つに限定する */
 | FUN formal_args MINUS_GREATER exp
     %prec prec_let    
     /* really?? SEMICOLONより結合は弱そう。
        e.g. let f = fun x -> x + 1; 5 in f 1 は 5 になるので、let f = fun x -> (x + 1; 5) in f 1 */
-    { let f = Id.genid "f" in LetRec({ name = addtyp f; args = $2; body = $4 }, Var(f)) }
+    /* { let f = Id.genid "f" in LetRec({ name = addtyp f; args = $2; body = $4 }, Var(f)) } */
+    /* fun arg1 -> fun arg2 -> ... -> fun argn -> e は右結合 */
+    { List.fold_right (fun arg exp -> let f = Id.genid "f" in LetRec({ name = addtyp f; args = [arg]; body = exp }, Var(f))) $2 $4 }
 | simple_exp DOT LPAREN exp RPAREN LESS_MINUS exp
     { Put($1, $4, $7) }
 | exp SEMICOLON exp
@@ -149,9 +162,9 @@ exp: /* (* 一般の式 (caml2html: parser_exp) *) */
            (Parsing.symbol_start ())
            (Parsing.symbol_end ())) }
 
-fundef:
+/* fundef:
 | IDENT formal_args EQUAL exp
-    { { name = addtyp $1; args = $2; body = $4 } }
+    { { name = addtyp $1; args = $2; body = $4 } } */
 
 formal_args:
 | IDENT formal_args
