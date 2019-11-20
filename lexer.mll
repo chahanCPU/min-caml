@@ -73,6 +73,10 @@ rule token = parse
     { COMMA }
 | '_'
     { IDENT(Id.gentmp Type.Unit) }
+| "fun"
+    { FUN }
+| "->"
+    { MINUS_GREATER }
 | "Array.create" | "Array.make" (* [XX] ad hoc *)
     { ARRAY_CREATE }
 | '.'

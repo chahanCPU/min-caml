@@ -29,6 +29,8 @@ let addtyp x = (x, Type.gentyp ())
 %token IN
 %token REC
 %token COMMA
+%token FUN
+%token MINUS_GREATER
 %token ARRAY_CREATE
 %token DOT
 %token LESS_MINUS
@@ -129,6 +131,11 @@ exp: /* (* 一般の式 (caml2html: parser_exp) *) */
     { Tuple($1) }
 | LET LPAREN pat RPAREN EQUAL exp IN exp
     { LetTuple($3, $6, $8) }
+| FUN formal_args MINUS_GREATER exp
+    %prec prec_let    
+    /* really?? SEMICOLONより結合は弱そう。
+       e.g. let f = fun x -> x + 1; 5 in f 1 は 5 になるので、let f = fun x -> (x + 1; 5) in f 1 */
+    { let f = Id.genid "f" in LetRec({ name = addtyp f; args = $2; body = $4 }, Var(f)) }
 | simple_exp DOT LPAREN exp RPAREN LESS_MINUS exp
     { Put($1, $4, $7) }
 | exp SEMICOLON exp
