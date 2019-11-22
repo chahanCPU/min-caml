@@ -108,9 +108,10 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
 *)
   (* 要注意 *)
   (* SetLは浮動小数点即値以外にもClosure.ExtArray(Id.L(x))で使われるので、区別のために新しい命令FSetDを追加しました *)
-  | NonTail(x), SetL(Id.L(y)) -> (* Printf.fprintf oc "\tor\t%s, $zero, %s\t\t# 実機で引数にラベルが取れるか注意\n" x y *)
-      failwith("外部配列ExtArrayはchahanで対応してません。ソースコードで配列" ^ y ^ "をしてしてください")
+  | NonTail(x), SetL(Id.L(y)) -> Printf.fprintf oc "\tor\t%s, $zero, %s\t\t# 実機で引数にラベルが取れるか注意\n" x y
+      (* failwith("外部配列ExtArrayはchahanで対応してません。ソースコードで配列" ^ y ^ "をしてしてください") *)
       (* 関数呼び出しでもこれを用いることが判明。至急要修正 *)
+      (* もともと外部配列だけだと思っていたが、関数のラベル(関数が返り値になることもあるじゃん)をスタックに保存したいときに使う *)
     (* そもそもラベル32bitだからだめじゃん、外部配列を使わないようにお願いします(raytracerで普通使ってるけど) *)
   | NonTail(x), Mov(y) when x = y -> ()
   | NonTail(x), Mov(y) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y
@@ -272,7 +273,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(z), IfEq(x, C(y), e1, e2) ->
       (* Printf.fprintf oc "\tseqi\t$at, %s, %d\n" x y; *)
       Printf.fprintf oc "\tori\t$at, $zero, %d\n" y;
-      g'_non_tail_ifeq oc (NonTail(z)) e1 e2 x "$at"
+      g'_non_tail_ifeq oc (NonTail(z)) e1 e2 x "$at"    (* if y=0 *)
   | NonTail(z), IfLE(x, V(y), e1, e2) ->
       Printf.fprintf oc "\taddi\t$at, %s, 1\n" y;
       Printf.fprintf oc "\tslt\t$at, %s, $at\n" x;
