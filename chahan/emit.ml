@@ -433,6 +433,13 @@ let f oc (Prog(fundefs, e)) =
 
   (* Printf.fprintf oc ".section \".text\"\n"; *)
 
+  let lib = open_in "libmincaml.S" in
+  try
+    while true do Printf.fprintf oc "%s\n" (input_line lib) done
+  with End_of_file -> ();
+  close_in lib;
+
+(*
   (* libに書くべし .sじゃなくて.mlの方が最適化できそう *)
   (* outの付け足し  後でインライン化してね *)
   (* Printf.fprintf oc "min_caml_print_int:\n"; *)
@@ -477,7 +484,7 @@ let f oc (Prog(fundefs, e)) =
   Printf.fprintf oc "min_caml_float_of_int:\n";
   Printf.fprintf oc "\titof\t$f2, $2\n";
   Printf.fprintf oc "\tjr\t%s\n" reg_ra;
-
+*)
   (* List.iter (fun fundef -> h oc fundef) fundefs; *)
 
   (* Printf.fprintf oc ".global min_caml_start\n"; *)

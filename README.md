@@ -12,10 +12,11 @@ chahan(自作アーキテクチャ), x86, PowerPC, SPARCに対応しています
 
 - Download (and expand) MinCaml, e.g.
 
-    ```git clone https://github.com/chahanCPU/min-caml.git```
+    ```git clone --recursive https://github.com/chahanCPU/min-caml.git```
 
-- chahan用のsimulator (https://github.com/chahanCPU/ASM.git) をインストール
-<!-- submoduleはgit cloneのときにインストールされない? -->
+	【注】```--recursive```がないと、chahan用のsimulator (https://github.com/chahanCPU/ASM.git) がダウンロードされない 
+    (参考 https://qiita.com/PolarBear/items/861189910f91257127f3)
+    <!-- submoduleはgit cloneのときにインストールされない? -->
 
 ## 使い方
 
