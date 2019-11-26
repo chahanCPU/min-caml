@@ -1,1 +1,1 @@
-chahan/make.mk
+x86/make.mk

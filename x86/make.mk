@@ -1,5 +1,5 @@
 assembly: $(TESTS:%=test/%.s)
-do_test: $(TESTS:%=test/%.cmp)
+do_test: $(TESTS:%=test/%.res)
 
 # ここも要検討
 .PRECIOUS: test/%.txt test/%.s test/% test/%.res test/%.ans test/%.cmp

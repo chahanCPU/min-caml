@@ -45,7 +45,17 @@ let rec output_t oc x =
   | Float f -> Printf.fprintf oc "Float %f\n" f
   | Not x -> op1 "Not" x
   | Neg x -> op1 "Neg" x
-  | Add (x,y) -> op2 "Add" x y
+  | Add (x,y,ty) ->  
+      print_string "add*\n";    
+      nTAB := !nTAB + 1;
+      print_TABs !nTAB;
+      print_t x;
+      print_TABs !nTAB;
+      print_t y;
+      print_TABs !nTAB;
+      print_type !ty;
+      print_string "\n";
+      nTAB := !nTAB - 1 
   | Sub (x,y) -> op2 "Sub" x y
   | FNeg x -> op1 "FNeg" x
   | FAdd (x,y) -> op2 "FAdd" x y
@@ -152,7 +162,7 @@ let string_of_t = function
   | Float f -> "Float"
   | Not x -> "Not"
   | Neg x -> "Neg"
-  | Add (x,y) -> "Add"
+  | Add (x,y,_) -> "Add"
   | Sub (x,y) -> "Sub"
   | FNeg x -> "FNeg"
   | FAdd _ -> "FAdd"

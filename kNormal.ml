@@ -58,10 +58,28 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
   | Syntax.Neg(e) ->
       insert_let (g env e)
         (fun x -> Neg(x), Type.Int)
-  | Syntax.Add(e1, e2) -> (* 足し算のK正規化 (caml2html: knormal_add) *)
-      insert_let (g env e1)
-        (fun x -> insert_let (g env e2)
-            (fun y -> Add(x, y), Type.Int))
+  | Syntax.Add(e1, e2, ty) -> (* 足し算のK正規化 (caml2html: knormal_add) *)
+      (match !ty with
+       | Type.Int ->
+          insert_let (g env e1)
+            (fun x -> insert_let (g env e2)
+              (fun y -> Add(x, y), Type.Int))
+       | Type.Float ->
+          insert_let (g env e1)
+            (fun x -> insert_let (g env e2)
+              (fun y -> FAdd(x, y), Type.Float)) 
+       | Type.Var r ->
+          (match !r with
+           | Some (Type.Int) -> 
+              insert_let (g env e1)
+                (fun x -> insert_let (g env e2)
+                  (fun y -> Add(x, y), Type.Int))
+           | Some (Type.Float) ->
+              insert_let (g env e1)
+                (fun x -> insert_let (g env e2)
+                  (fun y -> FAdd(x, y), Type.Float))
+           | _ -> failwith("adddddddddddddddddddddd"))
+        | _ -> failwith("adddddddddddddddddddddd"))
   | Syntax.Sub(e1, e2) ->
       insert_let (g env e1)
         (fun x -> insert_let (g env e2)

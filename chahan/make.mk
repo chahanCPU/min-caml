@@ -1,7 +1,7 @@
 assembly: $(TESTS:%=test/%.s)
 # do_test: $(TESTS:%=test/%.s) $(TESTS:%=test/%.ans)
 # do_test: $(TESTS:%=test/%.s.binary) $(TESTS:%=test/%.s.bintext) $(TESTS:%=test/%.ans)
-do_test: $(TESTS:%=test/%.cmp)
+do_test: $(TESTS:%=test/%.res)
 
 # ここも要検討
 .PRECIOUS: test/%.txt test/%.s test/%.bin test/%.res test/%.ans test/%.cmp
