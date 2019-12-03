@@ -1,5 +1,6 @@
 # 全部.mlにしたい。このためだけにスタックの確保・退避を行うのはコストが高い。
 # asm.mlのexpに命令を追加して、インライン化・レジスタ割当ができるように。
+# simulator: ラベルにコメントをつけると、だめっぽい？
 # ライブラリ
 min_caml_print_newline:
 	ori	$2, $zero, 10		# LF
@@ -39,14 +40,14 @@ min_caml_print_byte:
 # min_caml_prerr_int:		# 未実装
 # min_caml_prerr_byte:		# 未実装
 # min_caml_prerr_float:		# 未実装
-# min_caml_read_int:		# 動作確認をすること
-# 	in	$2
-# 	jr	$ra
-# min_caml_read_float:		# 動作確認をすること
-# 	in	$at
-# 	sw	$at, 16($sp)		# 16?
-# 	lw.s	$f2, 16($sp)		# 16?
-# 	jr	$ra
+min_caml_read_int:
+	in	$2		# 動作確認をすること
+	jr	$ra
+min_caml_read_float:
+	in	$at		# 動作確認をすること
+	sw	$at, 16($sp)		# 16?
+	lw.s	$f2, 16($sp)		# 16?
+	jr	$ra
 # min_caml_create_array:		# まだできていない
 # 	# mov	%i2, %i4		# 引数は%i2(配列の要素数)と%i3	(SPARC)
 # 	# mov	%i1, %i2		# %i1はヒープポインタ	(SPARC)
@@ -83,10 +84,32 @@ min_caml_print_byte:
 # 	add	%i1, 8, %i1
 # 	b	create_float_array_loop
 # 	nop
+min_caml_create_array:
+	or	$4, $zero, $2
+	or	$2, $zero, $gp
+create_array_loop:
+	blez	$4, create_array_exit
+	sw	$3, 0($gp)
+	addi	$4, $4, -1
+	addi	$gp, $gp, 4
+	j	create_array_loop
+create_array_exit:
+	jr	$ra
+min_caml_create_float_array:
+	or	$3, $zero, $2
+	or	$2, $zero, $gp
+create_float_array_loop:
+	blez	$3, create_float_array_exit
+	sw.s	$f2, 0($gp)
+	addi	$3, $3, -1
+	addi	$gp, $gp, 4
+	j	create_float_array_loop
+create_float_array_exit:
+	jr	$ra
 # min_caml_abs_float:		# libmincaml.mlを参照
-# min_caml_sqrt:
-# 	fsqrt	$f2, $f2
-# 	jr	$ra
+min_caml_sqrt:
+	sqrt.s	$f2, $f2
+	jr	$ra
 # min_caml_floor:		# libmincaml.mlを参照
 min_caml_int_of_float:
 min_caml_truncate:

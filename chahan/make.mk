@@ -38,4 +38,5 @@ test/%.ans: test/%.ml
 test/%.cmp: test/%.res test/%.ans
 	-diff $^ > $@
 # -によりmakeに失敗しても引き続きmakeが行われる
+# diffがあったとき返り値1になるから、エラー吐くのかな
 # mandelbrotで何故か失敗する。中身は正しそうだが

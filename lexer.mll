@@ -73,7 +73,7 @@ rule token = parse
     { COMMA }
 | '_'
     { IDENT(Id.gentmp Type.Unit) }
-| "Array.create" | "Array.make" (* [XX] ad hoc *)
+| "Array.create" | "Array.make" | "create_array" (* [XX] ad hoc *)
     { ARRAY_CREATE }
 | '.'
     { DOT }
@@ -104,3 +104,7 @@ and comment = parse
     { Format.eprintf "warning: unterminated comment@." }
 | _
     { comment lexbuf }
+
+(* ここで組み込まれている関数に関しては、 *)
+(* let not = 1 then print_int not *)
+(* みたいなことはできないので、どうなんだろう *)

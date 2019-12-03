@@ -4,12 +4,12 @@
 (* いや、型情報をtyping.mlではなく、ここで与えれば上手くいくのでは？？ *)
 
 (* float (1) *)
-let rec fequal x y = (x +. 0.0 = y) in
-let rec fless x y = (x +. 0.0 < y) in
+let rec fequal x y = (x +. 0. = y) in    (* +0.0はx,y がfloatだと教えるため。最適化で消したい *)
+let rec fless x y = (x +. 0. < y) in
 
-let rec fispos x = (x > 0.0) in
-let rec fisneg x = (x < 0.0) in
-let rec fiszero x = (x = 0.0) in
+let rec fispos x = (x > 0.) in
+let rec fisneg x = (x < 0.) in
+let rec fiszero x = (x = 0.) in
 
 (* int *)
 (* external (=) : int -> int -> bool = "%equal" *)
@@ -38,12 +38,12 @@ let rec fsqr x = x *. x in
 (* external ( *. ) : float -> float -> float = "%mulfloat" *)
 (* external (/.) : float -> float -> float = "%divfloat" *)
 
-let rec fabs x = if x >= 0.0 then x else -. x in
+let rec fabs x = if x >= 0. then x else -. x in
 let rec fneg x = -. x in
 (* external sqrt : float -> float = "sqrt_float" "sqrt" "float" *)
 let rec floor x = 
   let y = float_of_int (int_of_float x) in
-  if x >= 0.0 then y else if x = y then x else y -. 1.0 in   (* 怪しいかも。x=yは整数であることを意図 *)
+  if x >= 0. then y else if x = y then x else y -. 1.0 in   (* 怪しいかも。x=yは整数であることを意図 *)
 
 (* external int_of_float : float -> int = "%intoffloat" *)
 (* external float_of_int : int -> float = "%floatofint" *)
@@ -72,25 +72,25 @@ let rec cos x =
 						taylor_sin (1.5707963705 -. x)
 				else
 					if x < 2.35619455 then
-						0.0 -. taylor_sin (x -. 1.5707963705)
+						-. taylor_sin (x -. 1.5707963705)
 					else
-						0.0 -. taylor_cos (3.1415927410 -. x)
+						-. taylor_cos (3.1415927410 -. x)
 			else
 				let y = x -. 3.1415927410 in
 					if y < 1.5707963705 then
 						if y < 0.785398185 then
 							(* 0.0 -. taylor_sin y *)
-							0.0 -. taylor_cos y
+							-. taylor_cos y
 						else
 							(* 0.0 -. taylor_cos (1.5707963705 -. y) *)
-							0.0 -. taylor_sin (1.5707963705 -. y)
+							-. taylor_sin (1.5707963705 -. y)
 					else
 						if y < 2.35619455 then
 							taylor_sin (y -. 1.5707963705)
 						else
 							taylor_cos (3.1415927410 -. y)
 	else
-		cos (0.0 -. x)
+		cos (-. x)
 in
 let rec sin x =
     if x >= 0.0 then
@@ -112,16 +112,16 @@ let rec sin x =
                 let y = x -. 3.1415927410 in
                     if y < 1.5707963705 then
                         if y < 0.785398185 then
-                            0.0 -. taylor_sin y
+                            -. taylor_sin y
                         else
-                            0.0 -. taylor_cos (1.5707963705 -. y)
+                            -. taylor_cos (1.5707963705 -. y)
                     else
                         if y < 2.35619455 then
-                            0.0 -. taylor_cos (y -. 1.5707963705)
+                            -. taylor_cos (y -. 1.5707963705)
                         else
-                            0.0 -. taylor_sin (3.1415927410 -. y)
+                            -. taylor_sin (3.1415927410 -. y)
     else
-        0.0 -. sin (0.0 -. x)
+        -. sin (-. x)
 in
 let rec taylor_atan x =
     let x2 = x *. x in
@@ -143,8 +143,8 @@ let rec atan x =
 					(* 0.0 -. (0.78539818 +. taylor_atan ((y -. 1.0) /. (y +. 1.0))) *)
 				(* else *)
 					(* 0.0 -. (1.57079637 -. taylor_atan (1.0 /. y)) *)
-			let y = 0.0 -. x in
-			0.0 -. (atan y)
+			let y = -. x in
+			-. (atan y)
 in 
 (* テスト用 *)
 (* for i = -100000000 to 100000000 do

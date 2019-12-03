@@ -137,10 +137,18 @@ exp: /* (* 一般の式 (caml2html: parser_exp) *) */
     %prec prec_app
     { Array($2, $3) }
 | error
-    { failwith
+    /* { failwith
         (Printf.sprintf "parse error near characters %d-%d"
            (Parsing.symbol_start ())
-           (Parsing.symbol_end ())) }
+           (Parsing.symbol_end ())) } */
+    { failwith (let bol = (Parsing.symbol_start_pos ()).Lexing.pos_bol in
+	            (Printf.sprintf "parse error near line %d charactfers %d-%d"
+	                            ((Parsing.symbol_start_pos ()).Lexing.pos_lnum)
+	                            ((Parsing.symbol_start_pos ()).Lexing.pos_cnum - bol)
+	                            ((Parsing.symbol_end_pos ()).Lexing.pos_cnum - bol))) }
+    /* ファイル入力のみになる? */
+    /* 標準入力からだったら? */
+    /* libmincaml.mlの行数を含むので、要注意 */
 
 fundef:
 | IDENT formal_args EQUAL exp
@@ -171,3 +179,16 @@ pat:
     { $1 @ [addtyp $3] }
 | IDENT COMMA IDENT
     { [addtyp $1; addtyp $3] }
+
+/* 
+# if 3; true then 1 else 0;;
+Warning 10: this expression should have type unit.
+- : int = 1
+# if 3; true; then 1 else 0;;
+Warning 10: this expression should have type unit.
+- : int = 1
+# if true; then 1 else 0;;
+- : int = 1 
+# if (true;); then 1 else 0;;
+- : int = 1
+*/
