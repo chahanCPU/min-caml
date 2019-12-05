@@ -17,6 +17,7 @@ chahan(自作アーキテクチャ), x86, PowerPC, SPARCに対応しています
 	【注】```--recursive```がないと、chahan用のsimulator (https://github.com/chahanCPU/ASM.git) がダウンロードされない
 
     【参考】https://qiita.com/PolarBear/items/861189910f91257127f3
+    <!-- 【参考】http://karoten512.hatenablog.com/entry/2017/11/09/013845 -->
 
 ## 使い方
 

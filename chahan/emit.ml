@@ -92,13 +92,19 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
         (* Printf.fprintf oc "\tlui.s\t%s, 0x%x\t\t# %fの上位16bits\n" x hi d *)
         (Printf.fprintf oc "\tlui\t$at, 0x%x\t\t# %fの上位16bits\n" hi d;
          (* Printf.fprintf oc "\tori\t$at, $at, 0x%x\t\t# %fの下位16bits\n" lo d; *)
-         Printf.fprintf oc "\tsw\t$at, 16(%s)\n" reg_sp;    (* 16ってとりすぎ? 0でも構わないのか。メモリの中身を見たい *)
-         Printf.fprintf oc "\tlw.s\t%s, 16(%s)\n" x reg_sp)
+         (* Printf.fprintf oc "\tsw\t$at, 16(%s)\t\t# why 16?\n" reg_sp;   (* 16ってとりすぎ? 0でも構わないのか。メモリの中身を見たい *) *)
+         (* Printf.fprintf oc "\tlw.s\t%s, 16(%s)\t\t# why 16?\n" x reg_sp *)
+         Printf.fprintf oc "\tsw\t$at, 4($zero)\n";     (* 4じゃなくて0だとバグりました、まだ上も選択肢としてあり *)
+         Printf.fprintf oc "\tlw.s\t%s, 4($zero)\n" x
+         )
       else    (* 無駄が多い *)
         (Printf.fprintf oc "\tlui\t$at, 0x%x\t\t# %fの上位16bits\n" hi d;
          Printf.fprintf oc "\tori\t$at, $at, 0x%x\t\t# %fの下位16bits\n" lo d;    (* ori, addiのどちら *)
-         Printf.fprintf oc "\tsw\t$at, 16(%s)\n" reg_sp;    (* 16ってとりすぎ? 0でも構わないのか。メモリの中身を見たい *)
-         Printf.fprintf oc "\tlw.s\t%s, 16(%s)\n" x reg_sp)
+         (* Printf.fprintf oc "\tsw\t$at, 16(%s)\t\t# why 16?\n" reg_sp;    (* 16ってとりすぎ? 0でも構わないのか。メモリの中身を見たい *) *)
+         (* Printf.fprintf oc "\tlw.s\t%s, 16(%s)\t\t# why 16?\n" x reg_sp *)
+         Printf.fprintf oc "\tsw\t$at, 4($zero)\n";     (* 4じゃなくて0だとバグりました、まだ上も選択肢としてあり *)
+         Printf.fprintf oc "\tlw.s\t%s, 4($zero)\n" x
+         )
         (* Printf.fprintf oc "頑張って実装して\n" *)
 
 (*
@@ -320,6 +326,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tsw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       Printf.fprintf oc "\tlw\t%s, 0(%s)\n" reg_sw reg_cl;
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp ss;
+      (* CallClsでバグる、下の行をよく考えよう *)
       Printf.fprintf oc "\tjal\t%s\n" reg_sw;
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp (-ss);
       Printf.fprintf oc "\tlw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
@@ -431,6 +438,11 @@ let f oc (Prog(fundefs, e)) =
   stackmap := [];
 
   Printf.fprintf oc "min_caml_start:\n";    (* "main"の方が良い? *)
+
+  (* 値は適当に決めて *)
+  Printf.fprintf oc "\tori\t$sp, $zero, 16\n";
+  Printf.fprintf oc "\tlui\t$gp, 1\n";  
+
   g oc (NonTail("$dummy"), e);
   Printf.fprintf oc "\tnoop\n";    (**コア係より末尾にNopが欲しい *)
 
@@ -512,3 +524,7 @@ let f oc (Prog(fundefs, e)) =
   (* Printf.fprintf oc "\trestore\n" *)
 
   (* Printf.fprintf oc "\tnoop\n" *)   (**コア係より末尾にNopが欲しい *)
+
+
+  (* ちゃんとプラス方向にしかメモリが伸びないか確かめてください *)
+  (* $sp, $gp, $zeroの扱いに注意してね *)

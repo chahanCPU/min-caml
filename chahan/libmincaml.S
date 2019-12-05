@@ -41,49 +41,32 @@ min_caml_print_byte:
 # min_caml_prerr_byte:		# 未実装
 # min_caml_prerr_float:		# 未実装
 min_caml_read_int:
-	in	$2		# 動作確認をすること
-	jr	$ra
+	ori	$at, $at, 0
+	in	$2
+	sll	$2, $2, 8
+	in	$at
+	or	$2, $2, $at
+	sll	$2, $2, 8
+	in	$at
+	or	$2, $2, $at
+	sll	$2, $2, 8
+	in	$at
+	or	$2, $2, $at
 min_caml_read_float:
-	in	$at		# 動作確認をすること
-	sw	$at, 16($sp)		# 16?
+	ori	$at, $at, 0
+	in	$2
+	sll	$2, $2, 8
+	in	$at
+	or	$2, $2, $at
+	sll	$2, $2, 8
+	in	$at
+	or	$2, $2, $at
+	sll	$2, $2, 8
+	in	$at
+	or	$2, $2, $at
+	sw	$2, 16($sp)		# 16?
 	lw.s	$f2, 16($sp)		# 16?
 	jr	$ra
-# min_caml_create_array:		# まだできていない
-# 	# mov	%i2, %i4		# 引数は%i2(配列の要素数)と%i3	(SPARC)
-# 	# mov	%i1, %i2		# %i1はヒープポインタ	(SPARC)
-# 	or	$4, $zero, $2
-# 	or	$2, $zero, $gp
-# create_array_loop:
-# 	# tst	%i4
-# 	# bnz	create_array_cont
-# 	bgtz	$4, create_array_cont
-# 	andcc	%i1, 4, %g0
-# 	bz	create_array_exit
-# 	nop
-# 	add	%i1, 4, %i1
-# create_array_exit:
-# 	jr	$ra
-# create_array_cont:
-# 	st	%i3, [%i1]
-# 	dec	%i4
-# 	add	%i1, 4, %i1
-# 	b	create_array_loop
-# 	nop
-# min_caml_create_float_array:		# まだできていない
-# 	mov	%i2, %i3
-# 	mov	%i1, %i2
-# create_float_array_loop:
-# 	tst	%i3
-# 	bnz	create_float_array_cont
-# 	nop
-# 	retl
-# 	nop
-# create_float_array_cont:
-# 	std	%f0, [%i1]
-# 	dec	%i3
-# 	add	%i1, 8, %i1
-# 	b	create_float_array_loop
-# 	nop
 min_caml_create_array:
 	or	$4, $zero, $2
 	or	$2, $zero, $gp
