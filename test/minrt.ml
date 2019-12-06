@@ -2396,6 +2396,7 @@ let rec rt size_x size_y =
 )
 in
 
-let _ = rt 512 512
+(* let _ = rt 512 512 *)
+let _ = rt 128 128
 
 in 0

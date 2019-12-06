@@ -52,6 +52,7 @@ min_caml_read_int:
 	sll	$2, $2, 8
 	in	$at
 	or	$2, $2, $at
+	jr	$ra
 min_caml_read_float:
 	ori	$at, $at, 0
 	in	$2
