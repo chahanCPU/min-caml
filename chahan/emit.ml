@@ -94,7 +94,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tlui\t$0, 0x%x\t\t# %fの下位16bits\n" lo d;
       Printf.fprintf oc "\tsrl\t$0, $0, 16\n";
       Printf.fprintf oc "\tor\t$at, $at, $0\n";
-      Printf.fprintf oc "\tlui\t$0, 0\n";
+      Printf.fprintf oc "\tlui\t$0, 0x0\n";
       Printf.fprintf oc "\tsw\t$at, 4($zero)\n";     (* 4じゃなくて0だとバグりました *)
       Printf.fprintf oc "\tlw.s\t%s, 4($zero)\n" x
 
