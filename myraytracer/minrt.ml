@@ -1,3 +1,96 @@
+(** globals.mlとminrt.mlを組み合わせた **)
+
+(**************** グローバル変数の宣言 ****************)
+
+(* オブジェクトの個数 *)
+let n_objects = create_array 1 0 in
+
+(* オブジェクトのデータを入れるベクトル（最大60個）*)
+let objects = 
+  let dummy = create_array 0 0.0 in
+  create_array 60 (0, 0, 0, 0, dummy, dummy, false, dummy, dummy, dummy, dummy) in
+
+(* Screen の中心座標 *)
+let screen = create_array 3 0.0 in
+(* 視点の座標 *)
+let viewpoint = create_array 3 0.0 in
+(* 光源方向ベクトル (単位ベクトル) *)
+let light = create_array 3 0.0 in
+(* 鏡面ハイライト強度 (標準=255) *)
+let beam = create_array 1 255.0 in
+(* AND ネットワークを保持 *)
+let and_net = create_array 50 (create_array 1 (-1)) in
+(* OR ネットワークを保持 *)
+let or_net = create_array 1 (create_array 1 (and_net.(0))) in
+
+(* 以下、交差判定ルーチンの返り値格納用 *)
+(* solver の交点 の t の値 *)
+let solver_dist = create_array 1 0.0 in
+(* 交点の直方体表面での方向 *)
+let intsec_rectside = create_array 1 0 in
+(* 発見した交点の最小の t *)
+let tmin = create_array 1 (1000000000.0) in
+(* 交点の座標 *)
+let intersection_point = create_array 3 0.0 in
+(* 衝突したオブジェクト番号 *)
+let intersected_object_id = create_array 1 0 in
+(* 法線ベクトル *)
+let nvector = create_array 3 0.0 in
+(* 交点の色 *)
+let texture_color = create_array 3 0.0 in
+
+(* 計算中の間接受光強度を保持 *)
+let diffuse_ray = create_array 3 0.0 in
+(* スクリーン上の点の明るさ *)
+let rgb = create_array 3 0.0 in
+
+(* 画像サイズ *)
+let image_size = create_array 2 0 in
+(* 画像の中心 = 画像サイズの半分 *)
+let image_center = create_array 2 0 in
+(* 3次元上のピクセル間隔 *)
+let scan_pitch = create_array 1 0.0 in
+
+(* judge_intersectionに与える光線始点 *)
+let startp = create_array 3 0.0 in
+(* judge_intersection_fastに与える光線始点 *)
+let startp_fast = create_array 3 0.0 in
+
+(* 画面上のx,y,z軸の3次元空間上の方向 *)
+let screenx_dir = create_array 3 0.0 in
+let screeny_dir = create_array 3 0.0 in
+let screenz_dir = create_array 3 0.0 in
+
+(* 直接光追跡で使う光方向ベクトル *)
+let ptrace_dirvec  = create_array 3 0.0 in
+
+(* 間接光サンプリングに使う方向ベクトル *)
+let dirvecs = 
+  let dummyf = create_array 0 0.0 in
+  let dummyff = create_array 0 dummyf in
+  let dummy_vs = create_array 0 (dummyf, dummyff) in
+  create_array 5 dummy_vs in
+
+(* 光源光の前処理済み方向ベクトル *)
+let light_dirvec =
+  let dummyf2 = create_array 0 0.0 in
+  let v3 = create_array 3 0.0 in
+  let consts = create_array 60 dummyf2 in
+  (v3, consts) in
+
+(* 鏡平面の反射情報 *)
+let reflections =
+  let dummyf3 = create_array 0 0.0 in
+  let dummyff3 = create_array 0 dummyf3 in
+  let dummydv = (dummyf3, dummyff3) in
+  create_array 180 (0, dummydv, 0.0) in
+
+(* reflectionsの有効な要素数 *) 
+let n_reflections = create_array 1 0 in
+
+();
+
+
 (****************************************************************)
 (*                                                              *)
 (* Ray Tracing Program for (Mini) Objective Caml                *)
@@ -11,8 +104,6 @@
 
 (*NOMINCAML open MiniMLRuntime;;*)
 (*NOMINCAML open Globals;;*)
-(*MINCAML*) let true = 1 in
-(*MINCAML*) let false = 0 in
 (*MINCAML*) let rec xor x y = if x then not y else y in
 
 (******************************************************************************
@@ -1386,7 +1477,7 @@ let rec solve_each_element_fast iand_ofs and_group dirvec =
 		tmin.(0) <- t;
 		vecset intersection_point q0 q1 q2;
 		intersected_object_id.(0) <- iobj;
-		intsec_rectside.(0) <- t0;
+		intsec_rectside.(0) <- t0
 	       )
 	    else ()
 	   )
@@ -1615,7 +1706,7 @@ let rec trace_reflections index diffuse hilight_scale dirvec =
 
     (*反射光を逆にたどり、実際にその鏡面に当たれば、反射光が届く可能性有り *)
     if judge_intersection_fast dvec then
-      let surface_id = intersected_object_id.(0) * 4 + intsec_rectside.(0) in
+      let surface_id = intersected_object_id.(0) + intersected_object_id.(0) + intersected_object_id.(0) + intersected_object_id.(0) + intsec_rectside.(0) in
       if surface_id = r_surface_id rinfo then
 	(* 鏡面との衝突点が光源の影になっていなければ反射光は届く *)
         if not (shadow_check_one_or_matrix 0 or_net.(0)) then
@@ -1651,7 +1742,7 @@ let rec trace_ray nref energy dirvec pixel dist =
       utexture obj intersection_point; (*テクスチャを計算 *)
 
       (* pixel tupleに情報を格納する *)
-      surface_ids.(nref) <- obj_id * 4 + intsec_rectside.(0);
+      surface_ids.(nref) <- obj_id + obj_id + obj_id + obj_id + intsec_rectside.(0);
       let intersection_points = p_intersection_points pixel in
       veccpy intersection_points.(nref) intersection_point;
 
@@ -1665,7 +1756,7 @@ let rec trace_ray nref energy dirvec pixel dist =
 	veccpy energya.(nref) texture_color;
 	vecscale energya.(nref) ((1.0 /. 256.0) *. diffuse);
 	let nvectors = p_nvectors pixel in
-	veccpy nvectors.(nref) nvector;
+	veccpy nvectors.(nref) nvector
        );
 
       let w = (-2.0) *. veciprod dirvec nvector in
@@ -1695,7 +1786,7 @@ let rec trace_ray nref energy dirvec pixel dist =
 	if m_surface = 2 then (   (* 完全鏡面反射 *)
 	  let energy2 = energy *. (1.0 -. o_diffuse obj) in
 	  trace_ray (nref+1) energy2 dirvec pixel (dist +. tmin.(0))
-	 ) else ();
+	 ) else ()
 
        ) else ()
 
@@ -2054,7 +2145,7 @@ let rec scan_line y prev cur next group_id = (
       pretrace_line next (y + 1) group_id
     else ();
     scan_pixel 0 y prev cur next;
-    scan_line (y + 1) cur next prev (add_mod5 group_id 2);
+    scan_line (y + 1) cur next prev (add_mod5 group_id 2)
    ) else ()
 )
 in
@@ -2234,7 +2325,7 @@ in
 
 (* 直方体の各面について情報を追加する *)
 let rec setup_rect_reflection obj_id obj =
-  let sid = obj_id * 4 in
+  let sid = obj_id + obj_id + obj_id + obj_id in
   let nr = n_reflections.(0) in
   let br = 1.0 -. o_diffuse obj in
   let n0 = fneg light.(0) in
@@ -2248,7 +2339,7 @@ in
 
 (* 平面について情報を追加する *)
 let rec setup_surface_reflection obj_id obj =
-  let sid = obj_id * 4 + 1 in
+  let sid = obj_id + obj_id + obj_id + obj_id + 1 in
   let nr = n_reflections.(0) in
   let br = 1.0 -. o_diffuse obj in
   let p = veciprod light (o_param_abc obj) in
@@ -2288,8 +2379,8 @@ let rec rt size_x size_y =
 (
  image_size.(0) <- size_x;
  image_size.(1) <- size_y;
- image_center.(0) <- size_x / 2;
- image_center.(1) <- size_y / 2;
+ image_center.(0) <- int_of_float (float_of_int size_x /. 2.0);
+ image_center.(1) <- int_of_float (float_of_int size_y /. 2.0);
  scan_pitch.(0) <- 128.0 /. float_of_int size_x;
  let prev = create_pixelline () in
  let cur  = create_pixelline () in
@@ -2305,6 +2396,7 @@ let rec rt size_x size_y =
 )
 in
 
-let _ = rt 512 512
+(* let _ = rt 512 512 *)
+let _ = rt 128 128
 
 in 0
