@@ -1,5 +1,8 @@
 (* translation into SPARC assembly with infinite number of virtual registers *)
 
+(* align 4 に直さないとだめ *)
+(* もともと倍精度になってるから、色々修正が必要 *)
+
 open Asm
 
 let classify xts ini addf addi =
@@ -25,7 +28,8 @@ let expand xts ini addf addi =
     ini
     (fun (offset, acc) x ->
       let offset = align offset in
-      (offset + 8, addf x offset acc))
+      (* (offset + 8, addf x offset acc)) *)
+      (offset + 4, addf x offset acc))
     (fun (offset, acc) x t ->
       (offset + 4, addi x t offset acc))
 
@@ -121,7 +125,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       (match M.find x env with
       | Type.Array(Type.Unit) -> Ans(Nop)
       | Type.Array(Type.Float) ->
-          Let((offset, Type.Int), SLL(y, C(3)),
+          (* Let((offset, Type.Int), SLL(y, C(3)), *)
+          Let((offset, Type.Int), SLL(y, C(2)),
               Ans(LdDF(x, V(offset))))
       | Type.Array(_) ->
           Let((offset, Type.Int), SLL(y, C(2)),
@@ -132,7 +137,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       (match M.find x env with
       | Type.Array(Type.Unit) -> Ans(Nop)
       | Type.Array(Type.Float) ->
-          Let((offset, Type.Int), SLL(y, C(3)),
+          (* Let((offset, Type.Int), SLL(y, C(3)), *)
+          Let((offset, Type.Int), SLL(y, C(2)),
               Ans(StDF(z, x, V(offset))))
       | Type.Array(_) ->
           Let((offset, Type.Int), SLL(y, C(2)),

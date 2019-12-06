@@ -69,6 +69,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       let hi = (i land 0xFFFF0000) lsr 16 in
       let lo = i land 0xFFFF in
       Printf.fprintf oc "\tlui\t%s, 0x%x\t\t# %dの上位16bits\n" x hi i;
+      (* 要注意：下は正しくないです。loの最上位ビットが1のとき、レジスタの上位16ビットがすべて1になってしまうので。 *)
       if lo <> 0 then Printf.fprintf oc "\tori\t%s, %s, 0x%x\t\t# %dの下位16bits\n" x x lo i  (* oriかaddi *)
   | NonTail(x), Set(i) -> failwith("数が大きすぎ")
   (* 即値を取る命令について、上のような感じで確認すること！！！！！！！！！！！！ *)
@@ -87,18 +88,33 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       let i = Int32.to_int i in
       let hi = (i land 0xFFFF0000) lsr 16 in
       let lo = i land 0xFFFF in
+      
+      (* 臨時のFSetD *)
+      Printf.fprintf oc "\tlui\t$at, 0x%x\t\t# %fの上位16bits\n" hi d;
+      Printf.fprintf oc "\tlui\t$0, 0x%x\t\t# %fの下位16bits\n" lo d;
+      Printf.fprintf oc "\tsrl\t$0, $0, 16\n";
+      Printf.fprintf oc "\tor\t$at, $at, $0\n";
+      Printf.fprintf oc "\tlui\t$0, 0x0\n";
+      Printf.fprintf oc "\tsw\t$at, 4($zero)\n";     (* 4じゃなくて0だとバグりました *)
+      Printf.fprintf oc "\tlw.s\t%s, 4($zero)\n" x
 
-      if lo = 0 then    (* 無駄が多い *)
+      (* if lo = 0 then    (* 無駄が多い *)
         (* Printf.fprintf oc "\tlui.s\t%s, 0x%x\t\t# %fの上位16bits\n" x hi d *)
         (Printf.fprintf oc "\tlui\t$at, 0x%x\t\t# %fの上位16bits\n" hi d;
          (* Printf.fprintf oc "\tori\t$at, $at, 0x%x\t\t# %fの下位16bits\n" lo d; *)
-         Printf.fprintf oc "\tsw\t$at, 16(%s)\n" reg_sp;    (* 16ってとりすぎ? 0でも構わないのか。メモリの中身を見たい *)
-         Printf.fprintf oc "\tlw.s\t%s, 16(%s)\n" x reg_sp)
+         (* Printf.fprintf oc "\tsw\t$at, 16(%s)\t\t# why 16?\n" reg_sp;   (* 16ってとりすぎ? 0でも構わないのか。メモリの中身を見たい *) *)
+         (* Printf.fprintf oc "\tlw.s\t%s, 16(%s)\t\t# why 16?\n" x reg_sp *)
+         Printf.fprintf oc "\tsw\t$at, 4($zero)\n";     (* 4じゃなくて0だとバグりました、まだ上も選択肢としてあり *)
+         Printf.fprintf oc "\tlw.s\t%s, 4($zero)\n" x
+         )
       else    (* 無駄が多い *)
         (Printf.fprintf oc "\tlui\t$at, 0x%x\t\t# %fの上位16bits\n" hi d;
          Printf.fprintf oc "\tori\t$at, $at, 0x%x\t\t# %fの下位16bits\n" lo d;    (* ori, addiのどちら *)
-         Printf.fprintf oc "\tsw\t$at, 16(%s)\n" reg_sp;    (* 16ってとりすぎ? 0でも構わないのか。メモリの中身を見たい *)
-         Printf.fprintf oc "\tlw.s\t%s, 16(%s)\n" x reg_sp)
+         (* Printf.fprintf oc "\tsw\t$at, 16(%s)\t\t# why 16?\n" reg_sp;    (* 16ってとりすぎ? 0でも構わないのか。メモリの中身を見たい *) *)
+         (* Printf.fprintf oc "\tlw.s\t%s, 16(%s)\t\t# why 16?\n" x reg_sp *)
+         Printf.fprintf oc "\tsw\t$at, 4($zero)\n";     (* 4じゃなくて0だとバグりました、まだ上も選択肢としてあり *)
+         Printf.fprintf oc "\tlw.s\t%s, 4($zero)\n" x
+         ) *)
         (* Printf.fprintf oc "頑張って実装して\n" *)
 
 (*
@@ -108,8 +124,13 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
 *)
   (* 要注意 *)
   (* SetLは浮動小数点即値以外にもClosure.ExtArray(Id.L(x))で使われるので、区別のために新しい命令FSetDを追加しました *)
-  | NonTail(x), SetL(Id.L(y)) -> (* Printf.fprintf oc "\tor\t%s, $zero, %s\t\t# 実機で引数にラベルが取れるか注意\n" x y *)
-      failwith("外部配列ExtArrayはchahanで対応してません。ソースコードで配列" ^ y ^ "をしてしてください") 
+  | NonTail(x), SetL(Id.L(y)) -> 
+      (* アセンブラ担当と話して、擬似命令を追加 *)
+      Printf.fprintf oc "\tli\t%s, %s\n" x y
+      (* Printf.fprintf oc "\tor\t%s, $zero, %s\t\t# 実機で引数にラベルが取れるか注意\n" x y *)
+      (* failwith("外部配列ExtArrayはchahanで対応してません。ソースコードで配列" ^ y ^ "をしてしてください")  *)
+      (* 関数呼び出しでもこれを用いることが判明。至急要修正 *)
+    (* もともと外部配列だけだと思っていたが、関数のラベル(関数が返り値になることもあるじゃん)をスタックに保存したいときに使う *)
     (* そもそもラベル32bitだからだめじゃん、外部配列を使わないようにお願いします(raytracerで普通使ってるけど) *)
   | NonTail(x), Mov(y) when x = y -> ()
   | NonTail(x), Mov(y) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y
@@ -315,7 +336,15 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tsw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       Printf.fprintf oc "\tlw\t%s, 0(%s)\n" reg_sw reg_cl;
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp ss;
-      Printf.fprintf oc "\tjal\t%s\n" reg_sw;
+      (* CallClsでバグる、下の行をよく考えよう *)
+      (* Printf.fprintf oc "\tjral\t%s\n" reg_sw; *)
+
+      let tmp_label = Id.genid "tmp" in
+      Printf.fprintf oc "\tli\t%s, %s\n" reg_ra tmp_label;
+      (* Printf.fprintf oc "\taddi\t%s, %s, 12\n" reg_ra reg_ra; *)
+      Printf.fprintf oc "\tjr\t%s\n" reg_sw;
+      Printf.fprintf oc "%s:\n" tmp_label;
+
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp (-ss);
       Printf.fprintf oc "\tlw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       if List.mem a allregs && a <> regs.(0) then
@@ -426,13 +455,27 @@ let f oc (Prog(fundefs, e)) =
   stackmap := [];
 
   Printf.fprintf oc "min_caml_start:\n";    (* "main"の方が良い? *)
-  g oc (NonTail("$dummy"), e);
+
+  (* 値は適当に決めて → simulatorが決めてくれそう *)
+  (* Printf.fprintf oc "\tori\t$sp, $zero, 16\n"; *)
+  (* Printf.fprintf oc "\tlui\t$gp, 1\n";   *)
+
+  (* g oc (NonTail("$dummy"), e); *)
+  g oc (NonTail("$2"), e);    (* MLの最後がintとかなら、ここに値が入る *)
+
   Printf.fprintf oc "\tnoop\n";    (**コア係より末尾にNopが欲しい *)
 
   List.iter (fun fundef -> h oc fundef) fundefs;
 
   (* Printf.fprintf oc ".section \".text\"\n"; *)
 
+  let lib = open_in "libmincaml.S" in
+  try
+    while true do Printf.fprintf oc "%s\n" (input_line lib) done
+  with End_of_file -> ();
+  close_in lib;
+
+(*
   (* libに書くべし .sじゃなくて.mlの方が最適化できそう *)
   (* outの付け足し  後でインライン化してね *)
   (* Printf.fprintf oc "min_caml_print_int:\n"; *)
@@ -477,7 +520,7 @@ let f oc (Prog(fundefs, e)) =
   Printf.fprintf oc "min_caml_float_of_int:\n";
   Printf.fprintf oc "\titof\t$f2, $2\n";
   Printf.fprintf oc "\tjr\t%s\n" reg_ra;
-
+*)
   (* List.iter (fun fundef -> h oc fundef) fundefs; *)
 
   (* Printf.fprintf oc ".global min_caml_start\n"; *)
@@ -500,3 +543,7 @@ let f oc (Prog(fundefs, e)) =
   (* Printf.fprintf oc "\trestore\n" *)
 
   (* Printf.fprintf oc "\tnoop\n" *)   (**コア係より末尾にNopが欲しい *)
+
+
+  (* ちゃんとプラス方向にしかメモリが伸びないか確かめてください *)
+  (* $sp, $gp, $zeroの扱いに注意してね *)
