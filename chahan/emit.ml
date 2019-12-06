@@ -328,6 +328,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp ss;
       (* CallClsでバグる、下の行をよく考えよう *)
       Printf.fprintf oc "\tjal\t%s\n" reg_sw;
+      (* Printf.fprintf oc "\taddi\t%s, %s, 8\n" reg_ra reg_ra; *)
+      (* Printf.fprintf oc "\tjr\t%s\n" reg_sw; *)
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp (-ss);
       Printf.fprintf oc "\tlw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       if List.mem a allregs && a <> regs.(0) then
@@ -439,9 +441,9 @@ let f oc (Prog(fundefs, e)) =
 
   Printf.fprintf oc "min_caml_start:\n";    (* "main"の方が良い? *)
 
-  (* 値は適当に決めて *)
-  Printf.fprintf oc "\tori\t$sp, $zero, 16\n";
-  Printf.fprintf oc "\tlui\t$gp, 1\n";  
+  (* 値は適当に決めて → simulatorが決めてくれそう *)
+  (* Printf.fprintf oc "\tori\t$sp, $zero, 16\n"; *)
+  (* Printf.fprintf oc "\tlui\t$gp, 1\n";   *)
 
   g oc (NonTail("$dummy"), e);
   Printf.fprintf oc "\tnoop\n";    (**コア係より末尾にNopが欲しい *)
