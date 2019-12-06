@@ -104,3 +104,6 @@ min_caml_float_of_int:
 # min_caml_cos:		# libmincaml.mlを参照
 # min_caml_sin:		# libmincaml.mlを参照
 # min_caml_atan:		# libmincaml.mlを参照
+min_caml_print_char:		# print_byte, raytracer専用?
+	out	$2
+	jr	$ra

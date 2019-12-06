@@ -87,7 +87,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       let i = Int32.to_int i in
       let hi = (i land 0xFFFF0000) lsr 16 in
       let lo = i land 0xFFFF in
-
+      
       if lo = 0 then    (* 無駄が多い *)
         (* Printf.fprintf oc "\tlui.s\t%s, 0x%x\t\t# %fの上位16bits\n" x hi d *)
         (Printf.fprintf oc "\tlui\t$at, 0x%x\t\t# %fの上位16bits\n" hi d;
@@ -327,7 +327,14 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tlw\t%s, 0(%s)\n" reg_sw reg_cl;
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp ss;
       (* CallClsでバグる、下の行をよく考えよう *)
-      Printf.fprintf oc "\tjral\t%s\n" reg_sw;
+      (* Printf.fprintf oc "\tjral\t%s\n" reg_sw; *)
+
+      let tmp_label = Id.genid "tmp" in
+      Printf.fprintf oc "\tli\t%s, %s\n" reg_ra tmp_label;
+      (* Printf.fprintf oc "\taddi\t%s, %s, 12\n" reg_ra reg_ra; *)
+      Printf.fprintf oc "\tjr\t%s\n" reg_sw;
+      Printf.fprintf oc "%s:\n" tmp_label;
+
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp (-ss);
       Printf.fprintf oc "\tlw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       if List.mem a allregs && a <> regs.(0) then
@@ -443,7 +450,9 @@ let f oc (Prog(fundefs, e)) =
   (* Printf.fprintf oc "\tori\t$sp, $zero, 16\n"; *)
   (* Printf.fprintf oc "\tlui\t$gp, 1\n";   *)
 
-  g oc (NonTail("$dummy"), e);
+  (* g oc (NonTail("$dummy"), e); *)
+  g oc (NonTail("$2"), e);    (* MLの最後がintとかなら、ここに値が入る *)
+
   Printf.fprintf oc "\tnoop\n";    (**コア係より末尾にNopが欲しい *)
 
   List.iter (fun fundef -> h oc fundef) fundefs;
