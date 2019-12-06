@@ -69,6 +69,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       let hi = (i land 0xFFFF0000) lsr 16 in
       let lo = i land 0xFFFF in
       Printf.fprintf oc "\tlui\t%s, 0x%x\t\t# %dの上位16bits\n" x hi i;
+      (* 要注意：下は正しくないです。loの最上位ビットが1のとき、レジスタの上位16ビットがすべて1になってしまうので。 *)
       if lo <> 0 then Printf.fprintf oc "\tori\t%s, %s, 0x%x\t\t# %dの下位16bits\n" x x lo i  (* oriかaddi *)
   | NonTail(x), Set(i) -> failwith("数が大きすぎ")
   (* 即値を取る命令について、上のような感じで確認すること！！！！！！！！！！！！ *)
@@ -88,7 +89,16 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       let hi = (i land 0xFFFF0000) lsr 16 in
       let lo = i land 0xFFFF in
       
-      if lo = 0 then    (* 無駄が多い *)
+      (* 臨時のFSetD *)
+      Printf.fprintf oc "\tlui\t$at, 0x%x\t\t# %fの上位16bits\n" hi d;
+      Printf.fprintf oc "\tlui\t$0, 0x%x\t\t# %fの下位16bits\n" lo d;
+      Printf.fprintf oc "\tsrl\t$0, $0, 16\n";
+      Printf.fprintf oc "\tor\t$at, $at, $0\n";
+      Printf.fprintf oc "\tlui\t$0, 0\n";
+      Printf.fprintf oc "\tsw\t$at, 4($zero)\n";     (* 4じゃなくて0だとバグりました *)
+      Printf.fprintf oc "\tlw.s\t%s, 4($zero)\n" x
+
+      (* if lo = 0 then    (* 無駄が多い *)
         (* Printf.fprintf oc "\tlui.s\t%s, 0x%x\t\t# %fの上位16bits\n" x hi d *)
         (Printf.fprintf oc "\tlui\t$at, 0x%x\t\t# %fの上位16bits\n" hi d;
          (* Printf.fprintf oc "\tori\t$at, $at, 0x%x\t\t# %fの下位16bits\n" lo d; *)
@@ -104,7 +114,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
          (* Printf.fprintf oc "\tlw.s\t%s, 16(%s)\t\t# why 16?\n" x reg_sp *)
          Printf.fprintf oc "\tsw\t$at, 4($zero)\n";     (* 4じゃなくて0だとバグりました、まだ上も選択肢としてあり *)
          Printf.fprintf oc "\tlw.s\t%s, 4($zero)\n" x
-         )
+         ) *)
         (* Printf.fprintf oc "頑張って実装して\n" *)
 
 (*
