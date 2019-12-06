@@ -52,7 +52,9 @@ chahan(自作アーキテクチャ), x86, PowerPC, SPARCに対応しています
         - ```TESTS=hoge```を省略した場合は、MakefileのTESTS=…に書かれたプログラムを実行する
         - 複数のファイルを指定したいときは、```TESTS="hoge1 hoge2"```とする
 
-<!-- 5. If you like, try the ray tracer ※編集中 -->
+5. If you like, try the ray tracer <!-- ※編集中 -->
+
+   ```cd myraytracer/ ; make SLDS=contest```
 
 
 ## 原作者注
