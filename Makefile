@@ -9,7 +9,8 @@ CC = gcc
 CFLAGS = -g -O2 -Wall
 OCAMLLDFLAGS=-warn-error -31
 
-default: debug-code top $(RESULT) do_test
+# default: debug-code top $(RESULT) do_test
+default: debug-code top $(RESULT)
 $(RESULT): debug-code top
 ## [自分（住井）用の注]
 ## ・OCamlMakefileや古いGNU Makeのバグ(?)で上のような定義が必要(??)
@@ -28,6 +29,7 @@ closure.mli closure.ml asm.mli asm.ml virtual.mli virtual.ml \
 simm.mli simm.ml regAlloc.mli regAlloc.ml emit.mli emit.ml \
  \
 outputClosure.mli outputClosure.ml outputAsm.mli outputAsm.ml \
+catLib.mli catLib.ml \
 main.mli main.ml
 
 # ↓テストプログラムが増えたら、これも増やす
