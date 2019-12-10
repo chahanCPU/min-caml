@@ -41,7 +41,7 @@ min_caml_print_byte:
 # min_caml_prerr_byte:		# 未実装
 # min_caml_prerr_float:		# 未実装
 min_caml_read_int:
-	ori	$at, $at, 0
+	# ori	$at, $at, 0    # inは上位24ビットをゼロ埋め
 	in	$2
 	sll	$2, $2, 8
 	in	$at
@@ -54,7 +54,7 @@ min_caml_read_int:
 	or	$2, $2, $at
 	jr	$ra
 min_caml_read_float:
-	ori	$at, $at, 0
+	# ori	$at, $at, 0    # inは上位24ビットをゼロ埋め
 	in	$2
 	sll	$2, $2, 8
 	in	$at
