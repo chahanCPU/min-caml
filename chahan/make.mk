@@ -8,13 +8,15 @@ do_test: $(TESTS:%=test/%.cmp)
 TRASH = $(TESTS:%=test/%.txt) $(TESTS:%=test/%.s) $(TESTS:%=test/%.bin) $(TESTS:%=test/%.res) $(TESTS:%=test/%.ans) $(TESTS:%=test/%.cmp)
 
 # test/%.txt test/%.s: $(RESULT) test/%.ml
+# test/%.s: $(RESULT) libmincaml.S libmincaml.ml test/%.ml
+# 	@cp test/$*.ml .tmp0.ml
+# 	@cat libmincaml.ml test/$*.ml > .tmp.ml
+# 	@cp .tmp.ml test/$*.ml
+# 	./$(RESULT) test/$*
+# 	@cp .tmp0.ml test/$*.ml
+# 	@rm -f .tmp0.ml .tmp.ml
 test/%.s: $(RESULT) libmincaml.S libmincaml.ml test/%.ml
-	@cp test/$*.ml .tmp0.ml
-	@cat libmincaml.ml test/$*.ml > .tmp.ml
-	@cp .tmp.ml test/$*.ml
 	./$(RESULT) test/$*
-	@cp .tmp0.ml test/$*.ml
-	@rm -f .tmp0.ml .tmp.ml
 # sed -i '1r libmincaml.ml' test/$*.ml
 # cp libmincaml.ml temp.ml
 # $(shell cat libmincaml.S test)
@@ -28,7 +30,8 @@ test/%.res: test/%.s
 	make -C simulator TESTS=../$<
 	@rm -f $(*:%=test/%.s.binary)
 	@mv $(*:%=test/%.s.bintext) $(*:%=test/%.bin)
-	@mv $(*:%=test/%.s.res) $(*:%=test/%.res)
+	@mv $(*:%=test/%.s.ppm) $(*:%=test/%.res)
+# @mv $(*:%=test/%.s.res) $(*:%=test/%.res)
 # simulatorの拡張子を書き直したい
 # -によりmakeに失敗しても引き続きmakeが行われる
 # @により標準出力に表示されない
