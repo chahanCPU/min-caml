@@ -1,4 +1,4 @@
-(* translation into SPARC assembly with infinite number of virtual registers *)
+(* translation into chahan assembly with infinite number of virtual registers *)
 
 (* align 4 に直さないとだめ *)
 (* もともと倍精度になってるから、色々修正が必要 *)
@@ -51,6 +51,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
   | Closure.Neg(x) -> Ans(Neg(x))
   | Closure.Add(x, y) -> Ans(Add(x, V(y)))
   | Closure.Sub(x, y) -> Ans(Sub(x, V(y)))
+  | Closure.Mul(x, y) -> Ans(Mul(x, y))
+  | Closure.Div(x, y) -> Ans(Div(x, y))
   | Closure.FNeg(x) -> Ans(FNegD(x))
   | Closure.FAdd(x, y) -> Ans(FAddD(x, y))
   | Closure.FSub(x, y) -> Ans(FSubD(x, y))

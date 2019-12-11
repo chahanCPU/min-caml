@@ -38,30 +38,27 @@ let lexbuf debugchan outchan l lib = (* バッファをコンパイルしてチ�
 
 let string s = (* 文字列をコンパイルして標準出力に表示する (caml2html: main_string) *)
   let libchan = open_in "libmincaml.ml" in
-  try
-    lexbuf stdout stdout (Lexing.from_string s) (Lexing.from_channel libchan);
-    close_in libchan
-  with e ->
-    (Printf.fprintf stdout "%s\n" (Printexc.to_string e);    (* debugchanで良いの? *)
-     close_in libchan)
+  (try
+     lexbuf stderr stdout (Lexing.from_string s) (Lexing.from_channel libchan)
+   with
+     | Failure s -> Printf.fprintf stderr "%s\n" s
+     | e -> Printf.fprintf stderr "%s\n" (Printexc.to_string e));
+  close_in libchan
 
 let file f = (* ファイルをコンパイルしてファイルに出力する (caml2html: main_file) *)
   let inchan = open_in (f ^ ".ml") in
   let libchan = open_in "libmincaml.ml" in
   let debugchan = open_out (f ^ ".txt") in    (* 本当に.txtで良いの? *)
   let outchan = open_out (f ^ ".s") in
-  try
-    lexbuf debugchan outchan (Lexing.from_channel inchan) (Lexing.from_channel libchan);    (* debugchanで良いの? *)
-    close_in inchan;
-    close_in libchan;
-    close_out debugchan;
-    close_out outchan
-  with e -> 
-    (Printf.fprintf debugchan "%s\n" (Printexc.to_string e);
-     close_in inchan; 
-     close_in libchan; 
-     close_out debugchan; 
-     close_out outchan)
+  (try
+     lexbuf debugchan outchan (Lexing.from_channel inchan) (Lexing.from_channel libchan)
+   with
+     | Failure s -> Printf.fprintf debugchan "%s\n" s    (* debugchanで良いの? *)
+     | e -> Printf.fprintf debugchan "%s\n" (Printexc.to_string e));    (* debugchanで良いの? *)
+  close_in inchan; 
+  close_in libchan; 
+  close_out debugchan; 
+  close_out outchan
 
 let () = (* ここからコンパイラの実行が開始される (caml2html: main_entry) *)
   let files = ref [] in
