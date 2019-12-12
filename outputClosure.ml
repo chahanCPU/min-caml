@@ -69,6 +69,8 @@ and output_t oc x =
   | Neg x -> op1 "Neg" x
   | Add (x,y) -> op2 "Add" x y
   | Sub (x,y) -> op2 "Sub" x y
+  | Mul (x,y) -> op2 "Mul" x y
+  | Div (x,y) -> op2 "Div" x y
   | FNeg x -> op1 "FNeg" x
   | FAdd (x,y) -> op2 "FAdd" x y
   | FSub (x,y) -> op2 "FSub" x y

@@ -116,7 +116,15 @@ and output_exp oc exp =
   | Neg x -> op1 "Neg" x
   | Add (x,y) -> op2' "Add" x y
   | Sub (x,y) -> op2' "Sub" x y
+  | Mul (x,y) -> op2 "Mul" x y
+  | Div (x,y) -> op2 "Div" x y
   | SLL (x,y) -> op2' "SLL" x y
+  | SRA (x,y) ->
+      print_string "SRA ";
+      print_id x;
+      print_string " ";
+      print_int y;
+      print_string "\n"
   | Ld (x,y) -> op2' "Ld" x y
   | St (x,y,z) -> op3' "St" x y z
   | FMovD x -> op1 "FMovD" x

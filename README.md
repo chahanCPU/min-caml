@@ -25,18 +25,24 @@ chahan(自作アーキテクチャ), x86, PowerPC, SPARCに対応しています
 
 2. Execute ```./to_chahan``` for chahan
 
-    (or ```./to_x86``` for x86, ```./to_ppc``` for PowerPC, ```./to_sparc``` for SPARC)
+    or ```./to_x86``` for x86, ```./to_ppc``` for PowerPC, ```./to_sparc``` for SPARC
 
-3. ディレクトリtestの下に、コンパイルしたいMinCamlのプログラムhoge.mlをおく
+3. Build the compiler (```make```) 
 
-4. ```make assembly TESTS=hoge``` もしくは ```make do_test TESTS=hoge``` を実行
+4. You can compile hoge.ml by the following code:
 
-    - ```make assembly TESTS=hoge``` により、ディレクトリtestの下に以下のファイルが生成される
+    ```./min-caml hoge```
+
+5. (4.に替えて)
+    サブディレクトリtest/の下にhoge.mlをおき、
+    ```make assembly TESTS=hoge``` もしくは ```make do_test TESTS=hoge``` を実行してもよい
+
+    - ```make assembly TESTS=hoge``` により、サブディレクトリtest/の下に以下のファイルが生成される
 
         - hoge.txt : コンパイルの中間結果
         - hoge.s : hoge.mlをMinCamlでコンパイルしたアセンブリ
 
-    - ```make do_test TESTS=hoge``` により、ディレクトリtestの下に上記のファイルとともに以下のファイルが生成される
+    - ```make do_test TESTS=hoge``` により、サブディレクトリtest/の下に上記のファイルとともに以下のファイルが生成される
 
         <!-- 今は無理やりコマンドで名前変えてます。simulatorで変えたいが -->
         <!-- x86は実行ファイルhogeも -->
@@ -48,13 +54,15 @@ chahan(自作アーキテクチャ), x86, PowerPC, SPARCに対応しています
 
     - ```make```のオプションについて
 
-        - ```assembly```も```do_test```も指定しなかった場合は、後者が実行される
-        - ```TESTS=hoge```を省略した場合は、MakefileのTESTS=…に書かれたプログラムを実行する
+        <!-- - ```assembly```も```do_test```も指定しなかった場合は、後者が実行される -->
+        - ```TESTS=hoge```を省略した場合は、MakefileのTESTS=…に書かれたプログラムを実行する <!-- この仕様を変更しそう -->
         - 複数のファイルを指定したいときは、```TESTS="hoge1 hoge2"```とする
 
-5. If you like, try the ray tracer <!-- ※編集中 -->
+<!-- 編集中
+6. If you like, try the ray tracer
 
    ```cd myraytracer/ ; make SLDS=contest```
+-->
 
 
 ## 原作者注
