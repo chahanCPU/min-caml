@@ -38,7 +38,8 @@ let rec fsqr x = x *. x in
 (* external ( *. ) : float -> float -> float = "%mulfloat" *)
 (* external (/.) : float -> float -> float = "%divfloat" *)
 
-let rec fabs x = if x >= 0. then x else -. x in
+(* let rec fabs x = if x >= 0. then x else -. x in *)
+let rec fabs x = abs_float x in  (* これはglobal.mlに書くべき???? *)
 let rec fneg x = -. x in
 (* external sqrt : float -> float = "sqrt_float" "sqrt" "float" *)
 let rec floor x = 

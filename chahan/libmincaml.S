@@ -91,9 +91,9 @@ create_float_array_loop:
 create_float_array_exit:
 	jr	$ra
 # min_caml_abs_float:		# libmincaml.mlを参照
-min_caml_sqrt:
-	sqrt.s	$f2, $f2
-	jr	$ra
+# min_caml_sqrt:
+# 	sqrt.s	$f2, $f2
+# 	jr	$ra
 # min_caml_floor:		# libmincaml.mlを参照
 # min_caml_int_of_float:
 # min_caml_truncate:
