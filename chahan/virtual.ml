@@ -96,8 +96,21 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
       Ans(CallCls(x, int, float))
   | Closure.AppDir(Id.L(x), ys) ->
-      let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
-      Ans(CallDir(Id.L(x), int, float))
+  (* int_of_float等、ライブラリ関数の型が正しいか確かめないといけない *)
+  (* int_of_floatの引数がintかもしれない *)
+      (match x with
+      | "min_caml_int_of_float" ->
+          (try let [y] = ys in Ans(FTOI(y)) 
+          with _ -> failwith "int_of_float has invalid arguments")
+      | "min_caml_truncate" ->
+          (try let [y] = ys in Ans(FTOI(y)) 
+          with _ -> failwith "truncate has invalid arguments")
+      | "min_caml_float_of_int" ->
+          (try let [y] = ys in Ans(ITOF(y)) 
+          with _ -> failwith "float_of_int has invalid arguments")
+      | x ->
+          let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
+          Ans(CallDir(Id.L(x), int, float)))
   | Closure.Tuple(xs) -> (* 組の生成 (caml2html: virtual_tuple) *)
       let y = Id.genid "t" in
       let (offset, store) =

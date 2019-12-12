@@ -172,6 +172,8 @@ and output_exp oc exp =
       nTAB := !nTAB - 1
   | Save (x,y) -> op2 "Save" x y
   | Restore x -> op1 "Restore" x
+  | FTOI x -> op1 "FTOI" x
+  | ITOF x -> op1 "ITOF" x
 
 and output_fundef oc fundef = 
   let print_string = Printf.fprintf oc "%s" in

@@ -95,13 +95,13 @@ min_caml_sqrt:
 	sqrt.s	$f2, $f2
 	jr	$ra
 # min_caml_floor:		# libmincaml.mlを参照
-min_caml_int_of_float:
-min_caml_truncate:
-	ftoi	$2, $f2
-	jr	$ra
-min_caml_float_of_int:
-	itof	$f2, $2
-	jr	$ra
+# min_caml_int_of_float:
+# min_caml_truncate:
+# 	ftoi	$2, $f2
+# 	jr	$ra
+# min_caml_float_of_int:
+# 	itof	$f2, $2
+# 	jr	$ra
 # min_caml_cos:		# libmincaml.mlを参照
 # min_caml_sin:		# libmincaml.mlを参照
 # min_caml_atan:		# libmincaml.mlを参照
