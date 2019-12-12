@@ -17,6 +17,8 @@ and g' env = function (* 各命令の16bit即値最適化 (caml2html: simm16_gpr
   | Add(x, V(y)) when M.mem y env -> Add(x, C(M.find y env))
   | Add(x, V(y)) when M.mem x env -> Add(y, C(M.find x env))
   | Sub(x, V(y)) when M.mem y env -> Sub(x, C(M.find y env))
+  | Mul(x, y) when (M.mem y env) && (M.find y env = 4) -> SLL(x, C(2)) (* minrt.mlの *4 に対応 *)
+  | Div(x, y) when (M.mem y env) && (M.find y env = 2) -> SRA(x, 1) (* minrt.mlの /2 に対応 *)
   | SLL(x, V(y)) when M.mem y env -> SLL(x, C(M.find y env))
   | Ld(x, V(y)) when M.mem y env -> Ld(x, C(M.find y env))
   | St(x, y, V(z)) when M.mem z env -> St(x, y, C(M.find z env))
