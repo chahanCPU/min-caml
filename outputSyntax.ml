@@ -156,6 +156,8 @@ let string_of_t = function
   | Neg x -> "Neg"
   | Add (x,y) -> "Add"
   | Sub (x,y) -> "Sub"
+  | Mul _ -> "Mul"
+  | Div _ -> "Div"
   | FNeg x -> "FNeg"
   | FAdd _ -> "FAdd"
   | FSub _ -> "FSub"

@@ -27,8 +27,11 @@ rule token = parse
     { BOOL(true) }
 | "false"
     { BOOL(false) }
-| "not"
-    { NOT }
+(* let not = 1 in not を許したい *)
+(* 代わりにlibmincaml.mlに実装 *)
+(* 命令が長くなるので、後に要修正 *)
+(* | "not"
+    { NOT } *)
 | digit+ (* 整数を字句解析するルール (caml2html: lexer_int) *)
     { INT(int_of_string (Lexing.lexeme lexbuf)) }
 | digit+ ('.' digit*)? (['e' 'E'] ['+' '-']? digit+)?

@@ -8,7 +8,7 @@ let addtyp x = (x, Type.gentyp ())
 %token <bool> BOOL
 %token <int> INT
 %token <float> FLOAT
-%token NOT
+/* %token NOT */
 %token MINUS
 %token PLUS
 %token AST
@@ -79,9 +79,9 @@ simple_exp: /* (* 括弧をつけなくても関数の引数になれる式 (cam
 exp: /* (* 一般の式 (caml2html: parser_exp) *) */
 | simple_exp
     { $1 }
-| NOT exp
+/* | NOT exp
     %prec prec_app
-    { Not($2) }
+    { Not($2) } */
 | MINUS exp
     %prec prec_unary_minus
     { match $2 with

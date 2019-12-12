@@ -100,14 +100,14 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
   (* int_of_floatの引数がintかもしれない *)
       (match x with
       | "min_caml_int_of_float" ->
-          (try let [y] = ys in Ans(FTOI(y)) 
-          with _ -> failwith "int_of_float has invalid arguments")
+          (match ys with [y] -> Ans(FTOI(y)) 
+          | _ -> failwith "int_of_float has invalid arguments")
       | "min_caml_truncate" ->
-          (try let [y] = ys in Ans(FTOI(y)) 
-          with _ -> failwith "truncate has invalid arguments")
+          (match ys with [y] -> Ans(FTOI(y)) 
+          | _ -> failwith "truncate has invalid arguments")
       | "min_caml_float_of_int" ->
-          (try let [y] = ys in Ans(ITOF(y)) 
-          with _ -> failwith "float_of_int has invalid arguments")
+          (match ys with [y] -> Ans(ITOF(y)) 
+          | _ -> failwith "float_of_int has invalid arguments")
       | x ->
           let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
           Ans(CallDir(Id.L(x), int, float)))
