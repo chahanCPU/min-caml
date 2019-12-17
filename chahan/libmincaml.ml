@@ -52,6 +52,7 @@ let rec floor x =
 (* external cos : float -> float = "cos_float" "cos" "float" *)
 (* external sin : float -> float = "sin_float" "sin" "float" *)
 (* external atan : float -> float = "atan_float" "atan" "float" *)
+(* 
 let rec taylor_cos x =
 	let x2 = x *. x in
 		1.0 -. x2 *. (0.5 -. x2 *. (0.04166368 -. x2 *. 0.0013695068))
@@ -146,7 +147,8 @@ let rec atan x =
 					(* 0.0 -. (1.57079637 -. taylor_atan (1.0 /. y)) *)
 			let y = -. x in
 			-. (atan y)
-in 
+in
+*)
 (* テスト用 *)
 (* for i = -100000000 to 100000000 do
   let v = (float_of_int i) *. 0.0001 in

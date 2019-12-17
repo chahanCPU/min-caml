@@ -177,6 +177,10 @@ and output_exp oc exp =
   | FSqrt x -> op1 "FSqrt" x
   | FTOI x -> op1 "FTOI" x
   | ITOF x -> op1 "ITOF" x
+  | Cos(x) -> op1 "Cos" x
+  | Sin(x) -> op1 "Sin" x
+  | Tan(x) -> op1 "Tan" x
+  | ATan(x) -> op1 "ATan" x 
 
 and output_fundef oc fundef = 
   let print_string = Printf.fprintf oc "%s" in

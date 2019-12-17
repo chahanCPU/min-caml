@@ -224,6 +224,10 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(x), FSqrt(y) -> Printf.fprintf oc "\tsqrt.s\t%s, %s\n" x y
   | NonTail(x), FTOI(y) -> Printf.fprintf oc "\tftoi\t%s, %s\n" x y
   | NonTail(x), ITOF(y) -> Printf.fprintf oc "\titof\t%s, %s\n" x y
+  | NonTail(x), Cos(y) -> Printf.fprintf oc "\tcos\t%s, %s\n" x y
+  | NonTail(x), Sin(y) -> Printf.fprintf oc "\tsin\t%s, %s\n" x y
+  | NonTail(x), Tan(y) -> Printf.fprintf oc "\ttan\t%s, %s\n" x y
+  | NonTail(x), ATan(y) -> Printf.fprintf oc "\tatan\t%s, %s\n" x y
 
   (* 末尾だったら計算結果を第一レジスタにセットしてリターン (caml2html: emit_tailret) *)
   | Tail, (Nop | St _ | StDF _ | Comment _ | Save _ | Out _ as exp) ->
@@ -232,7 +236,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | Tail, (Set _ | SetL _ | Mov _ | Neg _ | Add _ | Sub _ | Mul _ | Div _ | SLL _ | SRA _ | Ld _ | FTOI _ as exp) ->
       g' oc (NonTail(regs.(0)), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
-  | Tail, (FSetD _ | FMovD _ | FNegD _ | FAddD _ | FSubD _ | FMulD _ | FDivD _ | LdDF _ | FAbs _ | FSqrt _ | ITOF _ as exp) ->
+  | Tail, (FSetD _ | FMovD _ | FNegD _ | FAddD _ | FSubD _ | FMulD _ | FDivD _ | LdDF _ | FAbs _ | FSqrt _ | ITOF _ | Cos _ | Sin _ | Tan _ | ATan _ as exp) ->
       g' oc (NonTail(fregs.(0)), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
   | Tail, (Restore(x) as exp) ->

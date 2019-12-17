@@ -117,6 +117,18 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       | "min_caml_float_of_int" ->
           (match ys with [y] -> Ans(ITOF(y)) 
           | _ -> failwith "float_of_int has invalid arguments")
+      | "min_caml_cos" ->
+          (match ys with [y] -> Ans(Cos(y)) 
+          | _ -> failwith "cos has invalid arguments")
+      | "min_caml_sin" ->
+          (match ys with [y] -> Ans(Sin(y)) 
+          | _ -> failwith "sin has invalid arguments")
+      | "min_caml_tan" ->
+          (match ys with [y] -> Ans(Tan(y)) 
+          | _ -> failwith "tan has invalid arguments")
+      | "min_caml_atan" ->
+          (match ys with [y] -> Ans(ATan(y)) 
+          | _ -> failwith "atan has invalid arguments")
       | x ->
           let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
           Ans(CallDir(Id.L(x), int, float)))
