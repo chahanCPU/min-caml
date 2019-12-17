@@ -164,6 +164,7 @@ let f e =
   | Type.Unit -> ()
   | _ -> Format.eprintf "warning: final result does not have type unit@.");
 *)
+(* 
   (try unify Type.Unit (g M.empty e)
   with Unify _ -> 
   (try extenv := M.empty; unify Type.Int (g M.empty e)
@@ -174,5 +175,7 @@ let f e =
   with Unify _ ->
   (try extenv := M.empty; unify (Type.Tuple([Type.Fun([Type.Int],Type.Int);Type.Int])) (g M.empty e)
   with Unify _ -> failwith "top level does not have type unit")))));
+*)
+  ignore (deref_typ (g M.empty e));
   extenv := M.map deref_typ !extenv;
   deref_term e
