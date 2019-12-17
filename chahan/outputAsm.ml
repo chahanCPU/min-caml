@@ -132,7 +132,8 @@ and output_exp oc exp =
   | FAddD (x,y) -> op2 "FAddD" x y
   | FSubD (x,y) -> op2 "FSubD" x y
   | FMulD (x,y) -> op2 "FMulD" x y
-  | FDivD (x,y) -> op2 "FDivD" x y
+  (* | FDivD (x,y) -> op2 "FDivD" x y *)
+  | FInv(x) -> op1 "FInv" x
   | LdDF (x,y) -> op2' "LdDF" x y
   | StDF (x,y,z) -> op3' "StDF" x y z
   | Comment s -> 

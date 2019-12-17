@@ -200,11 +200,14 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(x), FAddD(y, z) -> Printf.fprintf oc "\tadd.s\t%s, %s, %s\n" x y z
   | NonTail(x), FSubD(y, z) -> Printf.fprintf oc "\tsub.s\t%s, %s, %s\n" x y z
   | NonTail(x), FMulD(y, z) -> Printf.fprintf oc "\tmul.s\t%s, %s, %s\n" x y z
-	| NonTail(x), FDivD(y, z) -> 
+  (* 
+  | NonTail(x), FDivD(y, z) -> 
 			(* $f0はゼロ、$f1は$atのノリで使ってる *)
 			(* $f0だけを拘束して、Divの場合$f0を一時退避に用いて最後に$f0に0を代入してもよさそう。小数レジスタを増やしたいので *)
       Printf.fprintf oc "\tinv.s\t$f1, %s\n" z;    (* $atを浮動小数点数用に使うのはあり!? --> なし *)
       Printf.fprintf oc "\tmul.s\t%s, %s, $f1\n" x y
+  *)
+  | NonTail(x), FInv(y) -> Printf.fprintf oc "\tinv.s\t%s, %s\n" x y
   | NonTail(x), LdDF(y, V(z)) ->
       Printf.fprintf oc "\tadd\t$at, %s, %s\n" z y;
       Printf.fprintf oc "\tlw.s\t%s, 0($at)\n" x
@@ -252,7 +255,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | Tail, (Set _ | SetL _ | Mov _ | Neg _ | Add _ | Sub _ | Mul _ | Div _ | SLL _ | SRA _ | Ld _ | FTOI _ as exp) ->
       g' oc (NonTail(regs.(0)), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
-  | Tail, (FSetD _ | FMovD _ | FNegD _ | FAddD _ | FSubD _ | FMulD _ | FDivD _ | LdDF _ | FAbs _ | FSqrt _ | ITOF _ | Cos _ | Sin _ | Tan _ | ATan _ as exp) ->
+  | Tail, (FSetD _ | FMovD _ | FNegD _ | FAddD _ | FSubD _ | FMulD _ | FInv _ | LdDF _ | FAbs _ | FSqrt _ | ITOF _ | Cos _ | Sin _ | Tan _ | ATan _ as exp) ->
       g' oc (NonTail(fregs.(0)), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
   | Tail, (Restore(x) as exp) ->
