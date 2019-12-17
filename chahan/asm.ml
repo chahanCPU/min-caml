@@ -45,6 +45,7 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   | Restore of Id.t (* スタック変数から値を復元 (caml2html: sparcasm_restore) *)
   (* もともとライブラリにあった命令 *)
   | Out of Id.t
+  | OutInt of Id.t
   | FAbs of Id.t
   | FSqrt of Id.t
   | FTOI of Id.t
@@ -103,7 +104,7 @@ let rec remove_and_uniq xs = function
 let fv_id_or_imm = function V(x) -> [x] | _ -> []
 let rec fv_exp = function
   | Nop | Set(_) | FSetD(_) | SetL(_) | Comment(_) | Restore(_) -> []
-  | Mov(x) | Neg(x) | SRA(x, _) | FMovD(x) | FNegD(x) | Save(x, _) | Out(x) | FAbs (x) | FSqrt (x) | FTOI(x) | ITOF(x) | Cos(x) | Sin(x) | Tan(x) | ATan(x) -> [x]
+  | Mov(x) | Neg(x) | SRA(x, _) | FMovD(x) | FNegD(x) | Save(x, _) | Out(x) | OutInt(x) | FAbs (x) | FSqrt (x) | FTOI(x) | ITOF(x) | Cos(x) | Sin(x) | Tan(x) | ATan(x) -> [x]
   | Add(x, y') | Sub(x, y') | SLL(x, y') | Ld(x, y') | LdDF(x, y') -> x :: fv_id_or_imm y'
   | St(x, y, z') | StDF(x, y, z') -> x :: y :: fv_id_or_imm z'
   | Mul(x, y) | Div(x, y) | FAddD(x, y) | FSubD(x, y) | FMulD(x, y) | FDivD(x, y) -> [x; y]

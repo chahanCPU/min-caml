@@ -102,6 +102,9 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       | "min_caml_print_char" ->
           (match ys with [y] -> Ans(Out(y)) 
           | _ -> failwith "print_char has invalid arguments")
+      | "min_caml_print_int" ->
+          (match ys with [y] -> Ans(OutInt(y)) 
+          | _ -> failwith "print_int has invalid arguments")
       | "min_caml_abs_float" ->
           (match ys with [y] -> Ans(FAbs(y)) 
           | _ -> failwith "abs_float has invalid arguments")

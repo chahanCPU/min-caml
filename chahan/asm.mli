@@ -39,6 +39,7 @@ and exp =
   | Restore of Id.t (* スタック変数から値を復元 *)
   (* もともとライブラリにあった命令 *)
   | Out of Id.t
+  | OutInt of Id.t
   | FAbs of Id.t
   | FSqrt of Id.t
   | FTOI of Id.t
