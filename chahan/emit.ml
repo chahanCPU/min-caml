@@ -219,13 +219,14 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       assert (List.mem x allfregs);
       Printf.fprintf oc "\tlw.s\t%s, %d(%s)\n" x (offset y) reg_sp
   
+  | NonTail(_), Out(x) -> Printf.fprintf oc "\tout\t%s\n" x
   | NonTail(x), FAbs(y) -> Printf.fprintf oc "\tabs.s\t%s, %s\n" x y
   | NonTail(x), FSqrt(y) -> Printf.fprintf oc "\tsqrt.s\t%s, %s\n" x y
   | NonTail(x), FTOI(y) -> Printf.fprintf oc "\tftoi\t%s, %s\n" x y
   | NonTail(x), ITOF(y) -> Printf.fprintf oc "\titof\t%s, %s\n" x y
 
   (* 末尾だったら計算結果を第一レジスタにセットしてリターン (caml2html: emit_tailret) *)
-  | Tail, (Nop | St _ | StDF _ | Comment _ | Save _ as exp) ->
+  | Tail, (Nop | St _ | StDF _ | Comment _ | Save _ | Out _ as exp) ->
       g' oc (NonTail(Id.gentmp Type.Unit), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
   | Tail, (Set _ | SetL _ | Mov _ | Neg _ | Add _ | Sub _ | Mul _ | Div _ | SLL _ | SRA _ | Ld _ | FTOI _ as exp) ->

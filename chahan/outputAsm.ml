@@ -172,6 +172,7 @@ and output_exp oc exp =
       nTAB := !nTAB - 1
   | Save (x,y) -> op2 "Save" x y
   | Restore x -> op1 "Restore" x
+  | Out x -> op1 "Out" x
   | FAbs x -> op1 "FAbs" x
   | FSqrt x -> op1 "FSqrt" x
   | FTOI x -> op1 "FTOI" x

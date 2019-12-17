@@ -34,9 +34,9 @@ print_int_label2:
 	j	print_int_label2
 print_int_label3:
 	jr	$ra
-min_caml_print_byte:
-	out	$2
-	jr	$ra
+# min_caml_print_byte:
+# 	out	$2
+# 	jr	$ra
 # min_caml_prerr_int:		# 未実装
 # min_caml_prerr_byte:		# 未実装
 # min_caml_prerr_float:		# 未実装
@@ -105,6 +105,6 @@ create_float_array_exit:
 # min_caml_cos:		# libmincaml.mlを参照
 # min_caml_sin:		# libmincaml.mlを参照
 # min_caml_atan:		# libmincaml.mlを参照
-min_caml_print_char:		# print_byte, raytracer専用?
-	out	$2
-	jr	$ra
+# min_caml_print_char:		# print_byte, raytracer専用?
+# 	out	$2
+# 	jr	$ra

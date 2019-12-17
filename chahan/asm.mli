@@ -38,6 +38,7 @@ and exp =
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
   | Restore of Id.t (* スタック変数から値を復元 *)
   (* もともとライブラリにあった命令 *)
+  | Out of Id.t
   | FAbs of Id.t
   | FSqrt of Id.t
   | FTOI of Id.t

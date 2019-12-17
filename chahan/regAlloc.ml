@@ -154,6 +154,7 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   | Save(x, y) -> assert false
   (* 例えば、FTOIの出力先レジスタが整数レジスタになるって決まってますか? *)
   (* 型検査しないとまずそう *)
+  | Out(x) -> (Ans(Out(find x Type.Int regenv)), regenv)
   | FAbs(x) -> (Ans(FAbs(find x Type.Float regenv)), regenv)
   | FSqrt(x) -> (Ans(FSqrt(find x Type.Float regenv)), regenv)
   | FTOI(x) -> (Ans(FTOI(find x Type.Float regenv)), regenv)
