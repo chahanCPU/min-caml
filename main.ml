@@ -10,31 +10,19 @@ let rec iter n e = (* 最適化処理をくりかえす (caml2html: main_iter) *
 let lexbuf debugchan outchan l lib = (* バッファをコンパイルしてチャンネルへ出力する (caml2html: main_lexbuf) *)
   Id.counter := 0;
   Typing.extenv := M.empty;
-  let hoge1 = Parser.exp Lexer.token l in
+  let hoge1 = Parser.exp Lexer.token l in Printf.fprintf debugchan "<****** Parser ******>\n"; OutputSyntax.output_t debugchan hoge1; Printf.fprintf debugchan "\n\n";
   let hogelib = Parser.exp Lexer.token lib in
-  let hoge11 = CatLib.f hoge1 hogelib in
-  let hoge2 = Typing.f hoge11 in
-  let hoge3 = KNormal.f hoge2 in
-  let hoge4 = Alpha.f hoge3 in
-  (* let hoge = CommonSubexpressionElimination.f hoge4 in *)
-  let hoge5 = iter !limit hoge4 in
-  let hoge6 = Closure.f hoge5 in
-  let hoge7 = Virtual.f hoge6 in
-  let hoge8 = Simm.f hoge7 in
-  let hoge9 = RegAlloc.f hoge8 in
-  let hoge10 = Emit.f outchan hoge9 in
-  Printf.fprintf debugchan "<****** Parser ******>\n"; OutputSyntax.output_t debugchan hoge1; Printf.fprintf debugchan "\n\n";
-  Printf.fprintf debugchan "<****** CatLib ******>\n"; OutputSyntax.output_t debugchan hoge11; Printf.fprintf debugchan "\n\n";
-  Printf.fprintf debugchan "<****** Typing ******>\n"; OutputSyntax.output_t debugchan hoge2; Printf.fprintf debugchan "\n\n";
-  Printf.fprintf debugchan "<****** KNormal ******>\n"; OutputKNormal.output_t debugchan hoge3; Printf.fprintf debugchan "\n\n";
-  Printf.fprintf debugchan "<****** Alpha ******>\n"; OutputKNormal.output_t debugchan hoge4; Printf.fprintf debugchan "\n\n";
-  (* Printf.fprintf debugchan "<****** CommonSubexpressionElimination ******>\n"; OutputKNormal.output_t debugchan hoge; Printf.fprintf debugchan "\n\n"; *)
-  Printf.fprintf debugchan "<****** iter ******>\n"; OutputKNormal.output_t debugchan hoge5; Printf.fprintf debugchan "\n\n";
-  Printf.fprintf debugchan "<****** Closure ******>\n"; OutputClosure.output_prog debugchan hoge6; Printf.fprintf debugchan "\n\n";
-  Printf.fprintf debugchan "<****** Virtual ******>\n"; OutputAsm.output_prog debugchan hoge7; Printf.fprintf debugchan "\n\n";
-  Printf.fprintf debugchan "<****** Simm ******>\n"; OutputAsm.output_prog debugchan hoge8; Printf.fprintf debugchan "\n\n";
-  Printf.fprintf debugchan "<****** RegAlloc ******>\n"; OutputAsm.output_prog debugchan hoge9;
-  hoge10
+  let hoge11 = CatLib.f hoge1 hogelib in Printf.fprintf debugchan "<****** CatLib ******>\n"; OutputSyntax.output_t debugchan hoge11; Printf.fprintf debugchan "\n\n";
+  let hoge2 = Typing.f hoge11 in Printf.fprintf debugchan "<****** Typing ******>\n"; OutputSyntax.output_t debugchan hoge2; Printf.fprintf debugchan "\n\n";
+  let hoge3 = KNormal.f hoge2 in Printf.fprintf debugchan "<****** KNormal ******>\n"; OutputKNormal.output_t debugchan hoge3; Printf.fprintf debugchan "\n\n";
+  let hoge4 = Alpha.f hoge3 in Printf.fprintf debugchan "<****** Alpha ******>\n"; OutputKNormal.output_t debugchan hoge4; Printf.fprintf debugchan "\n\n";
+  (* let hoge = CommonSubexpressionElimination.f hoge4 in Printf.fprintf debugchan "<****** CommonSubexpressionElimination ******>\n"; OutputKNormal.output_t debugchan hoge; Printf.fprintf debugchan "\n\n"; *)
+  let hoge5 = iter !limit hoge4 in Printf.fprintf debugchan "<****** iter ******>\n"; OutputKNormal.output_t debugchan hoge5; Printf.fprintf debugchan "\n\n";
+  let hoge6 = Closure.f hoge5 in Printf.fprintf debugchan "<****** Closure ******>\n"; OutputClosure.output_prog debugchan hoge6; Printf.fprintf debugchan "\n\n";
+  let hoge7 = Virtual.f hoge6 in Printf.fprintf debugchan "<****** Virtual ******>\n"; OutputAsm.output_prog debugchan hoge7; Printf.fprintf debugchan "\n\n";
+  let hoge8 = Simm.f hoge7 in Printf.fprintf debugchan "<****** Simm ******>\n"; OutputAsm.output_prog debugchan hoge8; Printf.fprintf debugchan "\n\n";
+  let hoge9 = RegAlloc.f hoge8 in Printf.fprintf debugchan "<****** RegAlloc ******>\n"; OutputAsm.output_prog debugchan hoge9;
+  Emit.f outchan hoge9
 
 let string s = (* 文字列をコンパイルして標準出力に表示する (caml2html: main_string) *)
   let libchan = open_in "libmincaml.ml" in
