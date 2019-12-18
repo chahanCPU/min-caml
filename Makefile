@@ -10,8 +10,10 @@ CFLAGS = -g -O2 -Wall
 OCAMLLDFLAGS=-warn-error -31
 
 # default: debug-code top $(RESULT) do_test
-default: debug-code top $(RESULT)
-$(RESULT): debug-code top
+# default: debug-code top $(RESULT)
+# $(RESULT): debug-code top
+default: $(RESULT)
+$(RESULT): debug-code
 ## [自分（住井）用の注]
 ## ・OCamlMakefileや古いGNU Makeのバグ(?)で上のような定義が必要(??)
 ## ・OCamlMakefileではdebug-codeとnative-codeのそれぞれで
