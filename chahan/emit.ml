@@ -493,7 +493,7 @@ let f oc (Prog(fundefs, e)) =
   (* Printf.fprintf oc "\tlui\t$gp, 1\n";   *)
 
   (* g oc (NonTail("$dummy"), e); *)
-  g oc (NonTail("$2"), e);    (* MLの最後がintとかなら、ここに値が入る *)
+  g oc (NonTail(regs.(0)), e);    (* MLの最後がintとかなら、ここに値が入る *)
 
   Printf.fprintf oc "\tnoop\n";    (**コア係より末尾にNopが欲しい *)
 
