@@ -152,10 +152,11 @@ let rec g env e = (* 型推論ルーチン (caml2html: typing_g) *)
         unify Type.Int (g env e2);
         Type.Unit
   with Unify(t1, t2) -> 
-    let s = OutputSyntax.string_of_t (deref_term e) in
+    (* let s = OutputSyntax.string_of_t (deref_term e) in
     let t1 = OutputType.string_of_t (deref_typ t1) in
     let t2 = OutputType.string_of_t (deref_typ t2) in
-    failwith ("[" ^ s ^ "] " ^ t1 ^ " ---> " ^ t2)
+    failwith ("[" ^ s ^ "] " ^ t1 ^ " ---> " ^ t2) *)
+    failwith "Type Unification Error"
 
 let f e =
   extenv := M.empty;
