@@ -102,6 +102,9 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
   (* int_of_float等、ライブラリ関数の型が正しいか確かめないといけない *)
   (* int_of_floatの引数がintかもしれない *)
       (match x with
+      | "min_caml_print_newline" ->
+          (match ys with [y] -> let z = Id.gentmp Type.Int in Let((z, Type.Int), Set(10), Ans(Out(z)))  (* yの型がunitだと確かめてない *)
+          | _ -> failwith "print_newline has invalid arguments")
       | "min_caml_print_char" ->
           (match ys with [y] -> Ans(Out(y)) 
           | _ -> failwith "print_char has invalid arguments")

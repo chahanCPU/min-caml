@@ -2,10 +2,10 @@
 # asm.mlのexpに命令を追加して、インライン化・レジスタ割当ができるように。
 # simulator: ラベルにコメントをつけると、だめっぽい？
 # ライブラリ
-min_caml_print_newline:
-	ori	$2, $zero, 10		# LF
-	out	$2
-	jr	$ra
+# min_caml_print_newline:
+# 	ori	$2, $zero, 10		# LF
+# 	out	$2
+# 	jr	$ra
 # min_caml_print_int:
 # 	slti	$at, $2, 0
 # 	blez	$at, print_int_label0
