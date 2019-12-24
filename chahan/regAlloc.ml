@@ -222,7 +222,8 @@ let h { name = Id.L(x); args = ys; fargs = zs; body = e; ret = t } = (* 関数�
       zs in
   let a =
     match t with
-    | Type.Unit -> Id.gentmp Type.Unit
+    (* | Type.Unit -> Id.gentmp Type.Unit *)
+    | Type.Unit -> Id.genid "Tunit"
     | Type.Float -> fregs.(0)
     | _ -> regs.(0) in
   let (e', regenv') = g (a, t) (Ans(Mov(a))) regenv e in
@@ -231,5 +232,6 @@ let h { name = Id.L(x); args = ys; fargs = zs; body = e; ret = t } = (* 関数�
 let f (Prog(fundefs, e)) = (* プログラム全体のレジスタ割り当て (caml2html: regalloc_f) *)
   Format.eprintf "register allocation: may take some time (up to a few minutes, depending on the size of functions)@.";
   let fundefs' = List.map h fundefs in
-  let e', regenv' = g (Id.gentmp Type.Unit, Type.Unit) (Ans(Nop)) M.empty e in
+  (* let e', regenv' = g (Id.gentmp Type.Unit, Type.Unit) (Ans(Nop)) M.empty e in *)
+  let e', regenv' = g (Id.genid "Tunit", Type.Unit) (Ans(Nop)) M.empty e in
   Prog(fundefs', e')

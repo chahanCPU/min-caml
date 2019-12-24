@@ -59,7 +59,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
   | Closure.FMul(x, y) -> Ans(FMulD(x, y))
   (* | Closure.FDiv(x, y) -> Ans(FDivD(x, y)) *)
   | Closure.FDiv(x, y) ->
-      let z = Id.gentmp Type.Float in
+      (* let z = Id.gentmp Type.Float in *)
+      let z = Id.genid "Tfloat" in
       Let((z, Type.Float), FInv(y), Ans(FMulD(x, z)))
   | Closure.IfEq(x, y, e1, e2) ->
       (match M.find x env with
@@ -103,7 +104,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
   (* int_of_floatの引数がintかもしれない *)
       (match x with
       | "min_caml_print_newline" ->
-          (match ys with [y] -> let z = Id.gentmp Type.Int in Let((z, Type.Int), Set(10), Ans(Out(z)))  (* yの型がunitだと確かめてない *)
+          (* (match ys with [y] -> let z = Id.gentmp Type.Int in Let((z, Type.Int), Set(10), Ans(Out(z)))  yの型がunitだと確かめてない *)
+          (match ys with [y] -> let z = Id.genid "Tint" in Let((z, Type.Int), Set(10), Ans(Out(z)))  (* yの型がunitだと確かめてない *)
           | _ -> failwith "print_newline has invalid arguments")
       | "min_caml_print_char" ->
           (match ys with [y] -> Ans(Out(y)) 

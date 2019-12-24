@@ -43,11 +43,22 @@ let rec fv = function (* 式に出現する（自由な）変数 (caml2html: kno
   | Put(x, y, z) -> S.of_list [x; y; z]
   | LetTuple(xs, y, e) -> S.add y (S.diff (fv e) (S.of_list (List.map fst xs)))
 
+let id_of_type = function
+  | Type.Unit -> "unit"
+  | Type.Bool -> "bool"
+  | Type.Int -> "int"
+  | Type.Float -> "float"
+  | Type.Fun _ -> "fun"
+  | Type.Tuple _ -> "tuple"
+  | Type.Array _ -> "array" 
+  | Type.Var _ -> assert false
+
 let insert_let (e, t) k = (* letを挿入する補助関数 (caml2html: knormal_insert) *)
   match e with
   | Var(x) -> k x
   | _ ->
-      let x = Id.gentmp t in
+      (* let x = Id.gentmp t in *)
+      let x = Id.genid ("T" ^ id_of_type t) in
       let e', t' = k x in
       Let((x, t), e, e'), t'
 

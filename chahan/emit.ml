@@ -250,7 +250,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
 
   (* 末尾だったら計算結果を第一レジスタにセットしてリターン (caml2html: emit_tailret) *)
   | Tail, (Nop | St _ | StDF _ | Comment _ | Save _ | Out _ | OutInt _ as exp) ->
-      g' oc (NonTail(Id.gentmp Type.Unit), exp);
+      (* g' oc (NonTail(Id.gentmp Type.Unit), exp); *)
+      g' oc (NonTail(Id.genid "Tunit"), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
   | Tail, (Set _ | SetL _ | Mov _ | Neg _ | Add _ | Sub _ | Mul _ | Div _ | SLL _ | SRA _ | Ld _ | FTOI _ as exp) ->
       g' oc (NonTail(regs.(0)), exp);

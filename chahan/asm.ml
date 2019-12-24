@@ -60,7 +60,8 @@ type fundef = { name : Id.l; args : Id.t list; fargs : Id.t list; body : t; ret 
 type prog = Prog of fundef list * t
 
 let fletd(x, e1, e2) = Let((x, Type.Float), e1, e2)
-let seq(e1, e2) = Let((Id.gentmp Type.Unit, Type.Unit), e1, e2)
+let seq(e1, e2) = Let((Id.genid "Tunit", Type.Unit), e1, e2)
+(* let seq(e1, e2) = Let((Id.gentmp Type.Unit, Type.Unit), e1, e2) *)
 
 let regs = (* Array.init 16 (fun i -> Printf.sprintf "%%r%d" i) *)
   [| "$2"; "$3"; 

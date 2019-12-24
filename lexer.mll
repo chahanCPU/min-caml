@@ -79,7 +79,8 @@ rule token = parse
 | ','
     { COMMA }
 | '_'
-    { IDENT(Id.gentmp Type.Unit) }
+    { IDENT(Id.genid "Tunit") }
+    (* { IDENT(Id.gentmp Type.Unit) } *)
 | "Array.create" | "Array.make" | "create_array" (* [XX] ad hoc *)
     { ARRAY_CREATE }
 | '.'
