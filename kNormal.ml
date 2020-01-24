@@ -51,7 +51,7 @@ let id_of_type = function
   | Type.Fun _ -> "fun"
   | Type.Tuple _ -> "tuple"
   | Type.Array _ -> "array" 
-  | Type.Var _ -> assert false
+  | Type.Var(alpha) -> alpha
 
 let insert_let (e, t) k = (* letを挿入する補助関数 (caml2html: knormal_insert) *)
   match e with

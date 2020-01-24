@@ -23,7 +23,5 @@ let rec output_t oc = function
   | Array(t) ->
       output_t oc t;
       Printf.fprintf oc " array"
-  | Var(r) ->
-      (match !r with
-      | Some(t) -> output_t oc t; Printf.fprintf oc "?"
-      | None -> Printf.fprintf oc "????")
+  | Var(alpha) ->
+      OutputId.output_t oc alpha

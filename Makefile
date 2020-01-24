@@ -32,7 +32,7 @@ simm.mli simm.ml regAlloc.mli regAlloc.ml emit.mli emit.ml \
  \
 outputClosure.mli outputClosure.ml outputAsm.mli outputAsm.ml \
 catLib.mli catLib.ml \
-main.mli main.ml
+libtype.ml main.mli main.ml
 
 # ↓テストプログラムが増えたら、これも増やす
 # TESTS_ = $(wildcard test/*.ml)

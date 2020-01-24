@@ -9,7 +9,8 @@ let rec iter n e = (* 最適化処理をくりかえす (caml2html: main_iter) *
 
 let lexbuf debugchan outchan l lib = (* バッファをコンパイルしてチャンネルへ出力する (caml2html: main_lexbuf) *)
   Id.counter := 0;
-  Typing.extenv := M.empty;
+  (* Typing.extenv := M.empty; *)
+  Typing.extenv := Libtype.extenv;
   let hoge1 = Parser.exp Lexer.token l in Printf.fprintf debugchan "<****** Parser ******>\n"; OutputSyntax.output_t debugchan hoge1; Printf.fprintf debugchan "\n\n";
   let hogelib = Parser.exp Lexer.token lib in
   let hoge11 = CatLib.f hoge1 hogelib in Printf.fprintf debugchan "<****** CatLib ******>\n"; OutputSyntax.output_t debugchan hoge11; Printf.fprintf debugchan "\n\n";
