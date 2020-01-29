@@ -162,7 +162,6 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
                       (fun x -> bind (xs @ [x]) e2s) in
               bind [] e2s) (* left-to-right evaluation *)
       | _ -> assert false)
-  | Syntax.App(_) -> assert false
   | Syntax.Tuple(es) ->
       let rec bind xs ts = function (* "xs" and "ts" are identifiers and types for the elements *)
         | [] -> Tuple(xs), Type.Tuple(ts)

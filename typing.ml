@@ -7,6 +7,8 @@
 
 (* 値制限は？ *)
 
+(* LetRecにより定義した関数は多相型を持つ *)
+(* LetやLetTupleでは不可 *)
 
 open Syntax
 
@@ -199,11 +201,10 @@ let rec infer env = function  (* 型推論ルーチン *)
       let s1' = unify (subst_type (s3 + s2) t1) Type.Bool in
       let s2' = unify (subst_type (s1' + s3) t2) (subst_type s1' t3) in
       (If(subst_term (s2' + (s1' + (s3 + s2))) e1, subst_term (s2' + (s1' + s3)) e2, subst_term (s2' + s1') e3), subst_type (s2' + s1') t3, s2' + (s1' + (s3 + (s2 + s1))))
-  | Let((x, _), e1, e2) -> 
+  | Let((x, _), e1, e2) ->  (* 単相型 *)
       let (e1, t1, s1) = infer env e1 in
-      let t1' = generalize (subst_env s1 env) t1 in
-      let (e2, t2, s2) = infer (M.add x t1' (subst_env s1 env)) e2 in
-      (Let((x, subst_type s2 t1'), subst_term s2 e1, e2), t2, s2 + s1)
+      let (e2, t2, s2) = infer (M.add x (Type.Scheme([], t1)) (subst_env s1 env)) e2 in
+      (Let((x, subst_type s2 t1), subst_term s2 e1, e2), t2, s2 + s1)
   | Var(x, _) when M.mem x env -> 
       let (t, sigma) = instantiate (M.find x env) in
       (Var(x, M.bindings sigma), t, M.empty)
@@ -238,12 +239,11 @@ let rec infer env = function  (* 型推論ルーチン *)
         ([], [], M.empty)
         es in
       (Tuple(es), Type.Tuple(ts), sigma)
-  | LetTuple(xts, e1, e2) ->
+  | LetTuple(xts, e1, e2) ->  (* 単相型 *)
       let (e1, t1, s1) = infer env e1 in
       let s1' = unify (Type.Tuple(List.map (fun (_, t) -> subst_type s1 t) xts)) t1 in
-      let xts' = List.map (fun (x, t) -> (x, generalize (subst_env (s1' + s1) env) (subst_type (s1' + s1) t))) xts in
-      let (e2, t2, s2) = infer (M.add_list xts' (subst_env (s1' + s1) env)) e2 in
-      (LetTuple(List.map (fun (x, t) -> (x, subst_type s2 t)) xts', subst_term (s2 + s1') e1, e2), t2, s2 + (s1' + s1))
+      let (e2, t2, s2) = infer (M.add_list (List.map (fun (x, t) -> (x, Type.Scheme([], subst_type (s1' + s1) t))) xts) (subst_env (s1' + s1) env)) e2 in
+      (LetTuple(List.map (fun (x, t) -> (x, subst_type (s2 + (s1' + s1)) t)) xts, subst_term (s2 + s1') e1, e2), t2, s2 + (s1' + s1))
   | Array(e1, e2) -> (* must be a primitive for "polymorphic" typing *)
       let (e1, t1, s1) = infer env e1 in
       let (e2, t2, s2) = infer (subst_env s1 env) e2 in
@@ -269,12 +269,12 @@ let rec fv_term = function  (* termにおいて自由に出現する型変数の
   | Not(e) | Neg(e) | FNeg(e) -> fv_term e
   | Add(e1, e2) | Sub(e1, e2) | Mul(e1, e2) | Div(e1, e2) | FAdd(e1, e2) | FSub(e1, e2) | FMul(e1, e2) | FDiv(e1, e2) | Eq(e1, e2) | LE(e1, e2) | Array(e1, e2) | Get(e1, e2) -> S.union (fv_term e1) (fv_term e2)
   | If(e1, e2, e3) | Put(e1, e2, e3) -> S.union (S.union (fv_term e1) (fv_term e2)) (fv_term e3)
-  | Let((x, t), e1, e2) -> S.union (fv_type t) (fv_term e2)
+  | Let((x, t), e1, e2) -> S.union (fv_term e1) (fv_term e2)
   | Var(x, bindings) -> List.fold_left (fun set (alpha, t) -> S.union set (fv_type t)) S.empty bindings 
   | LetRec({ name = (x, t); args = yts; body = e1 }, e2) -> S.union (fv_type t) (fv_term e2)
   | App(e, es) -> List.fold_left (fun set e -> S.union set (fv_term e)) S.empty (e :: es)
   | Tuple(es) -> List.fold_left (fun set e -> S.union set (fv_term e)) S.empty es
-  | LetTuple(xts, e1, e2) -> S.union (List.fold_left (fun set (x, t) -> S.union set (fv_type t)) S.empty xts) (fv_term e2)
+  | LetTuple(xts, e1, e2) -> S.union (fv_term e1) (fv_term e2)
 
 let undefinedtype_to_int e =  (* 自由に出現している型変数をすべてIntに置換 *)
   let sigma = S.fold (fun alpha sigma -> M.add alpha Type.Int sigma) (fv_term e) M.empty in
@@ -309,7 +309,7 @@ let rec rename_term (x, bindings) x' = function
   | Eq(e1, e2) -> Eq(rename_term (x, bindings) x' e1, rename_term (x, bindings) x' e2)
   | LE(e1, e2) -> LE(rename_term (x, bindings) x' e1, rename_term (x, bindings) x' e2)
   | If(e1, e2, e3) -> If(rename_term (x, bindings) x' e1, rename_term (x, bindings) x' e2, rename_term (x, bindings) x' e3)
-  | Let((y, t), e1, e2) as e when x = y -> e
+  | Let((y, t), e1, e2) when x = y -> Let((y, t), rename_term (x, bindings) x' e1, e2)
   | Let((y, t), e1, e2) -> Let((y, t), rename_term (x, bindings) x' e1, rename_term (x, bindings) x' e2)
   | Var(y, b) when (x, bindings) = (y, b) -> Var(x', [])
   | Var(_) as e -> e
@@ -320,7 +320,7 @@ let rec rename_term (x, bindings) x' = function
       LetRec({ name = (y, t); args = zts; body = rename_term (x, bindings) x' e1 }, rename_term (x, bindings) x' e2)
   | App(e, es) -> App(rename_term (x, bindings) x' e, List.map (rename_term (x, bindings) x') es)
   | Tuple(es) -> Tuple(List.map (rename_term (x, bindings) x') es)
-  | LetTuple(yts, e1, e2) as e when List.exists (fun (y, t) -> x = y) yts -> e
+  | LetTuple(yts, e1, e2) when List.exists (fun (y, t) -> x = y) yts -> LetTuple(yts, rename_term (x, bindings) x' e1, e2)
   | LetTuple(yts, e1, e2) -> LetTuple(yts, rename_term (x, bindings) x' e1, rename_term (x, bindings) x' e2)
   | Array(e1, e2) -> Array(rename_term (x, bindings) x' e1, rename_term (x, bindings) x' e2)
   | Get(e1, e2) -> Get(rename_term (x, bindings) x' e1, rename_term (x, bindings) x' e2)
@@ -350,8 +350,7 @@ let rec get_all_bindings x = function
   | LetTuple(yts, e1, e2) when List.exists (fun (y, t) -> x = y) yts -> get_all_bindings x e1
   | LetTuple(yts, e1, e2) -> S'.union (get_all_bindings x e1) (get_all_bindings x e2)
 
-(* RenameSyntaxのおかげ *)
-let rec expand = function
+let rec expand = function  (* 関数の複製(expansion)により、多相関数を単相にする *)
   | Unit | Bool(_) | Int(_) | Float(_) as e -> e
   | Not(e) -> Not(expand e)
   | Neg(e) -> Neg(expand e)
@@ -367,17 +366,7 @@ let rec expand = function
   | Eq(e1, e2) -> Eq(expand e1, expand e2)
   | LE(e1, e2) -> LE(expand e1, expand e2)
   | If(e1, e2, e3) -> If(expand e1, expand e2, expand e3)
-  | Let((x, Type.Scheme(vars, t)), e1, e2) ->
-      let e2 = expand e2 in
-      (* Let((x, )) *)
-      S'.fold 
-        (fun bindings e -> 
-          let x' = rename_var (x, bindings) in
-          let sigma = M.add_list bindings M.empty in 
-          Let((x', subst_type sigma t), expand (subst_term sigma e1), rename_term (x, bindings) x' e)) 
-        (get_all_bindings x e2)
-        e2
-  | Let(_) -> assert false
+  | Let((x, t), e1, e2) -> Let((x, t), expand e1, expand e2)
   | Var(_) as e -> e
   | LetRec({ name = (x, Type.Scheme(vars, t)); args = yts; body = e1 }, e2) -> 
       let e2 = expand e2 in
@@ -394,10 +383,7 @@ let rec expand = function
   | LetRec(_) -> assert false
   | App(e, es) -> App(expand e, List.map expand es)
   | Tuple(es) -> Tuple(List.map expand es)
-  | LetTuple(xts, e1, e2) ->
-      let e2 = expand e2 in
-      (* 未実装 *)
-      assert false
+  | LetTuple(xts, e1, e2) -> LetTuple(xts, expand e1, expand e2)
   | Array(e1, e2) -> Array(expand e1, expand e2)
   | Get(e1, e2) -> Get(expand e1, expand e2)
   | Put(e1, e2, e3) -> Put(expand e1, expand e2, expand e3)
@@ -476,6 +462,6 @@ let f e =
   e
 
 (* 関数の説明 *)
-(* 型スキーム代入。型スキームを別の方にしたほうが良さそう *)
-(* expand。Letのバグ、LetTuple未実装 *)
+(* 型スキーム代入。型スキームを別の型にしたほうが良さそう *)
+(* expand。Letのバグ、LetTuple未実装 *) (* このときは単相にした。LetRecのみ多相型に対応 *)
 (* RenameSyntaxが必要か。不要そう *)
