@@ -25,3 +25,14 @@ let rec output_t oc = function
       Printf.fprintf oc " array"
   | Var(alpha) ->
       OutputId.output_t oc alpha
+  | Scheme(vars, t) ->
+      Printf.fprintf oc "∀";
+      let tmp = ref vars in
+      while !tmp <> [] do
+        match !tmp with
+        | [alpha] -> OutputId.output_t oc alpha; tmp := []
+        | alpha :: vars -> OutputId.output_t oc alpha; Printf.fprintf oc ", "; tmp := vars
+        | _ -> ()
+      done;
+      Printf.fprintf oc ". ";
+      output_t oc t

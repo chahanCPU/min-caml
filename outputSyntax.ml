@@ -78,8 +78,27 @@ let rec output_t' oc depth e =
       Printf.fprintf oc "\n";
       output_t' oc (depth + 1) e1;
       output_t' oc depth e2
-  | Var(x) -> 
-      Printf.fprintf oc "Var %s\n" x
+  | Var(x, bindings) -> 
+      Printf.fprintf oc "Var ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\t[";
+      let tmp = ref bindings in
+      while !tmp <> [] do
+        match !tmp with
+        | [(alpha, t)] -> 
+            OutputType.output_t oc t;
+            Printf.fprintf oc " / ";
+            OutputId.output_t oc alpha;
+            tmp := []
+        | (alpha, t) :: rest ->
+            OutputType.output_t oc t;
+            Printf.fprintf oc " / ";
+            OutputId.output_t oc alpha;
+            Printf.fprintf oc ", ";
+            tmp := rest
+        | _ -> ()
+      done;
+      Printf.fprintf oc "]\n"
   | LetRec(fundef, e) ->
       Printf.fprintf oc "LetRec\n";
       output_fundef' oc (depth + 1) fundef;
