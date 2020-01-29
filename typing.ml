@@ -201,10 +201,11 @@ let rec infer env = function  (* 型推論ルーチン *)
       let s1' = unify (subst_type (s3 + s2) t1) Type.Bool in
       let s2' = unify (subst_type (s1' + s3) t2) (subst_type s1' t3) in
       (If(subst_term (s2' + (s1' + (s3 + s2))) e1, subst_term (s2' + (s1' + s3)) e2, subst_term (s2' + s1') e3), subst_type (s2' + s1') t3, s2' + (s1' + (s3 + (s2 + s1))))
-  | Let((x, _), e1, e2) ->  (* 単相型 *)
+  | Let((x, t), e1, e2) ->  (* 単相型 *)
       let (e1, t1, s1) = infer env e1 in
-      let (e2, t2, s2) = infer (M.add x (Type.Scheme([], t1)) (subst_env s1 env)) e2 in
-      (Let((x, subst_type s2 t1), subst_term s2 e1, e2), t2, s2 + s1)
+      let s1' = unify t t1 in
+      let (e2, t2, s2) = infer (M.add x (Type.Scheme([], subst_type s1' t1)) (subst_env (s1' + s1) env)) e2 in
+      (Let((x, subst_type (s2 + s1') t1), subst_term (s2 + s1') e1, e2), t2, s2 + (s1' + s1))
   | Var(x, _) when M.mem x env -> 
       let (t, sigma) = instantiate (M.find x env) in
       (Var(x, M.bindings sigma), t, M.empty)

@@ -138,8 +138,8 @@ exp: /* (* 一般の式 (caml2html: parser_exp) *) */
 | simple_exp DOT LPAREN exp RPAREN LESS_MINUS exp
     { Put($1, $4, $7) }
 | exp SEMICOLON exp
-    { Let((Id.genid "Tunit?", Type.Unit), $1, $3) }
-    /* unitじゃなくても大丈夫になった */
+    { Let((Id.genid "Tunit", Type.Unit), $1, $3) }
+    /* Unitじゃなくても大丈夫になった。いや、Unitじゃないといけなくしました */
     /* { Let((Id.gentmp Type.Unit, Type.Unit), $1, $3) } */
 | ARRAY_CREATE simple_exp simple_exp
     %prec prec_app
