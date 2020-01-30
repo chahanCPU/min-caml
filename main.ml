@@ -20,7 +20,8 @@ let lexbuf debugchan outchan l lib = (* バッファをコンパイルしてチ�
   (* let hoge = CommonSubexpressionElimination.f hoge4 in Printf.fprintf debugchan "<****** CommonSubexpressionElimination ******>\n"; OutputKNormal.output_t debugchan hoge; Printf.fprintf debugchan "\n\n"; *)
   let hoge5 = iter !limit hoge4 in Printf.fprintf debugchan "<****** iter ******>\n"; OutputKNormal.output_t debugchan hoge5; Printf.fprintf debugchan "\n\n";
   let hoge6 = Closure.f hoge5 in Printf.fprintf debugchan "<****** Closure ******>\n"; OutputClosure.output_prog debugchan hoge6; Printf.fprintf debugchan "\n\n";
-  let hoge7 = Virtual.f hoge6 in Printf.fprintf debugchan "<****** Virtual ******>\n"; OutputAsm.output_prog debugchan hoge7; Printf.fprintf debugchan "\n\n";
+  let hoge6' = ClosureTypeCheck.f hoge6 in
+  let hoge7 = Virtual.f hoge6' in Printf.fprintf debugchan "<****** Virtual ******>\n"; OutputAsm.output_prog debugchan hoge7; Printf.fprintf debugchan "\n\n";
   let hoge8 = Simm.f hoge7 in Printf.fprintf debugchan "<****** Simm ******>\n"; OutputAsm.output_prog debugchan hoge8; Printf.fprintf debugchan "\n\n";
   let hoge9 = RegAlloc.f hoge8 in Printf.fprintf debugchan "<****** RegAlloc ******>\n"; OutputAsm.output_prog debugchan hoge9;
   Emit.f outchan hoge9

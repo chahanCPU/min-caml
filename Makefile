@@ -23,16 +23,18 @@ clean:: nobackup
 
 # ↓もし実装を改造したら、それに合わせて変える
 SOURCES = float.c id.ml type.ml m.ml s.ml outputId.mli outputId.ml outputType.mli outputType.ml \
+libtype.ml \
 syntax.ml outputSyntax.mli outputSyntax.ml parser.mly lexer.mll typing.mli typing.ml kNormal.mli kNormal.ml \
 alpha.mli alpha.ml beta.mli beta.ml assoc.mli assoc.ml \
 inline.mli inline.ml constFold.mli constFold.ml elim.mli elim.ml \
 outputKNormal.mli outputKNormal.ml commonSubexpressionElimination.mli commonSubexpressionElimination.ml \
+closureTypeCheck.mli closureTypeCheck.ml \
 closure.mli closure.ml asm.mli asm.ml virtual.mli virtual.ml \
 simm.mli simm.ml regAlloc.mli regAlloc.ml emit.mli emit.ml \
  \
 outputClosure.mli outputClosure.ml outputAsm.mli outputAsm.ml \
 catLib.mli catLib.ml \
-libtype.ml main.mli main.ml
+main.mli main.ml
 
 # ↓テストプログラムが増えたら、これも増やす
 # TESTS_ = $(wildcard test/*.ml)

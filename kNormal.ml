@@ -188,7 +188,7 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
               ExtFunApp(l, [x; y]), Type.Array(t2)))
   | Syntax.Get(e1, e2) ->
       (match g env e1 with
-      |        _, Type.Array(t) as g_e1 ->
+      | _, Type.Array(t) as g_e1 ->
           insert_let g_e1
             (fun x -> insert_let (g env e2)
                 (fun y -> Get(x, y), t))
@@ -199,4 +199,26 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
             (fun y -> insert_let (g env e3)
                 (fun z -> Put(x, y, z), Type.Unit)))
 
-let f e = fst (g M.empty e)
+let rec b2i_type = function  (* Type.BoolをType.Intに変換 *)
+  | Type.Unit | Type.Int | Type.Float as t -> t
+  | Type.Bool -> Type.Int
+  | Type.Fun(ts, t) -> Type.Fun(List.map b2i_type ts, b2i_type t)
+  | Type.Tuple(ts) -> Type.Tuple(List.map b2i_type ts)
+  | Type.Array(t) -> Type.Array(b2i_type t)
+  | Type.Var _ | Type.Scheme _ -> assert false
+
+let rec b2i_term = function  (* Type.BoolをType.Intに変換 *)
+  | IfEq(x, y, e1, e2) -> IfEq(x, y, b2i_term e1, b2i_term e2)
+  | IfLE(x, y, e1, e2) -> IfLE(x, y, b2i_term e1, b2i_term e2)
+  | Let((x, t), e1, e2) -> 
+      Let((x, b2i_type t), b2i_term e1, b2i_term e2)
+  | LetRec({ name = (x, t); args = yts; body = e1 }, e2) -> 
+      LetRec({ name = (x, b2i_type t);
+               args = List.map (fun (y, t) -> (y, b2i_type t)) yts;
+               body = b2i_term e1 },
+             b2i_term e2)
+  | LetTuple(xts, y, e) ->
+      LetTuple(List.map (fun (x, t) -> (x, b2i_type t)) xts, y, b2i_term e)
+  | e -> e
+
+let f e = b2i_term (fst (g M.empty e))
