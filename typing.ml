@@ -6,13 +6,14 @@
 (* 分割コンパイルとかは無理 *)
 
 (* 値制限は？ *)
+(* let rec f x = x in let rec g y = Array.make 1 f in ((g 0).(0) 1, (g 0).(0) true)  型ついた *)
 
 (* LetRecにより定義した関数は多相型を持つ *)
 (* LetやLetTupleでは不可 *)
 
 open Syntax
 
-let extenv = ref M.empty
+let extenv = ref M.empty  (* どうする？mainで指定しなくても *)
 
 let rec subst_type sigma = function  (* 型に型代入を実行する *)
   | Type.Unit | Type.Bool | Type.Int | Type.Float as t -> t
@@ -109,17 +110,19 @@ let rec fv_type = function  (* 型において自由に出現する型変数の�
 let fv_env env =  (* 型環境において自由に出現する型変数の集合を求める *)
   M.fold (fun x t set -> S.union set (fv_type t)) env S.empty
 
-let generalize env t =
+let generalize env t =  (* 型を型スキームに一般化 *)
   let vars = S.elements (S.diff (fv_type t) (fv_env env)) in
   Type.Scheme(vars, t)
 
-let instantiate t =
+let instantiate t =  (* 型スキームを型に実体化 *)
   match t with Type.Scheme(vars, t) ->
     let sigma = List.fold_left (fun sigma alpha -> M.add alpha (Type.gentyp ()) sigma) M.empty vars in
     (subst_type sigma t, sigma)
   | _ -> assert false
 
 let rec infer env = function  (* 型推論ルーチン *)
+(* 型環境Γと(型注釈のない)項Mを受け取って、 *)
+(* most general (e, t, σ) s.t. eの型注釈を削除した項がM, σΓ |- e : t を返す *)
   | Unit -> (Unit, Type.Unit, M.empty)
   | Bool(b) -> (Bool(b), Type.Bool, M.empty)
   | Int(i) -> (Int(i), Type.Int, M.empty)
@@ -203,20 +206,21 @@ let rec infer env = function  (* 型推論ルーチン *)
       (If(subst_term (s2' + (s1' + (s3 + s2))) e1, subst_term (s2' + (s1' + s3)) e2, subst_term (s2' + s1') e3), subst_type (s2' + s1') t3, s2' + (s1' + (s3 + (s2 + s1))))
   | Let((x, t), e1, e2) ->  (* 単相型 *)
       let (e1, t1, s1) = infer env e1 in
-      let s1' = unify t t1 in
+      let s1' = unify (subst_type s1 t) t1 in
       let (e2, t2, s2) = infer (M.add x (Type.Scheme([], subst_type s1' t1)) (subst_env (s1' + s1) env)) e2 in
       (Let((x, subst_type (s2 + s1') t1), subst_term (s2 + s1') e1, e2), t2, s2 + (s1' + s1))
-  | Var(x, _) when M.mem x env -> 
+  | Var(x, []) when M.mem x env -> 
       let (t, sigma) = instantiate (M.find x env) in
       (Var(x, M.bindings sigma), t, M.empty)
   (* 外部関数は決まっているので、後でそう直したい *)
   (* envはenv->tysc, !extenvはenv->typeになってる *)
   (* 今は外部変数は単相型のみ *)
-  | Var(x, _) when M.mem x !extenv -> (Var(x, []), M.find x !extenv, M.empty)
-  | Var(x, _) -> failwith (Printf.sprintf "Unbound variable: %s" x)
-  | LetRec({ name = (x, t); args = yts; body = e1 }, e2) -> 
+  | Var(x, []) when M.mem x !extenv -> (Var(x, []), M.find x !extenv, M.empty)
+  | Var(x, []) -> failwith (Printf.sprintf "Unbound variable: %s" x)
+  | Var(_) -> assert false
+  | LetRec({ name = (x, t); args = yts; body = e1 }, e2) ->  (* 多相関数 *)
       let (e1, t1, s1) = infer (M.add_list (List.map (fun (x, t) -> (x, Type.Scheme([], t))) ((x, t) :: yts)) env) e1 in
-      let s1' = unify t (Type.Fun(List.map (fun (_, t) -> subst_type s1 t) yts, t1)) in
+      let s1' = unify (subst_type s1 t) (Type.Fun(List.map (fun (_, t) -> subst_type s1 t) yts, t1)) in
       let t' = generalize (subst_env (s1' + s1) env) (subst_type (s1' + s1) t) in
       let (e2, t2, s2) = infer (M.add x t' (subst_env (s1' + s1) env)) e2 in
       (LetRec({ name = (x, subst_type s2 t'); args = List.map (fun (y, t) -> (y, subst_type (s2 + (s1' + s1)) t)) yts; body = subst_term (s2 + s1') e1 }, e2), t2, s2 + (s1' + s1))
@@ -245,7 +249,7 @@ let rec infer env = function  (* 型推論ルーチン *)
       let s1' = unify (Type.Tuple(List.map (fun (_, t) -> subst_type s1 t) xts)) t1 in
       let (e2, t2, s2) = infer (M.add_list (List.map (fun (x, t) -> (x, Type.Scheme([], subst_type (s1' + s1) t))) xts) (subst_env (s1' + s1) env)) e2 in
       (LetTuple(List.map (fun (x, t) -> (x, subst_type (s2 + (s1' + s1)) t)) xts, subst_term (s2 + s1') e1, e2), t2, s2 + (s1' + s1))
-  | Array(e1, e2) -> (* must be a primitive for "polymorphic" typing *)
+  | Array(e1, e2) ->  (* must be a primitive for "polymorphic" typing *)
       let (e1, t1, s1) = infer env e1 in
       let (e2, t2, s2) = infer (subst_env s1 env) e2 in
       let s1' = unify (subst_type s2 t1) Type.Int in
@@ -291,10 +295,10 @@ let rec id_of_type = function
   | Type.Array(t) -> "A(" ^ (id_of_type t) ^ ")"
   | Type.Var(_) | Type.Scheme(_) -> assert false
 
-let rename_var (x, bindings) =
+let rename_var (x, bindings) =  (* 多相関数xをinstantiateごとに書き換える *)
   List.fold_left (fun x (_, t) -> x ^ (id_of_type t)) (x ^ ".") bindings
 
-let rec rename_term (x, bindings) x' = function
+let rec rename_term (x, bindings) x' = function  (* termにおける変数Var(x, bindings)をVar(x', [])に置換する *)
   | Unit | Bool(_) | Int(_) | Float(_) as e -> e
   | Not(e) -> Not(rename_term (x, bindings) x' e)
   | Neg(e) -> Neg(rename_term (x, bindings) x' e)
@@ -334,7 +338,7 @@ module S' =
       let compare = compare
     end)
   
-let rec get_all_bindings x = function
+let rec get_all_bindings x = function  (* 多相関数xがどのようにinstantiateされたかを調べる *)
   | Unit | Bool(_) | Int(_) | Float(_) -> S'.empty
   | Not(e) | Neg(e) | FNeg(e) -> get_all_bindings x e
   | Add(e1, e2) | Sub(e1, e2) | Mul(e1, e2) | Div(e1, e2) | FAdd(e1, e2) | FSub(e1, e2) | FMul(e1, e2) | FDiv(e1, e2) | Eq(e1, e2) | LE(e1, e2) | Array(e1, e2) | Get(e1, e2) -> S'.union (get_all_bindings x e1) (get_all_bindings x e2)
@@ -370,7 +374,7 @@ let rec expand = function  (* 関数の複製(expansion)により、多相関数
   | Let((x, t), e1, e2) -> Let((x, t), expand e1, expand e2)
   | Var(_) as e -> e
   | LetRec({ name = (x, Type.Scheme(vars, t)); args = yts; body = e1 }, e2) -> 
-      let e2 = expand e2 in
+      let e2' = expand e2 in
       S'.fold
         (fun bindings e ->
           let x' = rename_var (x, bindings) in
@@ -379,8 +383,8 @@ let rec expand = function  (* 関数の複製(expansion)により、多相関数
                    args = List.map (fun (y, t) -> (y, subst_type sigma t)) yts;
                    body = expand (subst_term sigma (rename_term (x, []) x' e1)) },
                  rename_term (x, bindings) x' e))
-        (get_all_bindings x e2)  (* 単相再帰なので、e1は含めない *)
-        e2
+        (get_all_bindings x e2')  (* 単相再帰なので、e1は含めない *)
+        e2'
   | LetRec(_) -> assert false
   | App(e, es) -> App(expand e, List.map expand es)
   | Tuple(es) -> Tuple(List.map expand es)
@@ -466,3 +470,8 @@ let f e =
 (* 型スキーム代入。型スキームを別の型にしたほうが良さそう *)
 (* expand。Letのバグ、LetTuple未実装 *) (* このときは単相にした。LetRecのみ多相型に対応 *)
 (* RenameSyntaxが必要か。不要そう *)
+
+(* eにも代入したい *)
+(* そうしなくて良いように *)
+(* 入力の項に自由に出現する型は単相かつ型変数を含まないとする *)
+(* 特にライブラリ *)

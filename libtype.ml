@@ -30,3 +30,5 @@ let extenv =
      ("floor", Fun([Float], Float)) *)
      ] 
     M.empty
+
+(* 外部関数に自由に出現する型は単相かつ型変数を含まないとする *)
