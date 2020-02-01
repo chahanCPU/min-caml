@@ -23,9 +23,35 @@ let rec g env tyenv = function  (* envは関数定義からその本体中の自
       LetTuple(xts, y, g (List.fold_left (fun env (x, t) -> M.add x [] env) env xts) (M.add_list xts tyenv) e)
   | e -> e
 
-(* let f e = g M.empty M.empty e *)
-let f e = g M.empty Libtype.extenv e
+let rec uncurry_type = function
+	| Type.Unit | Type.Bool | Type.Int | Type.Float as t -> t
+	| Type.Fun(ts, t) -> 
+			(match uncurry_type t with Type.Fun(ts', t') -> Type.Fun(List.map uncurry_type ts @ ts', t')
+			| t' -> Type.Fun(List.map uncurry_type ts, t'))
+	| Type.Tuple(ts) -> Type.Tuple(List.map uncurry_type ts)
+	| Type.Array(t) -> Type.Array(uncurry_type t)
+	| Type.Var(_) | Type.Scheme(_) -> assert false
 
+let rec uncurry_term = function
+	| IfEq(x, y, e1, e2) -> IfEq(x, y, uncurry_term e1, uncurry_term e2)
+	| IfLE(x, y, e1, e2) -> IfLE(x, y, uncurry_term e1, uncurry_term e2)
+	| Let((x, t), e1, e2) -> 
+			Let((x, uncurry_type t), uncurry_term e1, uncurry_term e2)
+	| LetRec({ name = (x, t); args = yts; body = e1 }, e2) -> 
+			LetRec({ name = (x, uncurry_type t);
+							 args = List.map (fun (y, t) -> (y, uncurry_type t)) yts; 
+							 body = uncurry_term e1 },
+						 uncurry_term e2)
+	| LetTuple(xts, y, e) -> 
+			LetTuple(List.map (fun (x, t) -> (x, uncurry_type t)) xts, y, uncurry_term e)
+	| e -> e
+
+(* let f e = g M.empty M.empty e *)
+(* let f e = (g M.empty Libtype.extenv e) *)
+let f e = uncurry_term (g M.empty Libtype.extenv e)
+
+(* 部分適用が許されていないので、uncurryしても
+closureの型検査でうまくいかない *)
 
 (* 定数畳み込みの後にしたほうがいいのかも *)
 (* ladder.mlとか畳み込めそう *)
