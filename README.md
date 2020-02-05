@@ -2,7 +2,7 @@
 
 Ocamlのサブセットである言語MinCaml用のコンパイラです。
 
-chahan(自作アーキテクチャ), x86, PowerPC, SPARCに対応しています。
+自作アーキテクチャchahanに対応しています。
 
 ## 想定環境
 

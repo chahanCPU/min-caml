@@ -1,8 +1,0 @@
-# /*.cmi
-# /*.cmx
-# /*.o
-# /.minrt
-
-/minrt.s.binary
-/minrt.s.bintext
-/*.ppm
