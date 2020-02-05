@@ -120,15 +120,6 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       | "min_caml_sqrt" ->
           (match ys with [y] -> Ans(FSqrt(y)) 
           | _ -> failwith "sqrt has invalid arguments")
-      | "min_caml_int_of_float" ->
-          (match ys with [y] -> Ans(FTOI(y)) 
-          | _ -> failwith "int_of_float has invalid arguments")
-      | "min_caml_truncate" ->
-          (match ys with [y] -> Ans(FTOI(y)) 
-          | _ -> failwith "truncate has invalid arguments")
-      | "min_caml_float_of_int" ->
-          (match ys with [y] -> Ans(ITOF(y)) 
-          | _ -> failwith "float_of_int has invalid arguments")
       | "min_caml_cos" ->
           (match ys with [y] -> Ans(Cos(y)) 
           | _ -> failwith "cos has invalid arguments")
@@ -193,7 +184,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           Let((offset, Type.Int), SLL(y, C(2)),
               Ans(St(z, x, V(offset))))
       | _ -> assert false)
-  | Closure.ExtArray(Id.L(x)) -> Ans(SetL(Id.L("min_caml_" ^ x)))
+  | Closure.FTOI(x) -> Ans(FTOI(x))
+  | Closure.ITOF(x) -> Ans(ITOF(x))
 
 (* 関数の仮想マシンコード生成 (caml2html: virtual_h) *)
 let h { Closure.name = (Id.L(x), t); Closure.args = yts; Closure.formal_fv = zts; Closure.body = e } =

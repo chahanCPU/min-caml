@@ -196,9 +196,13 @@ let rec output_t' oc depth e =
       Printf.fprintf oc " ";
       OutputId.output_t oc z;
       Printf.fprintf oc "\n"
-  | ExtArray(Id.L(x)) ->
-      Printf.fprintf oc "ExtArray ";
-      OutputId.output_l oc (Id.L(x));
+  | FTOI(x) ->
+      Printf.fprintf oc "FTOI ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
+  | ITOF(x) ->
+      Printf.fprintf oc "ITOF ";
+      OutputId.output_t oc x;
       Printf.fprintf oc "\n"
   
 let output_fundef' oc depth { name = (Id.L(x), t); args = yts; formal_fv = zts; body = e } =

@@ -42,7 +42,8 @@ let rec g env = function (* α変換ルーチン本体 (caml2html: alpha_g) *)
                g env' e)
   | Get(x, y) -> Get(find x env, find y env)
   | Put(x, y, z) -> Put(find x env, find y env, find z env)
-  | ExtArray(x) -> ExtArray(x)
   | ExtFunApp(x, ys) -> ExtFunApp(x, List.map (fun y -> find y env) ys)
+  | FTOI(x) -> FTOI(find x env)
+  | ITOF(x) -> ITOF(find x env)
 
 let f = g M.empty

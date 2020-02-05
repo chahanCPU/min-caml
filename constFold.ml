@@ -58,6 +58,8 @@ let rec g env = function (* 定数畳み込みルーチン本体 (caml2html: con
   | FDiv(x, y) when memf x env && findf x env = 0. -> Float(0.)
   | FDiv(x, y) when memf y env && findf y env = -1. -> FNeg(x)
   | FDiv(x, y) when memf y env && findf y env = 1. -> Var(x)
+  | FTOI(x) when memf x env -> Int(int_of_float(findf x env))
+  | ITOF(x) when memi x env -> Float(float_of_int(findi x env))
   | IfEq(x, y, e1, e2) when memi x env && memi y env -> if findi x env = findi y env then g env e1 else g env e2
   | IfEq(x, y, e1, e2) when memf x env && memf y env -> if findf x env = findf y env then g env e1 else g env e2
   | IfEq(x, y, e1, e2) -> IfEq(x, y, g env e1, g env e2)

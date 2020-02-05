@@ -8,7 +8,7 @@ let addtyp x = (x, Type.gentyp ())
 %token <bool> BOOL
 %token <int> INT
 %token <float> FLOAT
-/* %token NOT */
+%token NOT
 %token MINUS
 %token PLUS
 %token AST
@@ -37,6 +37,8 @@ let addtyp x = (x, Type.gentyp ())
 %token SEMICOLON
 %token LPAREN
 %token RPAREN
+%token FTOI
+%token ITOF
 %token EOF
 
 /* (* 優先順位とassociativityの定義（低い方から高い方へ） (caml2html: parser_prior) *) */
@@ -79,9 +81,9 @@ simple_exp: /* (* 括弧をつけなくても関数の引数になれる式 (cam
 exp: /* (* 一般の式 (caml2html: parser_exp) *) */
 | simple_exp
     { $1 }
-/* | NOT exp
+| NOT exp
     %prec prec_app
-    { Not($2) } */
+    { Not($2) }
 | MINUS exp
     %prec prec_unary_minus
     { match $2 with
@@ -144,6 +146,12 @@ exp: /* (* 一般の式 (caml2html: parser_exp) *) */
 | ARRAY_CREATE simple_exp simple_exp
     %prec prec_app
     { Array($2, $3) }
+| FTOI exp
+    %prec prec_app
+    { FTOI($2) }
+| ITOF exp
+    %prec prec_app
+    { ITOF($2) }
 | error
     /* { failwith
         (Printf.sprintf "parse error near characters %d-%d"

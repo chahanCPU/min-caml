@@ -25,7 +25,7 @@ let rec fiszero x = (x = 0.) in
 (* external (/) : int -> int -> int = "%divint" *)
 
 (* logic *)
-let rec not x = if x then false else true in
+(* let rec not x = if x then false else true in *)
 let rec xor x y = if x then not y else y in
 (* parse error 
 もともとlexer, parserにnotがあったので解決 *)

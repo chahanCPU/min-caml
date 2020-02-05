@@ -160,8 +160,12 @@ let rec output_t' oc depth e =
       Printf.fprintf oc " ";
       OutputId.output_t oc z;
       Printf.fprintf oc "\n"
-  | ExtArray(x) ->
-      Printf.fprintf oc "ExtArray ";
+  | FTOI(x) ->
+      Printf.fprintf oc "FTOI ";
+      OutputId.output_t oc x;
+	    Printf.fprintf oc "\n"
+  | ITOF(x) ->
+      Printf.fprintf oc "ITOF ";
       OutputId.output_t oc x;
       Printf.fprintf oc "\n"
   | ExtFunApp(x, ys) ->

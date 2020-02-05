@@ -86,8 +86,12 @@ let rec g env = function  (* Closure.tの型検査 *)
         assert (M.find z env = t);
         Type.Unit
       | _ -> assert false)
-  | ExtArray(Id.L(x)) -> (* 必要??????????? *)
-      assert false
+  | FTOI(x) ->
+      assert (M.find x env = Type.Float);
+      Type.Int
+  | ITOF(x) ->
+      assert (M.find x env = Type.Int);
+      Type.Float
 
 let h { name = (Id.L(x), t); args = yts; formal_fv = zts; body = e } =  (* Closure.fundefの型検査 *)
   (* assert (Type.Fun(List.map (fun (y, t) -> t) yts, g (M.add_list (zts @ yts) M.empty) e) = t) *)

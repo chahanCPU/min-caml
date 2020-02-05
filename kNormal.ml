@@ -24,12 +24,13 @@ type t = (* K正規化後の式 (caml2html: knormal_t) *)
   | LetTuple of (Id.t * Type.t) list * Id.t * t
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
-  | ExtArray of Id.t
+  | FTOI of Id.t
+  | ITOF of Id.t
   | ExtFunApp of Id.t * Id.t list
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
 let rec fv = function (* 式に出現する（自由な）変数 (caml2html: knormal_fv) *)
-  | Unit | Int(_) | Float(_) | ExtArray(_) -> S.empty
+  | Unit | Int(_) | Float(_) -> S.empty
   | Neg(x) | FNeg(x) -> S.singleton x
   | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
@@ -42,6 +43,7 @@ let rec fv = function (* 式に出現する（自由な）変数 (caml2html: kno
   | Tuple(xs) | ExtFunApp(_, xs) -> S.of_list xs
   | Put(x, y, z) -> S.of_list [x; y; z]
   | LetTuple(xs, y, e) -> S.add y (S.diff (fv e) (S.of_list (List.map fst xs)))
+  | FTOI(x) | ITOF(x) -> S.singleton x
 
 let id_of_type = function
   | Type.Unit -> "unit"
@@ -129,10 +131,10 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
       let e2', t2 = g (M.add x t env) e2 in
       Let((x, t), e1', e2'), t2
   | Syntax.Var(x, []) when M.mem x env -> Var(x), M.find x env
-  | Syntax.Var(x, []) -> (* 外部配列の参照 (caml2html: knormal_extarray) *)
+  (* | Syntax.Var(x, []) -> (* 外部配列の参照 (caml2html: knormal_extarray) *)
       (match M.find x !Typing.extenv with
       | Type.Array(_) as t -> ExtArray x, t
-      | _ -> failwith (Printf.sprintf "external variable %s does not have an array type" x))
+      | _ -> failwith (Printf.sprintf "external variable %s does not have an array type" x)) *)
   | Syntax.Var(_) -> assert false
   | Syntax.LetRec({ Syntax.name = (x, t); Syntax.args = yts; Syntax.body = e1 }, e2) ->
       let env' = M.add x t env in
@@ -197,6 +199,12 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
         (fun x -> insert_let (g env e2)
             (fun y -> insert_let (g env e3)
                 (fun z -> Put(x, y, z), Type.Unit)))
+  | Syntax.FTOI(e) ->
+      insert_let (g env e)
+        (fun x -> FTOI(x), Type.Int)
+  | Syntax.ITOF(e) ->
+      insert_let (g env e)
+        (fun x -> ITOF(x), Type.Float)
 
 let rec b2i_type = function  (* Type.BoolをType.Intに変換 *)
   | Type.Unit | Type.Int | Type.Float as t -> t

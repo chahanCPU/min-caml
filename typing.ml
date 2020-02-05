@@ -68,6 +68,8 @@ let rec subst_term sigma = function  (* termに型代入を実行する *)
   | Array(e1, e2) -> Array(subst_term sigma e1, subst_term sigma e2)
   | Get(e1, e2) -> Get(subst_term sigma e1, subst_term sigma e2)
   | Put(e1, e2, e3) -> Put(subst_term sigma e1, subst_term sigma e2, subst_term sigma e3)
+  | FTOI(e) -> FTOI(subst_term sigma e)
+  | ITOF(e) -> ITOF(subst_term sigma e)
 
 let rec occur alpha = function  (* occur check *)
   | Type.Unit | Type.Bool | Type.Int | Type.Float -> false
@@ -268,10 +270,18 @@ let rec infer env = function  (* 型推論ルーチン *)
       let s1' = unify (subst_type (s3 + s2) t1) (Type.Array(t3)) in
       let s2' = unify (subst_type (s1' + s3) t2) Type.Int in
       (Put(subst_term (s2' + (s1' + (s3 + s2))) e1, subst_term (s2' + (s1' + s3)) e2, subst_term (s2' + s1') e3), Type.Unit, s2' + (s1' + (s3 + (s2 + s1))))
+  | FTOI(e) ->
+      let (e, t, s) = infer env e in
+      let s' = unify t Type.Float in
+      (FTOI(subst_term s' e), Type.Int, s' + s)
+  | ITOF(e) ->
+      let (e, t, s) = infer env e in
+      let s' = unify t Type.Int in
+      (ITOF(subst_term s' e), Type.Float, s' + s)
 
 let rec fv_term = function  (* termにおいて自由に出現する型変数の集合を求める *)
   | Unit | Bool(_) | Int(_) | Float(_) -> S.empty
-  | Not(e) | Neg(e) | FNeg(e) -> fv_term e
+  | Not(e) | Neg(e) | FNeg(e) | FTOI(e) | ITOF(e) -> fv_term e
   | Add(e1, e2) | Sub(e1, e2) | Mul(e1, e2) | Div(e1, e2) | FAdd(e1, e2) | FSub(e1, e2) | FMul(e1, e2) | FDiv(e1, e2) | Eq(e1, e2) | LE(e1, e2) | Array(e1, e2) | Get(e1, e2) -> S.union (fv_term e1) (fv_term e2)
   | If(e1, e2, e3) | Put(e1, e2, e3) -> S.union (S.union (fv_term e1) (fv_term e2)) (fv_term e3)
   | Let((x, t), e1, e2) -> S.union (fv_term e1) (fv_term e2)
@@ -330,6 +340,8 @@ let rec rename_term (x, bindings) x' = function  (* termにおける変数Var(x,
   | Array(e1, e2) -> Array(rename_term (x, bindings) x' e1, rename_term (x, bindings) x' e2)
   | Get(e1, e2) -> Get(rename_term (x, bindings) x' e1, rename_term (x, bindings) x' e2)
   | Put(e1, e2, e3) -> Put(rename_term (x, bindings) x' e1, rename_term (x, bindings) x' e2, rename_term (x, bindings) x' e3)
+  | FTOI(e) -> FTOI(rename_term (x, bindings) x' e)
+  | ITOF(e) -> ITOF(rename_term (x, bindings) x' e)
 
 module S' =
   Set.Make
@@ -340,7 +352,7 @@ module S' =
   
 let rec get_all_bindings x = function  (* 多相関数xがどのようにinstantiateされたかを調べる *)
   | Unit | Bool(_) | Int(_) | Float(_) -> S'.empty
-  | Not(e) | Neg(e) | FNeg(e) -> get_all_bindings x e
+  | Not(e) | Neg(e) | FNeg(e) | FTOI(e) | ITOF(e) -> get_all_bindings x e
   | Add(e1, e2) | Sub(e1, e2) | Mul(e1, e2) | Div(e1, e2) | FAdd(e1, e2) | FSub(e1, e2) | FMul(e1, e2) | FDiv(e1, e2) | Eq(e1, e2) | LE(e1, e2) | Array(e1, e2) | Get(e1, e2) -> S'.union (get_all_bindings x e1) (get_all_bindings x e2)
   | If(e1, e2, e3) | Put(e1, e2, e3) -> S'.union (S'.union (get_all_bindings x e1) (get_all_bindings x e2)) (get_all_bindings x e3)
   | Let((y, t), e1, e2) when x = y -> get_all_bindings x e1
@@ -392,6 +404,8 @@ let rec expand = function  (* 関数の複製(expansion)により、多相関数
   | Array(e1, e2) -> Array(expand e1, expand e2)
   | Get(e1, e2) -> Get(expand e1, expand e2)
   | Put(e1, e2, e3) -> Put(expand e1, expand e2, expand e3)
+  | FTOI(e) -> FTOI(expand e)
+  | ITOF(e) -> ITOF(expand e)
 
 let rec check env = function  (* 型検査 *)
   | Unit -> Type.Unit
@@ -457,6 +471,12 @@ let rec check env = function  (* 型検査 *)
         assert (check env e3 = t');
         Type.Unit
       | _ -> assert false)
+  | FTOI(e) ->
+      assert (check env e = Type.Float); 
+      Type.Int
+  | ITOF(e) ->
+      assert (check env e = Type.Int); 
+      Type.Float
 
 let f e =
   Format.eprintf "type inferring...@.";
