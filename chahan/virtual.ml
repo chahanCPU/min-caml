@@ -27,7 +27,7 @@ let expand xts ini addf addi =
     xts
     ini
     (fun (offset, acc) x ->
-      let offset = align offset in
+      (* let offset = align offset in *)
       (* (offset + 8, addf x offset acc)) *)
       (offset + 4, addf x offset acc))
     (fun (offset, acc) x t ->
@@ -91,7 +91,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           (fun y offset store_fv -> seq(StDF(y, x, C(offset)), store_fv))
           (fun y _ offset store_fv -> seq(St(y, x, C(offset)), store_fv)) in
       Let((x, t), Mov(reg_hp),
-          Let((reg_hp, Type.Int), Add(reg_hp, C(align offset)),
+          (* Let((reg_hp, Type.Int), Add(reg_hp, C(align offset)), *)
+          Let((reg_hp, Type.Int), Add(reg_hp, C(offset)),
               let z = Id.genid "l" in
               Let((z, Type.Int), SetL(l),
                   seq(St(z, x, C(0)),
@@ -152,7 +153,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           (fun x offset store -> seq(StDF(x, y, C(offset)), store))
           (fun x _ offset store -> seq(St(x, y, C(offset)), store)) in
       Let((y, Type.Tuple(List.map (fun x -> M.find x env) xs)), Mov(reg_hp),
-          Let((reg_hp, Type.Int), Add(reg_hp, C(align offset)),
+          (* Let((reg_hp, Type.Int), Add(reg_hp, C(align offset)), *)
+          Let((reg_hp, Type.Int), Add(reg_hp, C(offset)),
               store))
   | Closure.LetTuple(xts, y, e2) ->
       let s = Closure.fv e2 in
