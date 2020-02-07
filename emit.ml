@@ -302,7 +302,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tj\t%s\n" x;
   | NonTail(a), CallCls(x, ys, zs) ->
       g'_args oc [(x, reg_cl)] ys zs;
-      let ss = stacksize () in
+      let ss = stacksize () in  (* ssがそんなに大きくないことが前提 *)
       Printf.fprintf oc "\tsw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       Printf.fprintf oc "\tlw\t%s, 0(%s)\n" reg_sw reg_cl;
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp ss;
@@ -310,7 +310,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       (* Printf.fprintf oc "\tjral\t%s\n" reg_sw; *)
 
       let tmp_label = Id.genid "tmp" in
-      Printf.fprintf oc "\tli\t%s, %s\n" reg_ra tmp_label;
+      Printf.fprintf oc "\tla\t%s, %s\n" reg_ra tmp_label;
       (* Printf.fprintf oc "\taddi\t%s, %s, 12\n" reg_ra reg_ra; *)
       Printf.fprintf oc "\tjr\t%s\n" reg_sw;
       Printf.fprintf oc "%s:\n" tmp_label;
@@ -318,9 +318,9 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp (-ss);
       Printf.fprintf oc "\tlw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       if List.mem a allregs && a <> regs.(0) then
-        Printf.fprintf oc "\tor\t%s, $zero, %s\n" a regs.(0)
+        Printf.fprintf oc "\tmv\t%s, %s\n" a regs.(0)
       else if List.mem a allfregs && a <> fregs.(0) then
-        Printf.fprintf oc "\tadd.s\t%s, $f0, %s\n" a fregs.(0)
+        Printf.fprintf oc "\tmv.s\t%s, %s\n" a fregs.(0)
       (* else if List.mem a allfregs && a <> fregs.(0) then
         (Printf.fprintf oc "\tfmovs\t%s, %s\n" fregs.(0) a;
          Printf.fprintf oc "\tfmovs\t%s, %s\n" (co_freg fregs.(0)) (co_freg a)) *)
@@ -333,9 +333,9 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp (-ss);
       Printf.fprintf oc "\tlw\t%s, %d(%s)\n" reg_ra (ss - 4) reg_sp;
       if List.mem a allregs && a <> regs.(0) then
-        Printf.fprintf oc "\tor\t%s, $zero, %s\n" a regs.(0)
+        Printf.fprintf oc "\tmv\t%s, %s\n" a regs.(0)
       else if List.mem a allfregs && a <> fregs.(0) then
-        Printf.fprintf oc "\tadd.s\t%s, $f0, %s\n" a fregs.(0)
+        Printf.fprintf oc "\tmv.s\t%s, %s\n" a fregs.(0)
       (* else if List.mem a allfregs && a <> fregs.(0) then
         (Printf.fprintf oc "\tfmovs\t%s, %s\n" fregs.(0) a;
          Printf.fprintf oc "\tfmovs\t%s, %s\n" (co_freg fregs.(0)) (co_freg a)) *)
@@ -371,7 +371,7 @@ and g'_args oc x_reg_cl ys zs =
       (0, x_reg_cl)
       ys in
   List.iter
-    (fun (y, r) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" r y)
+    (fun (y, r) -> Printf.fprintf oc "\tmv\t%s, %s\n" r y)
     (shuffle reg_sw yrs);
   let (d, zfrs) =
     List.fold_left
@@ -380,7 +380,7 @@ and g'_args oc x_reg_cl ys zs =
       zs in
   List.iter
     (fun (z, fr) ->
-      Printf.fprintf oc "\tadd.s\t%s, $f0, %s\n" fr z)
+      Printf.fprintf oc "\tmv.s\t%s, %s\n" fr z)
       (* Printf.fprintf oc "\tfmovs\t%s, %s\n" z fr; *)
       (* Printf.fprintf oc "\tfmovs\t%s, %s\n" (co_freg z) (co_freg fr)) *)
     (shuffle reg_fsw zfrs)
