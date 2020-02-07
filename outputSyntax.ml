@@ -1,177 +1,190 @@
 open Syntax
 
-let nTAB = ref 0
-
-let output_TABs oc n =
-  for i = 1 to n do
+let rec output_t' oc depth e =
+  for i = 1 to depth do
     Printf.fprintf oc "\t"
-  done
-
-let rec output_t oc x =
-  let print_string = Printf.fprintf oc "%s" in
-  let print_id = OutputId.output_t oc in
-  let print_type = OutputType.output_t oc in
-  let print_TABs = output_TABs oc in
-  let print_t = output_t oc in
-  let print_fundef = output_fundef oc in
-  let op1 op x =
-    print_string (op ^ "\n");
-    nTAB := !nTAB + 1;
-    print_TABs !nTAB;
-    print_t x;
-    nTAB := !nTAB - 1 in
-  let op2 op x y =
-    print_string (op ^ "\n");    
-    nTAB := !nTAB + 1;
-    print_TABs !nTAB;
-    print_t x;
-    print_TABs !nTAB;
-    print_t y;
-    nTAB := !nTAB - 1 in
-  let op3 op x y z =
-    print_string (op ^ "\n");
-    nTAB := !nTAB + 1;
-    print_TABs !nTAB;
-    print_t x;
-    print_TABs !nTAB;
-    print_t y;
-    print_TABs !nTAB;
-    print_t z;
-    nTAB := !nTAB - 1 in
-  match x with
-  | Unit -> print_string "Unit\n"
-  | Bool b -> Printf.fprintf oc "Bool %B\n" b
-  | Int i -> Printf.fprintf oc "Int %d\n" i
-  | Float f -> Printf.fprintf oc "Float %f\n" f
-  | Not x -> op1 "Not" x
-  | Neg x -> op1 "Neg" x
-  | Add (x,y) -> op2 "Add" x y
-  | Sub (x,y) -> op2 "Sub" x y
-  | Mul (x,y) -> op2 "Mul" x y
-  | Div (x,y) -> op2 "Div" x y
-  | FNeg x -> op1 "FNeg" x
-  | FAdd (x,y) -> op2 "FAdd" x y
-  | FSub (x,y) -> op2 "FSub" x y
-  | FMul (x,y) -> op2 "FMul" x y
-  | FDiv (x,y) -> op2 "FDiv" x y
-  | Eq (x,y) -> op2 "Eq" x y
-  | LE (x,y) -> op2 "LE" x y
-  | If (x,y,z) -> op3 "If" x y z
-  | Let ((id,ty),x,y) ->
-      print_string "Let\n";
-      nTAB := !nTAB + 1;
-      print_TABs !nTAB;
-      print_id id;
-      print_string " : ";
-      print_type ty;
-      print_string "\n";
-      print_TABs !nTAB;
-      print_t x;
-      print_TABs !nTAB;
-      print_t y;
-      nTAB := !nTAB - 1
-  | Var id -> 
-      print_string "Var "; 
-      print_id id;
-      print_string "\n"
-  | LetRec (fundef,x) ->
-      print_string "LetRec\n";
-      nTAB := !nTAB + 1;
-      print_fundef fundef;
-      print_TABs !nTAB;
-      print_t x;
-      nTAB := !nTAB - 1
-  | App (x,l) ->
-      print_string "App\n";
-      nTAB := !nTAB + 1;
-      List.iter (fun x -> print_TABs !nTAB; print_t x) (x::l);
-      nTAB := !nTAB - 1
-  | Tuple l ->
-      print_string "Tuple\n";
-      nTAB := !nTAB + 1;
-      List.iter (fun x -> print_TABs !nTAB; print_t x) l;
-      nTAB := !nTAB - 1
-  | LetTuple (l,x,y) ->
-      print_string "LetTuple\n";
-      nTAB := !nTAB + 1;
-      print_TABs !nTAB;
-      print_string "(";
-      let temp = ref l in
-      while !temp <> [] do
-        match !temp with
-        | (id,ty)::z::rest ->
-            print_id id;
-            print_string " : ";
-            print_type ty;
-            print_string ", ";
-            temp := z::rest
-        | (id,ty)::rest ->
-            print_id id;
-            print_string " : ";
-            print_type ty;
-            temp := rest
-        | [] -> ()
+  done;
+  match e with
+  | Unit -> 
+      Printf.fprintf oc "Unit\n"
+  | Bool(b) -> 
+      Printf.fprintf oc "Bool %B\n" b
+  | Int(i) -> 
+      Printf.fprintf oc "Int %d\n" i
+  | Float(f) -> 
+      Printf.fprintf oc "Float %f\n" f
+  | Not(e) ->
+      Printf.fprintf oc "Not\n";
+      output_t' oc (depth + 1) e
+  | Neg(e) -> 
+      Printf.fprintf oc "Neg\n";
+      output_t' oc (depth + 1) e
+  | Add(e1, e2) ->
+      Printf.fprintf oc "Add\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | Sub(e1, e2) ->
+      Printf.fprintf oc "Sub\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | Mul(e1, e2) ->
+      Printf.fprintf oc "Mul\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | Div(e1, e2) -> 
+      Printf.fprintf oc "Div\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | FNeg(e) ->
+      Printf.fprintf oc "FNeg\n";
+      output_t' oc (depth + 1) e
+  | FAdd(e1, e2) ->
+      Printf.fprintf oc "FAdd\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | FSub(e1, e2) ->
+      Printf.fprintf oc "FSub\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | FMul(e1, e2) ->
+      Printf.fprintf oc "FMul\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | FDiv(e1, e2) -> 
+      Printf.fprintf oc "FDiv\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | Eq(e1, e2) -> 
+      Printf.fprintf oc "Eq\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | LE(e1, e2) -> 
+      Printf.fprintf oc "LE\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | If(e1, e2, e3) -> 
+      Printf.fprintf oc "If\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2;
+      output_t' oc (depth + 1) e3
+  | Let((x, t), e1, e2) -> 
+      Printf.fprintf oc "Let\n";
+      for i = 1 to depth + 1 do
+        Printf.fprintf oc "\t"
       done;
-      print_string ")\n";
-      print_TABs !nTAB;
-      print_t x;
-      print_TABs !nTAB;
-      print_t y;
-      nTAB := !nTAB - 1
-  | Array (x,y) -> op2 "Array" x y
-  | Get (x,y) -> op2 "Get" x y
-  | Put (x,y,z) -> op3 "Put" x y z
+      OutputId.output_t oc x;
+      Printf.fprintf oc " : ";
+      OutputType.output_t oc t;
+      Printf.fprintf oc "\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc depth e2
+  | Var(x, bindings) -> 
+      Printf.fprintf oc "Var ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\t[";
+      let tmp = ref bindings in
+      while !tmp <> [] do
+        match !tmp with
+        | [(alpha, t)] -> 
+            OutputType.output_t oc t;
+            Printf.fprintf oc " / ";
+            OutputId.output_t oc alpha;
+            tmp := []
+        | (alpha, t) :: rest ->
+            OutputType.output_t oc t;
+            Printf.fprintf oc " / ";
+            OutputId.output_t oc alpha;
+            Printf.fprintf oc ", ";
+            tmp := rest
+        | _ -> ()
+      done;
+      Printf.fprintf oc "]\n"
+  | LetRec(fundef, e) ->
+      Printf.fprintf oc "LetRec\n";
+      output_fundef' oc (depth + 1) fundef;
+      output_t' oc depth e
+  | App(e, es) -> 
+      Printf.fprintf oc "App\n";
+      output_t' oc (depth + 1) e;
+      List.iter (fun e -> output_t' oc (depth + 1) e) es
+  | Tuple(es) -> 
+      Printf.fprintf oc "Tuple\n";
+      List.iter (fun e -> output_t' oc (depth + 1) e) es
+  | LetTuple(xts, e1, e2) ->
+      Printf.fprintf oc "LetTuple\n";
+      for i = 1 to depth + 1 do
+        Printf.fprintf oc "\t"
+      done;
+      Printf.fprintf oc "(";
+      let tmp = ref xts in
+      while !tmp <> [] do
+        match !tmp with
+        | [(x, t)] ->
+            OutputId.output_t oc x;
+            Printf.fprintf oc " : ";
+            OutputType.output_t oc t;
+            tmp := []
+        | (x, t) :: xts -> 
+            OutputId.output_t oc x;
+            Printf.fprintf oc " : ";
+            OutputType.output_t oc t;
+            Printf.fprintf oc ", ";
+            tmp := xts 
+        | _ -> ()
+      done;
+      Printf.fprintf oc ")\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc depth e2
+  | Array(e1, e2) -> 
+      Printf.fprintf oc "Array\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | Get(e1, e2) -> 
+      Printf.fprintf oc "Get\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | Put(e1, e2, e3) -> 
+      Printf.fprintf oc "Put\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2;
+			output_t' oc (depth + 1) e3
+	| FTOI(e) ->
+			Printf.fprintf oc "FTOI\n";
+			output_t' oc (depth + 1) e
+	| ITOF(e) ->
+			Printf.fprintf oc "ITOF\n";
+			output_t' oc (depth + 1) e
 
-and output_fundef oc { name = (id,ty); args = l; body = x } = 
-  let print_string = Printf.fprintf oc "%s" in
-  let print_id = OutputId.output_t oc in
-  let print_type = OutputType.output_t oc in
-  let print_TABs = output_TABs oc in
-  let print_t = output_t oc in
-  print_TABs !nTAB; 
-  print_string "FunDef\n";
-  nTAB := !nTAB + 1;
-  print_TABs !nTAB;  
-  print_id id;
-  print_string " : ";
-  print_type ty;
-  print_string "\n";
-  List.iter 
-    (fun (id,ty) -> print_TABs !nTAB;
-                    print_id id;
-                    print_string " : ";
-                    print_type ty;
-                    print_string "\n")
-    l;
-  print_TABs !nTAB; 
-  print_t x;
-  nTAB := !nTAB - 1
+and output_fundef' oc depth { name = (x, t); args = yts; body = e } =
+  for i = 1 to depth do
+    Printf.fprintf oc "\t"
+  done;
+  OutputId.output_t oc x;
+  Printf.fprintf oc " : ";
+  OutputType.output_t oc t;
+  Printf.fprintf oc "\n";
+  for i = 1 to depth do
+    Printf.fprintf oc "\t"
+  done;
+  let tmp = ref yts in
+  while !tmp <> [] do
+    match !tmp with
+    | [(y, t)] -> 
+        OutputId.output_t oc y; 
+        Printf.fprintf oc " : "; 
+        OutputType.output_t oc t;
+        tmp := []
+    | (y, t) :: yts ->
+        OutputId.output_t oc y; 
+        Printf.fprintf oc " : "; 
+        OutputType.output_t oc t;
+        Printf.fprintf oc ", ";
+        tmp := yts 
+    | _ -> ()
+  done;
+  Printf.fprintf oc "\n";
+  output_t' oc depth e
 
-let string_of_t = function
-  | Unit -> "Unit"
-  | Bool b -> "Bool"
-  | Int i -> "Int"
-  | Float f -> "Float"
-  | Not x -> "Not"
-  | Neg x -> "Neg"
-  | Add (x,y) -> "Add"
-  | Sub (x,y) -> "Sub"
-  | FNeg x -> "FNeg"
-  | FAdd _ -> "FAdd"
-  | FSub _ -> "FSub"
-  | FMul _ -> "FMul"
-  | FDiv _ -> "FDiv"
-  | Eq _ -> "Eq"
-  | LE _ -> "LE"
-  | If _ -> "If"
-  | Let _ -> "Let"
-  | Var _ -> "Var"
-  | LetRec _ -> "LetRec"
-  | App _ -> "App"
-  | Tuple _ -> "Tuple"
-  | LetTuple _ -> "LetTuple"
-  | Array _ -> "Array"
-  | Get _ -> "Get"
-  | Put _ -> "Put"
+let output_t oc e = output_t' oc 0 e
 
-let string_of_fundef fundef = "fundef"
+let output_fundef oc fundef = output_fundef' oc 0 fundef

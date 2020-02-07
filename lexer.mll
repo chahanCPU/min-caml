@@ -27,6 +27,9 @@ rule token = parse
     { BOOL(true) }
 | "false"
     { BOOL(false) }
+(* let not = 1 in not を許したい *)
+(* 代わりにlibmincaml.mlに実装 *)
+(* 命令が長くなるので、後に要修正 *)
 | "not"
     { NOT }
 | digit+ (* 整数を字句解析するルール (caml2html: lexer_int) *)
@@ -76,7 +79,8 @@ rule token = parse
 | ','
     { COMMA }
 | '_'
-    { IDENT(Id.gentmp Type.Unit) }
+    { IDENT(Id.genid "Tunit") }
+    (* { IDENT(Id.gentmp Type.Unit) } *)
 | "Array.create" | "Array.make" | "create_array" (* [XX] ad hoc *)
     { ARRAY_CREATE }
 | '.'
@@ -85,6 +89,10 @@ rule token = parse
     { LESS_MINUS }
 | ';'
     { SEMICOLON }
+| "int_of_float" | "truncate"
+    { FTOI }
+| "float_of_int"
+    { ITOF }
 | eof
     { EOF }
 | lower (digit|lower|upper|'_')* (* 他の「予約語」より後でないといけない *)
@@ -112,3 +120,4 @@ and comment = parse
 (* ここで組み込まれている関数に関しては、 *)
 (* let not = 1 then print_int not *)
 (* みたいなことはできないので、どうなんだろう *)
+(* int_of_float, truncateもfloat_of_intも *)

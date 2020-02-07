@@ -1,225 +1,275 @@
 open Closure
-open Printf
 
-let nTAB = ref 0
-
-let output_TABs oc n =
-  for i = 1 to n do
+let output_closure' oc depth { entry = Id.L(x); actual_fv = ys } = 
+  for i = 1 to depth do
     Printf.fprintf oc "\t"
-  done
+  done;
+  Printf.fprintf oc "Closure\n";
+  for i = 1 to depth + 1 do
+    Printf.fprintf oc "\t"
+  done;
+  Printf.fprintf oc "<entry> ";
+  OutputId.output_l oc (Id.L(x));
+  Printf.fprintf oc "\n";
+  for i = 1 to depth + 1 do
+    Printf.fprintf oc "\t"
+  done;
+  Printf.fprintf oc "<actual_fv> ";
+  let tmp = ref ys in
+  while !tmp <> [] do
+    match !tmp with
+    | [y] -> OutputId.output_t oc y; tmp := []
+    | y :: ys -> OutputId.output_t oc y; Printf.fprintf oc ", "; tmp := ys 
+    | _ -> ()
+  done;
+  Printf.fprintf oc "\n"
 
-let rec output_closure oc closure = 
-  let print_string = Printf.fprintf oc "%s" in
-  let print_id = OutputId.output_t oc in
-  let print_idl = OutputId.output_l oc in
-  let print_TABs = output_TABs oc in
-  let { entry = id; actual_fv = l } = closure in
-  print_string "Closure\n";
-  nTAB := !nTAB + 1;
-  print_TABs !nTAB;
-  print_idl id;
-  print_string "\n";
-  List.iter 
-    (fun id -> print_TABs !nTAB; print_id id ; print_string "\n")
-    l;
-  nTAB := !nTAB - 1
-
-and output_t oc x = 
-  let print_string = Printf.fprintf oc "%s" in
-  let print_id = OutputId.output_t oc in
-  let print_idl = OutputId.output_l oc in
-  let print_type = OutputType.output_t oc in
-  let print_TABs = output_TABs oc in
-  let print_closure = output_closure oc in
-  let print_t = output_t oc in
-  let op1 op x = 
-    print_string (op ^ " ");
-    print_id x;
-    print_string "\n" in
-  let op2 op x y =
-    print_string (op ^ " ");
-    print_id x;
-    print_string " ";
-    print_id y;
-    print_string "\n" in
-  let op3 op x y z =
-    print_string (op ^ " "); 
-    print_id x;
-    print_string " ";
-    print_id y;
-    print_string " ";
-    print_id z;
-    print_string "\n" in
-  let opIf op id1 id2 t1 t2 =
-    print_string (op ^ " ");
-    print_id id1;
-    print_string " ";
-    print_id id2;
-    print_string "\n";
-    nTAB := !nTAB + 1;
-    print_TABs !nTAB;
-    print_t t1;
-    print_TABs !nTAB;
-    print_t t2;
-    nTAB := !nTAB - 1 in
-  match x with
-  | Unit -> print_string "Unit\n"
-  | Int i -> Printf.fprintf oc "Int %d\n" i
-  | Float f -> Printf.fprintf oc "Float %f\n" f
-  | Neg x -> op1 "Neg" x
-  | Add (x,y) -> op2 "Add" x y
-  | Sub (x,y) -> op2 "Sub" x y
-  | Mul (x,y) -> op2 "Mul" x y
-  | Div (x,y) -> op2 "Div" x y
-  | FNeg x -> op1 "FNeg" x
-  | FAdd (x,y) -> op2 "FAdd" x y
-  | FSub (x,y) -> op2 "FSub" x y
-  | FMul (x,y) -> op2 "FMul" x y
-  | FDiv (x,y) -> op2 "FDiv" x y
-  | IfEq (x,y,x',y') -> opIf "IfEq" x y x' y'
-  | IfLE (x,y,x',y') -> opIf "IfLE" x y x' y'
-  | Let ((id,ty),x,y) ->
-      print_string "Let\n";
-      nTAB := !nTAB + 1;
-      print_TABs !nTAB;
-      print_id id;
-      print_string " : ";
-      print_type ty;
-      print_string "\n";
-      print_TABs !nTAB;
-      print_t x;
-      print_TABs !nTAB;
-      print_t y;
-      nTAB := !nTAB - 1
-  | Var id -> 
-      print_string "Var "; 
-      print_id id; 
-      print_string "\n"
-  | MakeCls ((id,ty),closure,x) ->
-      print_string "MakeCls\n";
-      nTAB := !nTAB + 1;
-      print_TABs !nTAB;
-      print_id id;
-      print_string " : ";
-      print_type ty;
-      print_string "\n";
-      print_TABs !nTAB;
-      print_closure closure;
-      print_TABs !nTAB;
-      print_t x;
-      nTAB := !nTAB - 1
-  | AppCls (id,l) ->
-      print_string "AppCls ";
-      List.iter (fun id -> print_id id; print_string " ") (id::l);
-      print_string "\n"
-  | AppDir (id,l) ->
-      print_string "AppDir ";
-      print_idl id;
-      print_string " ";
-      List.iter (fun id -> print_id id; print_string " ") l;
-      print_string "\n"
-  | Tuple l ->
-      print_string "Tuple (";
-      let temp = ref l in
-      while !temp <> [] do
-        match !temp with
-        | x::z::rest ->
-            print_id x;
-            print_string ", ";
-            temp := z::rest
-        | x::rest ->
-            print_id x;
-            temp := rest
-        | [] -> ()
+let rec output_t' oc depth e =
+  for i = 1 to depth do
+    Printf.fprintf oc "\t"
+  done;
+  match e with
+  | Unit -> 
+      Printf.fprintf oc "Unit\n"
+  | Int(i) ->
+      Printf.fprintf oc "Int %d\n" i
+  | Float(f) ->
+      Printf.fprintf oc "Float %f\n" f
+  | Neg(x) ->
+      Printf.fprintf oc "Neg ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
+  | Add(x, y) ->
+      Printf.fprintf oc "Add ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
+  | Sub(x, y) ->
+      Printf.fprintf oc "Sub ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
+  | Mul(x, y) ->
+      Printf.fprintf oc "Mul ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
+  | Div(x, y) ->
+      Printf.fprintf oc "Div ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
+  | FNeg(x) ->
+      Printf.fprintf oc "FNeg ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
+  | FAdd(x, y) ->
+      Printf.fprintf oc "FAdd ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
+  | FSub(x, y) ->
+      Printf.fprintf oc "FSub ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
+  | FMul(x, y) ->
+      Printf.fprintf oc "FMul ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
+  | FDiv(x, y) ->
+      Printf.fprintf oc "FDiv ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
+  | IfEq(x, y, e1, e2) ->
+      Printf.fprintf oc "IfEq ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | IfLE(x, y, e1, e2) ->
+      Printf.fprintf oc "IfLE ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc (depth + 1) e2
+  | Let((x, t), e1, e2) ->
+      Printf.fprintf oc "Let\n";
+      for i = 1 to depth + 1 do
+        Printf.fprintf oc "\t"
       done;
-      print_string ")\n"
-  | LetTuple (l,id,x) ->
-      print_string "LetTuple\n";
-      nTAB := !nTAB + 1;
-      print_TABs !nTAB;
-      print_string "(";
-      let temp = ref l in
-      while !temp <> [] do
-        match !temp with
-        | (id,ty)::z::rest ->
-            print_id id;
-            print_string " : ";
-            print_type ty;
-            print_string ", ";
-            temp := z::rest
-        | (id,ty)::rest ->
-            print_id id;
-            print_string " : ";
-            print_type ty;
-            temp := rest
-        | [] -> ()
+      OutputId.output_t oc x;
+      Printf.fprintf oc " : ";
+      OutputType.output_t oc t;
+      Printf.fprintf oc "\n";
+      output_t' oc (depth + 1) e1;
+      output_t' oc depth e2
+  | Var(x) ->
+      Printf.fprintf oc "Var ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
+  | MakeCls((x, t), cls, e) ->
+      Printf.fprintf oc "MakeCls\n";
+      for i = 1 to depth + 1 do
+        Printf.fprintf oc "\t"
       done;
-      print_string ")\n";
-      print_TABs !nTAB;
-      print_id id;
-      print_string "\n";
-      print_TABs !nTAB;
-      print_t x;
-      nTAB := !nTAB - 1
-  | Get (x,y) -> op2 "Get" x y
-  | Put (x,y,z) -> op3 "Put" x y z
-  | ExtArray x ->
-      print_string "ExtArray ";
-      print_idl x;
-      print_string "\n";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " : ";
+      OutputType.output_t oc t;
+      Printf.fprintf oc "\n";
+      output_closure' oc (depth + 1) cls;
+      output_t' oc depth e
+  | AppCls(x, ys) ->
+      Printf.fprintf oc "AppCls ";
+      OutputId.output_t oc x;
+      List.iter (fun y -> Printf.fprintf oc " "; OutputId.output_t oc y) ys;
+      Printf.fprintf oc "\n"
+  | AppDir(Id.L(x), ys) ->
+      Printf.fprintf oc "AppDir ";
+      OutputId.output_l oc (Id.L(x));
+      List.iter (fun y -> Printf.fprintf oc " "; OutputId.output_t oc y) ys;
+      Printf.fprintf oc "\n"
+  | Tuple(xs) ->
+      Printf.fprintf oc "Tuple(";
+      let tmp = ref xs in
+      while !tmp <> [] do
+        match !tmp with
+        | [x] -> OutputId.output_t oc x; tmp := []
+        | x :: xs -> OutputId.output_t oc x; Printf.fprintf oc ", "; tmp := xs
+        | _ -> ()
+      done;
+      Printf.fprintf oc ")\n"
+  | LetTuple(xts, y, e) ->
+      Printf.fprintf oc "LetTuple\n";
+      for i = 1 to depth + 1 do
+        Printf.fprintf oc "\t"
+      done;
+      Printf.fprintf oc "(";
+      let tmp = ref xts in
+      while !tmp <> [] do
+        match !tmp with
+        | [(x, t)] ->
+            OutputId.output_t oc x;
+            Printf.fprintf oc " : ";
+            OutputType.output_t oc t;
+            tmp := []
+        | (x, t) :: xts ->
+            OutputId.output_t oc x;
+            Printf.fprintf oc " : ";
+            OutputType.output_t oc t;
+            Printf.fprintf oc ", ";
+            tmp := xts 
+        | _ -> ()
+      done;
+      Printf.fprintf oc ")\n";
+      for i = 1 to depth + 1 do
+        Printf.fprintf oc "\t"
+      done;
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n";
+      output_t' oc depth e
+  | Get(x, y) ->
+      Printf.fprintf oc "Get ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
+  | Put(x, y, z) ->
+      Printf.fprintf oc "Put ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc z;
+      Printf.fprintf oc "\n"
+  | FTOI(x) ->
+      Printf.fprintf oc "FTOI ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
+  | ITOF(x) ->
+      Printf.fprintf oc "ITOF ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
+  
+let output_fundef' oc depth { name = (Id.L(x), t); args = yts; formal_fv = zts; body = e } =
+  for i = 1 to depth do
+    Printf.fprintf oc "\t"
+  done;
+  Printf.fprintf oc "FunDef\n";
+  for i = 1 to depth + 1 do
+    Printf.fprintf oc "\t"
+  done;
+  Printf.fprintf oc "<name> ";
+  OutputId.output_l oc (Id.L(x));
+  Printf.fprintf oc " : ";
+  OutputType.output_t oc t;
+  Printf.fprintf oc "\n";
+  for i = 1 to depth + 1 do
+    Printf.fprintf oc "\t"
+  done;
+  Printf.fprintf oc "<args> ";
+  let tmp = ref yts in
+  while !tmp <> [] do
+    match !tmp with
+    | [(y, t)] -> 
+        OutputId.output_t oc y; 
+        Printf.fprintf oc " : "; 
+        OutputType.output_t oc t;
+        tmp := []
+    | (y, t) :: yts ->
+        OutputId.output_t oc y; 
+        Printf.fprintf oc " : "; 
+        OutputType.output_t oc t;
+        Printf.fprintf oc ", ";
+        tmp := yts 
+    | _ -> ()
+  done;
+  Printf.fprintf oc "\n";
+  for i = 1 to depth + 1 do
+    Printf.fprintf oc "\t"
+  done;
+  Printf.fprintf oc "<formal_fv> ";
+  let tmp = ref zts in
+  while !tmp <> [] do
+    match !tmp with
+    | [(z, t)] -> 
+        OutputId.output_t oc z; 
+        Printf.fprintf oc " : "; 
+        OutputType.output_t oc t;
+        tmp := []
+    | (z, t) :: zts ->
+        OutputId.output_t oc z; 
+        Printf.fprintf oc " : "; 
+        OutputType.output_t oc t;
+        Printf.fprintf oc ", ";
+        tmp := zts 
+    | _ -> ()
+  done;
+  Printf.fprintf oc "\n";
+  output_t' oc (depth + 1) e
 
-and output_fundef oc fundef = 
-  let print_string = Printf.fprintf oc "%s" in
-  let print_id = OutputId.output_t oc in
-  let print_idl = OutputId.output_l oc in
-  let print_type = OutputType.output_t oc in
-  let print_TABs = output_TABs oc in
-  let print_t = output_t oc in
-  let { name = (id,ty); args = l1; formal_fv = l2; body = x } = fundef in
-  print_string "FunDef\n";
-  nTAB := !nTAB + 1;
-  print_TABs !nTAB;
-  print_string "/* name */\n";
-  print_TABs !nTAB;
-  print_idl id;
-  print_string " : ";
-  print_type ty;
-  print_string "\n";
-  print_TABs !nTAB;
-  print_string "/* args */\n";
-  List.iter 
-    (fun (id,ty) -> print_TABs !nTAB;
-                    print_id id;
-                    print_string " : ";
-                    print_type ty;
-                    print_string "\n")
-    l1;
-  print_TABs !nTAB;
-  print_string "/* formal_fv */\n";
-  List.iter 
-    (fun (id,ty) -> print_TABs !nTAB;
-                    print_id id;
-                    print_string " : ";
-                    print_type ty;
-                    print_string "\n")
-    l2;
-  print_TABs !nTAB;
-  print_string "/* body */\n";
-  print_TABs !nTAB;
-  print_t x;
-  nTAB := !nTAB - 1
+let output_prog' oc depth (Prog(fundefs, e)) =
+  List.iter (output_fundef' oc depth) fundefs;
+  output_t' oc depth e
 
-and output_prog oc prog = 
-  let print_string = Printf.fprintf oc "%s" in
-  let print_TABs = output_TABs oc in
-  let print_t = output_t oc in
-  let print_fundef = output_fundef oc in
-  let Prog (l,x) = prog in
-  print_string "Prog\n";
-  nTAB := !nTAB + 1;
-  List.iter 
-    (fun fundef -> print_TABs !nTAB; print_fundef fundef)
-    l;
-  print_TABs !nTAB;
-  print_t x;
-  nTAB := !nTAB - 1
+let output_closure oc cls = output_closure' oc 0 cls
+
+let output_t oc e = output_t' oc 0 e
+
+let output_fundef oc fundef = output_fundef' oc 0 fundef
+
+let output_prog oc prog = output_prog' oc 0 prog

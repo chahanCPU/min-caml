@@ -24,12 +24,13 @@ type t = (* K正規化後の式 (caml2html: knormal_t) *)
   | LetTuple of (Id.t * Type.t) list * Id.t * t
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
-  | ExtArray of Id.t
+  | FTOI of Id.t
+  | ITOF of Id.t
   | ExtFunApp of Id.t * Id.t list
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
 let rec fv = function (* 式に出現する（自由な）変数 (caml2html: knormal_fv) *)
-  | Unit | Int(_) | Float(_) | ExtArray(_) -> S.empty
+  | Unit | Int(_) | Float(_) -> S.empty
   | Neg(x) | FNeg(x) -> S.singleton x
   | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
@@ -42,12 +43,24 @@ let rec fv = function (* 式に出現する（自由な）変数 (caml2html: kno
   | Tuple(xs) | ExtFunApp(_, xs) -> S.of_list xs
   | Put(x, y, z) -> S.of_list [x; y; z]
   | LetTuple(xs, y, e) -> S.add y (S.diff (fv e) (S.of_list (List.map fst xs)))
+  | FTOI(x) | ITOF(x) -> S.singleton x
+
+let id_of_type = function
+  | Type.Unit -> "unit"
+  | Type.Bool -> "bool"
+  | Type.Int -> "int"
+  | Type.Float -> "float"
+  | Type.Fun _ -> "fun"
+  | Type.Tuple _ -> "tuple"
+  | Type.Array _ -> "array" 
+  | Type.Var _ | Type.Scheme _ -> assert false
 
 let insert_let (e, t) k = (* letを挿入する補助関数 (caml2html: knormal_insert) *)
   match e with
   | Var(x) -> k x
   | _ ->
-      let x = Id.gentmp t in
+      (* let x = Id.gentmp t in *)
+      let x = Id.genid ("T" ^ id_of_type t) in
       let e', t' = k x in
       Let((x, t), e, e'), t'
 
@@ -117,17 +130,18 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
       let e1', t1 = g env e1 in
       let e2', t2 = g (M.add x t env) e2 in
       Let((x, t), e1', e2'), t2
-  | Syntax.Var(x) when M.mem x env -> Var(x), M.find x env
-  | Syntax.Var(x) -> (* 外部配列の参照 (caml2html: knormal_extarray) *)
+  | Syntax.Var(x, []) when M.mem x env -> Var(x), M.find x env
+  (* | Syntax.Var(x, []) -> (* 外部配列の参照 (caml2html: knormal_extarray) *)
       (match M.find x !Typing.extenv with
       | Type.Array(_) as t -> ExtArray x, t
-      | _ -> failwith (Printf.sprintf "external variable %s does not have an array type" x))
+      | _ -> failwith (Printf.sprintf "external variable %s does not have an array type" x)) *)
+  | Syntax.Var(_) -> assert false
   | Syntax.LetRec({ Syntax.name = (x, t); Syntax.args = yts; Syntax.body = e1 }, e2) ->
       let env' = M.add x t env in
       let e2', t2 = g env' e2 in
       let e1', t1 = g (M.add_list yts env') e1 in
       LetRec({ name = (x, t); args = yts; body = e1' }, e2'), t2
-  | Syntax.App(Syntax.Var(f), e2s) when not (M.mem f env) -> (* 外部関数の呼び出し (caml2html: knormal_extfunapp) *)
+  | Syntax.App(Syntax.Var(f, []), e2s) when not (M.mem f env) -> (* 外部関数の呼び出し (caml2html: knormal_extfunapp) *)
       (match M.find f !Typing.extenv with
       | Type.Fun(_, t) ->
           let rec bind xs = function (* "xs" are identifiers for the arguments *)
@@ -175,7 +189,7 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
               ExtFunApp(l, [x; y]), Type.Array(t2)))
   | Syntax.Get(e1, e2) ->
       (match g env e1 with
-      |        _, Type.Array(t) as g_e1 ->
+      | _, Type.Array(t) as g_e1 ->
           insert_let g_e1
             (fun x -> insert_let (g env e2)
                 (fun y -> Get(x, y), t))
@@ -185,5 +199,33 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
         (fun x -> insert_let (g env e2)
             (fun y -> insert_let (g env e3)
                 (fun z -> Put(x, y, z), Type.Unit)))
+  | Syntax.FTOI(e) ->
+      insert_let (g env e)
+        (fun x -> FTOI(x), Type.Int)
+  | Syntax.ITOF(e) ->
+      insert_let (g env e)
+        (fun x -> ITOF(x), Type.Float)
 
-let f e = fst (g M.empty e)
+let rec b2i_type = function  (* Type.BoolをType.Intに変換 *)
+  | Type.Unit | Type.Int | Type.Float as t -> t
+  | Type.Bool -> Type.Int
+  | Type.Fun(ts, t) -> Type.Fun(List.map b2i_type ts, b2i_type t)
+  | Type.Tuple(ts) -> Type.Tuple(List.map b2i_type ts)
+  | Type.Array(t) -> Type.Array(b2i_type t)
+  | Type.Var _ | Type.Scheme _ -> assert false
+
+let rec b2i_term = function  (* Type.BoolをType.Intに変換 *)
+  | IfEq(x, y, e1, e2) -> IfEq(x, y, b2i_term e1, b2i_term e2)
+  | IfLE(x, y, e1, e2) -> IfLE(x, y, b2i_term e1, b2i_term e2)
+  | Let((x, t), e1, e2) -> 
+      Let((x, b2i_type t), b2i_term e1, b2i_term e2)
+  | LetRec({ name = (x, t); args = yts; body = e1 }, e2) -> 
+      LetRec({ name = (x, b2i_type t);
+               args = List.map (fun (y, t) -> (y, b2i_type t)) yts;
+               body = b2i_term e1 },
+             b2i_term e2)
+  | LetTuple(xts, y, e) ->
+      LetTuple(List.map (fun (x, t) -> (x, b2i_type t)) xts, y, b2i_term e)
+  | e -> e
+
+let f e = b2i_term (fst (g M.empty e))

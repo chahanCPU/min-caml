@@ -88,8 +88,6 @@ let reflections =
 (* reflectionsの有効な要素数 *) 
 let n_reflections = create_array 1 0 in
 
-();
-
 
 (****************************************************************)
 (*                                                              *)
@@ -1706,7 +1704,8 @@ let rec trace_reflections index diffuse hilight_scale dirvec =
 
     (*反射光を逆にたどり、実際にその鏡面に当たれば、反射光が届く可能性有り *)
     if judge_intersection_fast dvec then
-      let surface_id = intersected_object_id.(0) + intersected_object_id.(0) + intersected_object_id.(0) + intersected_object_id.(0) + intsec_rectside.(0) in
+      (* let surface_id = intersected_object_id.(0) + intersected_object_id.(0) + intersected_object_id.(0) + intersected_object_id.(0) + intsec_rectside.(0) in *)
+      let surface_id = intersected_object_id.(0) * 4 + intsec_rectside.(0) in
       if surface_id = r_surface_id rinfo then
 	(* 鏡面との衝突点が光源の影になっていなければ反射光は届く *)
         if not (shadow_check_one_or_matrix 0 or_net.(0)) then
@@ -1742,7 +1741,8 @@ let rec trace_ray nref energy dirvec pixel dist =
       utexture obj intersection_point; (*テクスチャを計算 *)
 
       (* pixel tupleに情報を格納する *)
-      surface_ids.(nref) <- obj_id + obj_id + obj_id + obj_id + intsec_rectside.(0);
+      (* surface_ids.(nref) <- obj_id + obj_id + obj_id + obj_id + intsec_rectside.(0); *)
+      surface_ids.(nref) <- obj_id * 4 + intsec_rectside.(0);
       let intersection_points = p_intersection_points pixel in
       veccpy intersection_points.(nref) intersection_point;
 
@@ -2203,6 +2203,7 @@ in
    格子状に並ぶような配列を使う。この配列では方角によるベクトルの密度の差が
    大きいので、これに補正を加えたものを最終的に用いる *)
 
+(* tanも消したい。組み込みにしたい *)
 let rec tan x =
   sin(x) /. cos(x)
 in
@@ -2325,7 +2326,8 @@ in
 
 (* 直方体の各面について情報を追加する *)
 let rec setup_rect_reflection obj_id obj =
-  let sid = obj_id + obj_id + obj_id + obj_id in
+  (* let sid = obj_id + obj_id + obj_id + obj_id in *)
+  let sid = obj_id * 4 in
   let nr = n_reflections.(0) in
   let br = 1.0 -. o_diffuse obj in
   let n0 = fneg light.(0) in
@@ -2339,7 +2341,8 @@ in
 
 (* 平面について情報を追加する *)
 let rec setup_surface_reflection obj_id obj =
-  let sid = obj_id + obj_id + obj_id + obj_id + 1 in
+  (* let sid = obj_id + obj_id + obj_id + obj_id + 1 in *)
+  let sid = obj_id * 4 + 1 in
   let nr = n_reflections.(0) in
   let br = 1.0 -. o_diffuse obj in
   let p = veciprod light (o_param_abc obj) in
@@ -2379,8 +2382,10 @@ let rec rt size_x size_y =
 (
  image_size.(0) <- size_x;
  image_size.(1) <- size_y;
- image_center.(0) <- int_of_float (float_of_int size_x /. 2.0);
- image_center.(1) <- int_of_float (float_of_int size_y /. 2.0);
+ (* image_center.(0) <- int_of_float (float_of_int size_x /. 2.0); *)
+ (* image_center.(1) <- int_of_float (float_of_int size_y /. 2.0); *)
+ image_center.(0) <- size_x / 2;
+ image_center.(1) <- size_y / 2;
  scan_pitch.(0) <- 128.0 /. float_of_int size_x;
  let prev = create_pixelline () in
  let cur  = create_pixelline () in

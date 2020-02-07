@@ -11,6 +11,7 @@ let genid s =
   incr counter;
   Printf.sprintf "%s.%d" s !counter
 
+(*
 let rec id_of_typ = function
   | Type.Unit -> "u"
   | Type.Bool -> "b"
@@ -23,3 +24,4 @@ let rec id_of_typ = function
 let gentmp typ =
   incr counter;
   Printf.sprintf "T%s%d" (id_of_typ typ) !counter
+*)

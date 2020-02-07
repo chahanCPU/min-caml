@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-ln -sf chahan/{*.ml{,i},libmincaml.S,make.mk} .
-cd test; ln -sf chahan/{,too}manyargs.ml .; cd ..
-cd shootout; ln -sf chahan/Makefile .; cd ..
-cd bytemark; ln -sf chahan/Makefile .; cd ..
-cd min-rt; ln -sf chahan/globals.s .; cd ..

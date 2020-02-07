@@ -10,8 +10,10 @@ CFLAGS = -g -O2 -Wall
 OCAMLLDFLAGS=-warn-error -31
 
 # default: debug-code top $(RESULT) do_test
-default: debug-code top $(RESULT)
-$(RESULT): debug-code top
+# default: debug-code top $(RESULT)
+# $(RESULT): debug-code top
+default: $(RESULT)
+$(RESULT): debug-code
 ## [自分（住井）用の注]
 ## ・OCamlMakefileや古いGNU Makeのバグ(?)で上のような定義が必要(??)
 ## ・OCamlMakefileではdebug-codeとnative-codeのそれぞれで
@@ -20,11 +22,13 @@ $(RESULT): debug-code top
 clean:: nobackup
 
 # ↓もし実装を改造したら、それに合わせて変える
-SOURCES = float.c type.ml id.ml m.ml s.ml outputId.mli outputId.ml outputType.mli outputType.ml \
+SOURCES = float.c id.ml type.ml m.ml s.ml outputId.mli outputId.ml outputType.mli outputType.ml \
+libtype.ml \
 syntax.ml outputSyntax.mli outputSyntax.ml parser.mly lexer.mll typing.mli typing.ml kNormal.mli kNormal.ml \
 alpha.mli alpha.ml beta.mli beta.ml assoc.mli assoc.ml \
 inline.mli inline.ml constFold.mli constFold.ml elim.mli elim.ml \
 outputKNormal.mli outputKNormal.ml commonSubexpressionElimination.mli commonSubexpressionElimination.ml \
+closureTypeCheck.mli closureTypeCheck.ml \
 closure.mli closure.ml asm.mli asm.ml virtual.mli virtual.ml \
 simm.mli simm.ml regAlloc.mli regAlloc.ml emit.mli emit.ml \
  \
@@ -40,7 +44,8 @@ TESTS = print sum-tail gcd sum fib ack even-odd \
 adder funcomp cls-rec cls-bug cls-bug2 cls-reg-bug \
 shuffle spill spill2 spill3 join-stack join-stack2 join-stack3 \
 join-reg join-reg2 non-tail-if non-tail-if2 \
-inprod inprod-rec inprod-loop matmul matmul-flat
+inprod inprod-rec inprod-loop matmul matmul-flat \
+polymorphism
 # manyargs
 # TESTS = print sum-tail gcd sum fib ack even-odd float1 float2 mandelbrot
 # TESTS = week2-1 week2-2 week2-3a1 week2-3a2 week2-3b1 week2-3b2

@@ -1,4 +1,4 @@
-open KNormal
+(* open KNormal
 
 let eq = ref []  (* let id:ty = x in y について、((id,ty),x)を集めたリスト *)
 let kaeru = ref []  (* (id',id)のリストで、id'をidに変換 *)
@@ -40,4 +40,4 @@ let rec henkan x kaeru =
 let f x =
   find x eq;
   onaji eq kaeru;
-  henkan x kaeru
+  henkan x kaeru *)
