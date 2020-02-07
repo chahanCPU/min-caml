@@ -30,8 +30,9 @@ inline.mli inline.ml constFold.mli constFold.ml elim.mli elim.ml \
 outputKNormal.mli outputKNormal.ml commonSubexpressionElimination.mli commonSubexpressionElimination.ml \
 closureTypeCheck.mli closureTypeCheck.ml \
 closure.mli closure.ml asm.mli asm.ml virtual.mli virtual.ml \
-simm.mli simm.ml regAlloc.mli regAlloc.ml emit.mli emit.ml \
- \
+simm.mli simm.ml \
+asmBeta.mli asmBeta.ml asmConstFold.mli asmConstFold.ml asmElim.mli asmElim.ml peephole.mli peephole.ml \
+regAlloc.mli regAlloc.ml emit.mli emit.ml \
 outputClosure.mli outputClosure.ml outputAsm.mli outputAsm.ml \
 catLib.mli catLib.ml \
 main.mli main.ml

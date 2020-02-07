@@ -481,6 +481,7 @@ let rec check env = function  (* 型検査 *)
 let f e =
   Format.eprintf "type inferring...@.";
   let (e, _, _) = infer M.empty e in
+  (* OutputSyntax.output_t stdout e; *)
   let e = undefinedtype_to_int e in
   let e = expand e in
   ignore (check M.empty e);

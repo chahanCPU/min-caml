@@ -88,8 +88,6 @@ let reflections =
 (* reflectionsの有効な要素数 *) 
 let n_reflections = create_array 1 0 in
 
-();
-
 
 (****************************************************************)
 (*                                                              *)

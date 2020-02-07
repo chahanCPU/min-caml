@@ -32,7 +32,7 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   | FInv of Id.t
   | LdDF of Id.t * id_or_imm
   | StDF of Id.t * Id.t * id_or_imm
-  | Comment of string
+  | Comment of string  (* 消したい *)
   (* virtual instructions *)
   | IfEq of Id.t * id_or_imm * t * t
   | IfLE of Id.t * id_or_imm * t * t
