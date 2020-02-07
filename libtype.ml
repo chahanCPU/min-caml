@@ -9,10 +9,10 @@ let extenv =
      ("int_of_float", Fun([Float], Int)); 
      ("truncate", Fun([Float], Int)); 
      ("float_of_int", Fun([Int], Float)); 
-     ("cos", Fun([Float], Float));
+     (* ("cos", Fun([Float], Float));
      ("sin", Fun([Float], Float));
      ("tan", Fun([Float], Float));
-     ("atan", Fun([Float], Float));
+     ("atan", Fun([Float], Float)); *)
      ("print_newline", Fun([Unit], Unit));
      ("read_int", Fun([Unit], Int));
      ("read_float", Fun([Unit], Float))

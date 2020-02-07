@@ -51,10 +51,6 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   | FSqrt of Id.t
   | FTOI of Id.t
   | ITOF of Id.t
-  | Cos of Id.t
-  | Sin of Id.t
-  | Tan of Id.t
-  | ATan of Id.t
 type fundef = { name : Id.l; args : Id.t list; fargs : Id.t list; body : t; ret : Type.t }
 (* プログラム全体 = トップレベル関数 + メインの式 (caml2html: sparcasm_prog) *)
 type prog = Prog of fundef list * t
@@ -106,7 +102,7 @@ let rec remove_and_uniq xs = function
 let fv_id_or_imm = function V(x) -> [x] | _ -> []
 let rec fv_exp = function
   | Nop | Set(_) | FSetD(_) | SetL(_) | Comment(_) | Restore(_) -> []
-  | Mov(x) | Neg(x) | SRA(x, _) | FMovD(x) | FNegD(x) | FInv(x) | Save(x, _) | Out(x) | OutInt(x) | FAbs (x) | FSqrt (x) | FTOI(x) | ITOF(x) | Cos(x) | Sin(x) | Tan(x) | ATan(x) -> [x]
+  | Mov(x) | Neg(x) | SRA(x, _) | FMovD(x) | FNegD(x) | FInv(x) | Save(x, _) | Out(x) | OutInt(x) | FAbs (x) | FSqrt (x) | FTOI(x) | ITOF(x) -> [x]
   | Add(x, y') | Sub(x, y') | SLL(x, y') | Ld(x, y') | LdDF(x, y') -> x :: fv_id_or_imm y'
   | St(x, y, z') | StDF(x, y, z') -> x :: y :: fv_id_or_imm z'
   | Mul(x, y) | Div(x, y) | FAddD(x, y) | FSubD(x, y) | FMulD(x, y) -> [x; y]

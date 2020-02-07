@@ -280,22 +280,6 @@ and output_exp' oc depth exp =
       Printf.fprintf oc "ITOF ";
       OutputId.output_t oc x;
       Printf.fprintf oc "\n"
-  | Cos(x) ->
-      Printf.fprintf oc "Cos ";
-      OutputId.output_t oc x;
-      Printf.fprintf oc "\n"
-  | Sin(x) -> 
-      Printf.fprintf oc "Sin ";
-      OutputId.output_t oc x;
-      Printf.fprintf oc "\n"
-  | Tan(x) -> 
-      Printf.fprintf oc "Tan ";
-      OutputId.output_t oc x;
-      Printf.fprintf oc "\n"
-  | ATan(x) -> 
-      Printf.fprintf oc "ATan ";
-      OutputId.output_t oc x;
-      Printf.fprintf oc "\n"
 
 let output_fundef' oc depth { name = Id.L(x); args = ys; fargs = zs; body = e; ret = t } = 
   for i = 1 to depth do

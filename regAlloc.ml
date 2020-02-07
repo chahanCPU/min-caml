@@ -161,10 +161,6 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   | FSqrt(x) -> (Ans(FSqrt(find x Type.Float regenv)), regenv)
   | FTOI(x) -> (Ans(FTOI(find x Type.Float regenv)), regenv)
   | ITOF(x) -> (Ans(ITOF(find x Type.Int regenv)), regenv)
-  | Cos(x) -> (Ans(Cos(find x Type.Float regenv)), regenv)
-  | Sin(x) -> (Ans(Sin(find x Type.Float regenv)), regenv)
-  | Tan(x) -> (Ans(Tan(find x Type.Float regenv)), regenv)
-  | ATan(x) -> (Ans(ATan(find x Type.Float regenv)), regenv)
 and g'_if dest cont regenv exp constr e1 e2 = (* ifのレジスタ割り当て (caml2html: regalloc_if) *)
   let (e1', regenv1) = g dest cont regenv e1 in
   let (e2', regenv2) = g dest cont regenv e2 in
