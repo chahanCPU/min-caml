@@ -43,36 +43,36 @@
 min_caml_read_int:
 	# ori	$at, $at, 0    # inは上位24ビットをゼロ埋め
 	in	$2
-	sll	$2, $2, 8
-	in	$at
-	or	$2, $2, $at
-	sll	$2, $2, 8
-	in	$at
-	or	$2, $2, $at
-	sll	$2, $2, 8
-	in	$at
-	or	$2, $2, $at
+	sll	$2, $2, 24
+	in	$3
+	sll	$3, $3, 16
+	add	$2, $2, $3
+	in	$3
+	sll	$3, $3, 8
+	add	$2, $2, $3
+	in	$3
+	add	$2, $2, $3
 	jr	$ra
 min_caml_read_float:
 	# ori	$at, $at, 0    # inは上位24ビットをゼロ埋め
 	in	$2
-	sll	$2, $2, 8
-	in	$at
-	or	$2, $2, $at
-	sll	$2, $2, 8
-	in	$at
-	or	$2, $2, $at
-	sll	$2, $2, 8
-	in	$at
-	or	$2, $2, $at
+	sll	$2, $2, 24
+	in	$3
+	sll	$3, $3, 16
+	add	$2, $2, $3
+	in	$3
+	sll	$3, $3, 8
+	add	$2, $2, $3
+	in	$3
+	add	$2, $2, $3
 	sw	$2, 16($sp)		# 16?
 	lw.s	$f2, 16($sp)		# 16?
 	jr	$ra
 min_caml_create_array:
-	or	$4, $zero, $2
-	or	$2, $zero, $gp
+	mv	$4, $2
+	mv	$2, $gp
 create_array_loop:
-	blez	$4, create_array_exit
+	ble	$4, $zero, create_array_exit
 	sw	$3, 0($gp)
 	addi	$4, $4, -1
 	addi	$gp, $gp, 4
@@ -80,10 +80,10 @@ create_array_loop:
 create_array_exit:
 	jr	$ra
 min_caml_create_float_array:
-	or	$3, $zero, $2
-	or	$2, $zero, $gp
+	mv	$3, $2
+	mv	$2, $gp
 create_float_array_loop:
-	blez	$3, create_float_array_exit
+	ble	$3, $zero, create_float_array_exit
 	sw.s	$f2, 0($gp)
 	addi	$3, $3, -1
 	addi	$gp, $gp, 4
