@@ -218,8 +218,6 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tsw.s\t%s, 0($at)\n" x
   | NonTail(_), StDF(x, y, C(z)) -> Printf.fprintf oc "\tsw.s\t%s, %d(%s)\n" x z y
 
-  | NonTail(_), Comment(s) -> Printf.fprintf oc "\t# %s\n" s
-
   (* 要確認　もとのsparcと *)
   (* 退避の仮想命令の実装 (caml2html: emit_save) *)
   | NonTail(_), Save(x, y) when List.mem x allregs && not (S.mem y !stackset) ->
@@ -246,7 +244,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(x), ITOF(y) -> Printf.fprintf oc "\titof\t%s, %s\n" x y
 
   (* 末尾だったら計算結果を第一レジスタにセットしてリターン (caml2html: emit_tailret) *)
-  | Tail, (Nop | St _ | StDF _ | Comment _ | Save _ | Out _ | OutInt _ as exp) ->
+  | Tail, (Nop | St _ | StDF _ | Save _ | Out _ | OutInt _ as exp) ->
       (* g' oc (NonTail(Id.gentmp Type.Unit), exp); *)
       g' oc (NonTail(Id.genid "Tunit"), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra

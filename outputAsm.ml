@@ -140,8 +140,6 @@ and output_exp' oc depth exp =
       Printf.fprintf oc " ";
       output_id_or_imm oc z';
       Printf.fprintf oc "\n"
-  | Comment(s) -> 
-      Printf.fprintf oc "Comment %s\n" s
   | IfEq(x, y', e1, e2) -> 
       Printf.fprintf oc "IfEq ";
       OutputId.output_t oc x;
