@@ -42,50 +42,50 @@
 # min_caml_prerr_float:		# 未実装
 min_caml_read_int:
 	# ori	$at, $at, 0    # inは上位24ビットをゼロ埋め
+	in	$1
+	sll	$1, $1, 24
 	in	$2
-	sll	$2, $2, 24
-	in	$3
-	sll	$3, $3, 16
-	add	$2, $2, $3
-	in	$3
-	sll	$3, $3, 8
-	add	$2, $2, $3
-	in	$3
-	add	$2, $2, $3
+	sll	$2, $2, 16
+	add	$1, $1, $2
+	in	$2
+	sll	$2, $2, 8
+	add	$1, $1, $2
+	in	$2
+	add	$1, $1, $2
 	jr	$ra
 min_caml_read_float:
 	# ori	$at, $at, 0    # inは上位24ビットをゼロ埋め
+	in	$1
+	sll	$1, $1, 24
 	in	$2
-	sll	$2, $2, 24
-	in	$3
-	sll	$3, $3, 16
-	add	$2, $2, $3
-	in	$3
-	sll	$3, $3, 8
-	add	$2, $2, $3
-	in	$3
-	add	$2, $2, $3
-	sw	$2, 16($sp)		# 16?
-	lw.s	$f2, 16($sp)		# 16?
+	sll	$2, $2, 16
+	add	$1, $1, $2
+	in	$2
+	sll	$2, $2, 8
+	add	$1, $1, $2
+	in	$2
+	add	$1, $1, $2
+	sw	$1, 16($sp)		# 16?
+	lw.s	$f1, 16($sp)		# 16?
 	jr	$ra
 min_caml_create_array:
-	mv	$4, $2
-	mv	$2, $gp
+	mv	$3, $1
+	mv	$1, $gp
 create_array_loop:
-	ble	$4, $zero, create_array_exit
-	sw	$3, 0($gp)
-	addi	$4, $4, -1
+	ble	$3, $zero, create_array_exit
+	sw	$2, 0($gp)
+	addi	$3, $3, -1
 	addi	$gp, $gp, 4
 	j	create_array_loop
 create_array_exit:
 	jr	$ra
 min_caml_create_float_array:
-	mv	$3, $2
-	mv	$2, $gp
+	mv	$2, $1
+	mv	$1, $gp
 create_float_array_loop:
-	ble	$3, $zero, create_float_array_exit
-	sw.s	$f2, 0($gp)
-	addi	$3, $3, -1
+	ble	$2, $zero, create_float_array_exit
+	sw.s	$f1, 0($gp)
+	addi	$2, $2, -1
 	addi	$gp, $gp, 4
 	j	create_float_array_loop
 create_float_array_exit:

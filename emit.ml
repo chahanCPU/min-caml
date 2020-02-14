@@ -70,8 +70,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       (* let i = Int32.to_int i in *)    (* 64-bit platform を前提 *)
       let hi = (i land 0xFFFF0000) lsr 16 in
       let lo = i land 0xFFFF in
-      Printf.fprintf oc "\tlui\t%s, 0x%x\t\t# %dの上位16bits\n" x hi i;
-      if lo <> 0 then Printf.fprintf oc "\tlli\t%s, 0x%x\t\t# %dの下位16bits\n" x lo i  (* oriかaddi *)
+      Printf.fprintf oc "\tlui\t%s, 0x%x\t\t# %dの上位16ビット\n" x hi i;
+      if lo <> 0 then Printf.fprintf oc "\tlli\t%s, 0x%x\t\t# %dの下位16ビット\n" x lo i  (* oriかaddi *)
       (* 
       Printf.fprintf oc "\tlui\t%s, 0x%x\t\t# %dの上位16bits\n" x hi i;
       (* 要注意：下は正しくないです。loの最上位ビットが1のとき、レジスタの上位16ビットがすべて1になってしまうので。 *)
@@ -95,8 +95,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       let hi = (i land 0xFFFF0000) lsr 16 in
       let lo = i land 0xFFFF in
 
-      Printf.fprintf oc "\tlui.s\t%s, 0x%x\t\t# %fの上位16bits\n" x hi d;
-      if lo <> 0 then Printf.fprintf oc "\tlli.s\t%s, 0x%x\t\t# %fの下位16bits\n" x lo d
+      Printf.fprintf oc "\tlui.s\t%s, 0x%x\t\t# %fの上位16ビット\n" x hi d;
+      if lo <> 0 then Printf.fprintf oc "\tlli.s\t%s, 0x%x\t\t# %fの下位16ビット\n" x lo d
 
       (* 臨時のFSetD *)
       (*

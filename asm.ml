@@ -59,7 +59,7 @@ let seq(e1, e2) = Let((Id.genid "Tunit", Type.Unit), e1, e2)
 (* let seq(e1, e2) = Let((Id.gentmp Type.Unit, Type.Unit), e1, e2) *)
 
 let regs = (* Array.init 16 (fun i -> Printf.sprintf "%%r%d" i) *)
-  [| "$2"; "$3"; 
+  [| "$1"; "$2"; "$3"; 
      "$4"; "$5"; "$6"; "$7"; 
      "$8"; "$9"; "$10"; "$11"; "$12"; "$13"; "$14"; "$15";
      "$16"; "$17"; "$18"; "$19"; "$20"; "$21"; "$22"; "$23";
@@ -69,7 +69,7 @@ let regs = (* Array.init 16 (fun i -> Printf.sprintf "%%r%d" i) *)
 (* よく考えて *)
 (* $f0はゼロ、$f1は$atのノリで使ってる *)
 let fregs = (* Array.init 16 (fun i -> Printf.sprintf "%%f%d" (i * 2)) *)
-  Array.init 30 (fun i -> Printf.sprintf "$f%d" (i + 2))
+  Array.init 31 (fun i -> Printf.sprintf "$f%d" (i + 1))
 (* 浮動小数は班員と要相談 *)
 let allregs = Array.to_list regs
 let allfregs = Array.to_list fregs
