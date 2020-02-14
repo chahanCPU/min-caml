@@ -28,4 +28,5 @@ type t =  (* MinCamlの構文を表現するデータ型 (caml2html: syntax_t) *
   | Put of t * t * t
   | FTOI of t
   | ITOF of t
+  (* | Asm of Asm.exp * Type.t *)
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }  (* nameのType.tは型スキーム *)
