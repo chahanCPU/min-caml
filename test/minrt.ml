@@ -2204,9 +2204,9 @@ in
    大きいので、これに補正を加えたものを最終的に用いる *)
 
 (* tanも消したい。組み込みにしたい *)
-let rec tan x =
+(* let rec tan x =
   sin(x) /. cos(x)
-in
+in *)
 
 (* ベクトル達が出来るだけ球面状に一様に分布するよう座標を補正する *)
 let rec adjust_position h ratio =

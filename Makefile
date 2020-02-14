@@ -7,7 +7,9 @@ RESULT = min-caml
 NCSUFFIX = .opt
 CC = gcc
 CFLAGS = -g -O2 -Wall
-OCAMLLDFLAGS=-warn-error -31
+# 32bitで実行
+OCAMLFLAGS = -compat-32
+OCAMLLDFLAGS= -warn-error -31
 
 # default: debug-code top $(RESULT) do_test
 # default: debug-code top $(RESULT)

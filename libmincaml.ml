@@ -53,6 +53,7 @@ let rec floor x =
 (* external sin : float -> float = "sin_float" "sin" "float" *)
 (* external atan : float -> float = "atan_float" "atan" "float" *)
 
+(*
 let rec taylor_cos x =
 	let x2 = x *. x in
 		1.0 -. x2 *. (0.5 -. x2 *. (0.04166368 -. x2 *. 0.0013695068))
@@ -147,6 +148,51 @@ let rec atan x =
 					(* 0.0 -. (1.57079637 -. taylor_atan (1.0 /. y)) *)
 			let y = -. x in
 			-. (atan y)
+in
+*)
+
+let rec cos x = 
+  let pi = 3.141592654 in
+  if x >= 0.0 then
+    if x <= pi then
+      let x2 = x *. x in
+      1.0 -. x2 *. (0.5 -. x2 *. (0.04166666667 -. x2 *. (0.001388888889 -. x2 *. 0.00002480158730)))
+    else
+      if x <= 2.0 *. pi then
+        -. cos(x -. pi)
+      else
+        cos(x -. 2.0 *. pi)
+  else
+    cos(-. x)
+in
+let rec sin x = 
+  let pi = 3.141592654 in
+  if x >= 0.0 then
+    if x <= pi then
+      let x2 = x *. x in
+      x *. (1.0 -. x2 *. (0.1666666667 -. x2 *. (0.008333333333 -. x2 *. 0.0001984126984)))
+    else
+      if x <= 2.0 *. pi then 
+        -. sin(x -. pi)
+      else
+        sin(x -. 2.0 *. pi)
+  else
+    -. sin(-. x)
+in
+let rec tan x = 
+  let pi = 3.141592654 in
+  if x >= 0.0 then
+    if x <= 0.5 *. pi then
+      let x2 = x *. x in
+      x *. (1.0 +. x2 *. (0.333333333 +. x2 *. (0.133333333 +. x2 *. 0.053968254)))
+    else
+      tan(x -. pi)
+  else
+    -. tan(-. x)
+in
+let rec atan x =
+  let x2 = x *. x in
+  x *. (1.0 -. x2 *. (0.3333333333 -. x2 *. (0.2 -. x2 *. 0.1428571429)))
 in
 
 (* tanもここで実装したい *)
