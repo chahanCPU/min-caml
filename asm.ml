@@ -34,7 +34,6 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   (* virtual instructions *)
   | IfEq of Id.t * Id.t * t * t
   | IfLE of Id.t * Id.t * t * t
-  | IfGE of Id.t * Id.t * t * t (* 左右対称ではないので必要 *) (* 不要になりそう *)
       (* ↑ id_or_imm を Id.t に変更する。ゼロの特殊ケースver.を作る *)
   | IfFEq of Id.t * Id.t * t * t
   | IfFLE of Id.t * Id.t * t * t
@@ -103,7 +102,7 @@ let rec fv_exp = function
   | Nop | Set(_) | FSetD(_) | SetL(_) | Restore(_) | In -> []
   | Mov(x) | Addi(x, _) | SLL(x, _) | SRA(x, _) | Ld(x, _) | FMovD(x) | FNegD(x) | FInv(x) | LdDF(x, _) | Save(x, _) | Out(x) | OutInt(x) | FAbs (x) | FSqrt (x) | FTOI(x) | ITOF(x) -> [x]
   | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | St(x, y, _) | FAddD(x, y) | FSubD(x, y) | FMulD(x, y) | StDF(x, y, _)-> [x; y]
-  | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) | IfGE(x, y, e1, e2) | IfFEq(x, y, e1, e2) | IfFLE(x, y, e1, e2) -> x :: y :: remove_and_uniq S.empty (fv e1 @ fv e2)  (* uniq here just for efficiency *)
+  | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) | IfFEq(x, y, e1, e2) | IfFLE(x, y, e1, e2) -> x :: y :: remove_and_uniq S.empty (fv e1 @ fv e2)  (* uniq here just for efficiency *)
   | CallCls(x, ys, zs) -> x :: ys @ zs
   | CallDir(_, ys, zs) -> ys @ zs
 and fv = function

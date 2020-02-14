@@ -142,14 +142,6 @@ and output_exp' oc depth exp =
       Printf.fprintf oc "\n";
       output_t' oc (depth + 1) e1;
       output_t' oc (depth + 1) e2
-  | IfGE(x, y, e1, e2) ->
-      Printf.fprintf oc "IfGE ";
-      OutputId.output_t oc x;
-      Printf.fprintf oc " ";
-      OutputId.output_t oc y;
-      Printf.fprintf oc "\n";
-      output_t' oc (depth + 1) e1;
-      output_t' oc (depth + 1) e2
   | IfFEq (x, y, e1, e2) -> 
       Printf.fprintf oc "IfFEq ";
       OutputId.output_t oc x;

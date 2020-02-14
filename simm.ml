@@ -101,7 +101,6 @@ and g' env = function (* 各命令の16bit即値最適化 (caml2html: simm16_gpr
   (* ↑C(y)の形を許さない、C(0)のときだけつくりたい *)
   | IfEq(x, y, e1, e2) -> IfEq(x, y, g env e1, g env e2)
   | IfLE(x, y, e1, e2) -> IfLE(x, y, g env e1, g env e2)
-  | IfGE(x, y, e1, e2) -> IfGE(x, y, g env e1, g env e2)
   | IfFEq(x, y, e1, e2) -> IfFEq(x, y, g env e1, g env e2)
   | IfFLE(x, y, e1, e2) -> IfFLE(x, y, g env e1, g env e2)
   | e -> e

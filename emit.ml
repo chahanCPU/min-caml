@@ -249,13 +249,11 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
 
   | Tail, IfEq(x, y, e1, e2) -> g'_tail_if oc "beq" x y e1 e2
   | Tail, IfLE(x, y, e1, e2) -> g'_tail_if oc "ble" x y e1 e2
-  | Tail, IfGE(x, y, e1, e2) -> g'_tail_if oc "bge" x y e1 e2
   | Tail, IfFEq(x, y, e1, e2) -> g'_tail_if oc "beq.s" x y e1 e2
   | Tail, IfFLE(x, y, e1, e2) -> g'_tail_if oc "ble.s" x y e1 e2
 
   | NonTail(z), IfEq(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "beq" x y e1 e2
   | NonTail(z), IfLE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "ble" x y e1 e2
-  | NonTail(z), IfGE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "bge" x y e1 e2
   | NonTail(z), IfFEq(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "beq.s" x y e1 e2
   | NonTail(z), IfFLE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "ble.s" x y e1 e2
 
