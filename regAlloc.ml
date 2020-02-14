@@ -89,10 +89,6 @@ let find x t regenv =
   if is_reg x then x else
   try M.find x regenv
   with Not_found -> raise (NoReg(x, t))
-let find' x' regenv =
-  match x' with
-  | V(x) -> V(find x Type.Int regenv)
-  | c -> c
 
 let rec g dest cont regenv = function (* 命令列のレジスタ割り当て (caml2html: regalloc_g) *)
   | Ans(exp) -> g'_and_restore dest cont regenv exp
@@ -119,15 +115,15 @@ and g'_and_restore dest cont regenv exp = (* 使用される変数をスタッ�
 and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml2html: regalloc_gprime) *)
   | Nop | Set _ | FSetD _ | SetL _ | Restore _ as exp -> (Ans(exp), regenv)
   | Mov(x) -> (Ans(Mov(find x Type.Int regenv)), regenv)
-  | Neg(x) -> (Ans(Neg(find x Type.Int regenv)), regenv)
-  | Add(x, y') -> (Ans(Add(find x Type.Int regenv, find' y' regenv)), regenv)
-  | Sub(x, y') -> (Ans(Sub(find x Type.Int regenv, find' y' regenv)), regenv)
+  | Add(x, y) -> (Ans(Add(find x Type.Int regenv, find y Type.Int regenv)), regenv)
+  | Addi(x, i) -> (Ans(Addi(find x Type.Int regenv, i)), regenv)
+  | Sub(x, y) -> (Ans(Sub(find x Type.Int regenv, find y Type.Int regenv)), regenv)
   | Mul(x, y) -> (Ans(Mul(find x Type.Int regenv, find y Type.Int regenv)), regenv)
   | Div(x, y) -> (Ans(Div(find x Type.Int regenv, find y Type.Int regenv)), regenv)
-  | SLL(x, y') -> (Ans(SLL(find x Type.Int regenv, find' y' regenv)), regenv)
+  | SLL(x, i) -> (Ans(SLL(find x Type.Int regenv, i)), regenv)
   | SRA(x, i) -> (Ans(SRA(find x Type.Int regenv, i)), regenv)
-  | Ld(x, y') -> (Ans(Ld(find x Type.Int regenv, find' y' regenv)), regenv)
-  | St(x, y, z') -> (Ans(St(find x Type.Int regenv, find y Type.Int regenv, find' z' regenv)), regenv)
+  | Ld(x, i) -> (Ans(Ld(find x Type.Int regenv, i)), regenv)
+  | St(x, y, i) -> (Ans(St(find x Type.Int regenv, find y Type.Int regenv, i)), regenv)
   | FMovD(x) -> (Ans(FMovD(find x Type.Float regenv)), regenv)
   | FNegD(x) -> (Ans(FNegD(find x Type.Float regenv)), regenv)
   | FAddD(x, y) -> (Ans(FAddD(find x Type.Float regenv, find y Type.Float regenv)), regenv)
@@ -135,11 +131,11 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   | FMulD(x, y) -> (Ans(FMulD(find x Type.Float regenv, find y Type.Float regenv)), regenv)
   (* | FDivD(x, y) -> (Ans(FDivD(find x Type.Float regenv, find y Type.Float regenv)), regenv) *)
   | FInv(x) -> (Ans(FInv(find x Type.Float regenv)), regenv)
-  | LdDF(x, y') -> (Ans(LdDF(find x Type.Int regenv, find' y' regenv)), regenv)
-  | StDF(x, y, z') -> (Ans(StDF(find x Type.Float regenv, find y Type.Int regenv, find' z' regenv)), regenv)
-  | IfEq(x, y', e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfEq(find x Type.Int regenv, find' y' regenv, e1', e2')) e1 e2
-  | IfLE(x, y', e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfLE(find x Type.Int regenv, find' y' regenv, e1', e2')) e1 e2
-  | IfGE(x, y', e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfGE(find x Type.Int regenv, find' y' regenv, e1', e2')) e1 e2
+  | LdDF(x, i) -> (Ans(LdDF(find x Type.Int regenv, i)), regenv)
+  | StDF(x, y, i) -> (Ans(StDF(find x Type.Float regenv, find y Type.Int regenv, i)), regenv)
+  | IfEq(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfEq(find x Type.Int regenv, find y Type.Int regenv, e1', e2')) e1 e2
+  | IfLE(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfLE(find x Type.Int regenv, find y Type.Int regenv, e1', e2')) e1 e2
+  | IfGE(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfGE(find x Type.Int regenv, find y Type.Int regenv, e1', e2')) e1 e2
   | IfFEq(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfFEq(find x Type.Float regenv, find y Type.Float regenv, e1', e2')) e1 e2
   | IfFLE(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfFLE(find x Type.Float regenv, find y Type.Float regenv, e1', e2')) e1 e2
   | CallCls(x, ys, zs) as exp ->
@@ -155,6 +151,7 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   | Save(x, y) -> assert false
   (* 例えば、FTOIの出力先レジスタが整数レジスタになるって決まってますか? *)
   (* 型検査しないとまずそう *)
+  | In -> (Ans(In), regenv)
   | Out(x) -> (Ans(Out(find x Type.Int regenv)), regenv)
   | OutInt(x) -> (Ans(OutInt(find x Type.Int regenv)), regenv)
   | FAbs(x) -> (Ans(FAbs(find x Type.Float regenv)), regenv)

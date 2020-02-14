@@ -147,7 +147,6 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(x), Mov(y) when x = y -> ()
   | NonTail(x), Mov(y) -> Printf.fprintf oc "\tmv\t%s, %s\n" x y
   (* | NonTail(x), Mov(y) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y *)
-  | NonTail(x), Neg(y) -> Printf.fprintf oc "\tsub\t%s, $zero, %s\n" x y
   (* | NonTail(x), Add(y, z') -> Printf.fprintf oc "\tadd\t%s, %s, %s\n" y (pp_id_or_imm z') x
   | NonTail(x), Sub(y, z') -> Printf.fprintf oc "\tsub\t%s, %s, %s\n" y (pp_id_or_imm z') x
   | NonTail(x), SLL(y, z') -> Printf.fprintf oc "\tsll\t%s, %s, %s\n" y (pp_id_or_imm z') x
@@ -155,23 +154,15 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(_), St(x, y, z') -> Printf.fprintf oc "\tst\t%s, [%s + %s]\n" x y (pp_id_or_imm z') *)
   (* キャリー・オーバーフローとか全く気にしていないのですが、本当に大丈夫だろうか。
      シミュレータに要確認 *)
-  | NonTail(x), Add(y, V(z)) -> Printf.fprintf oc "\tadd\t%s, %s, %s\n" x y z
-  | NonTail(x), Add(y, C(z)) -> Printf.fprintf oc "\taddi\t%s, %s, %d\n" x y z
-  | NonTail(x), Sub(y, V(z)) -> Printf.fprintf oc "\tsub\t%s, %s, %s\n" x y z
-  | NonTail(x), Sub(y, C(z)) -> Printf.fprintf oc "\taddi\t%s, %s, %d\n" x y (-z)
+  | NonTail(x), Add(y, z) -> Printf.fprintf oc "\tadd\t%s, %s, %s\n" x y z
+  | NonTail(x), Addi(y, i) -> Printf.fprintf oc "\taddi\t%s, %s, %d\n" x y i
+  | NonTail(x), Sub(y, z) -> Printf.fprintf oc "\tsub\t%s, %s, %s\n" x y z
   | NonTail(x), Mul(y, z) -> Printf.fprintf oc "\tmult\t%s, %s, %s\n" x y z
   | NonTail(x), Div(y, z) -> Printf.fprintf oc "\tdiv\t%s, %s, %s\n" x y z
-  | NonTail(x), SLL(y, V(z)) -> Printf.fprintf oc "\tsllv\t%s, %s, %s\n" x y z
-  | NonTail(x), SLL(y, C(z)) -> Printf.fprintf oc "\tsll\t%s, %s, %d\n" x y z
-  | NonTail(x), SRA(y, z) -> Printf.fprintf oc "\tsra\t%s, %s, %d\n" x y z
-  | NonTail(x), Ld(y, V(z)) -> 
-      Printf.fprintf oc "\tadd\t$at, %s, %s\n" z y;
-      Printf.fprintf oc "\tlw\t%s, 0($at)\n" x
-  | NonTail(x), Ld(y, C(z)) -> Printf.fprintf oc "\tlw\t%s, %d(%s)\n" x z y 
-  | NonTail(_), St(x, y, V(z)) ->
-      Printf.fprintf oc "\tadd\t$at, %s, %s\n" z y;       
-      Printf.fprintf oc "\tsw\t%s, 0($at)\n" x
-  | NonTail(_), St(x, y, C(z)) -> Printf.fprintf oc "\tsw\t%s, %d(%s)\n" x z y
+  | NonTail(x), SLL(y, i) -> Printf.fprintf oc "\tsll\t%s, %s, %d\n" x y i
+  | NonTail(x), SRA(y, i) -> Printf.fprintf oc "\tsra\t%s, %s, %d\n" x y i
+  | NonTail(x), Ld(y, i) -> Printf.fprintf oc "\tlw\t%s, %d(%s)\n" x i y 
+  | NonTail(_), St(x, y, i) -> Printf.fprintf oc "\tsw\t%s, %d(%s)\n" x i y
   (* | NonTail(x), FMovD(y) when x = y -> ()
   | NonTail(x), FMovD(y) ->
       Printf.fprintf oc "\tfmovs\t%s, %s\n" y x;
@@ -209,14 +200,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tmul.s\t%s, %s, $f1\n" x y
   *)
   | NonTail(x), FInv(y) -> Printf.fprintf oc "\tinv.s\t%s, %s\n" x y
-  | NonTail(x), LdDF(y, V(z)) ->
-      Printf.fprintf oc "\tadd\t$at, %s, %s\n" z y;
-      Printf.fprintf oc "\tlw.s\t%s, 0($at)\n" x
-  | NonTail(x), LdDF(y, C(z)) -> Printf.fprintf oc "\tlw.s\t%s, %d(%s)\n" x z y 
-  | NonTail(_), StDF(x, y, V(z)) -> 
-      Printf.fprintf oc "\tadd\t$at, %s, %s\n" z y;       
-      Printf.fprintf oc "\tsw.s\t%s, 0($at)\n" x
-  | NonTail(_), StDF(x, y, C(z)) -> Printf.fprintf oc "\tsw.s\t%s, %d(%s)\n" x z y
+  | NonTail(x), LdDF(y, i) -> Printf.fprintf oc "\tlw.s\t%s, %d(%s)\n" x i y 
+  | NonTail(_), StDF(x, y, i) -> Printf.fprintf oc "\tsw.s\t%s, %d(%s)\n" x i y
 
   (* 要確認　もとのsparcと *)
   (* 退避の仮想命令の実装 (caml2html: emit_save) *)
@@ -236,6 +221,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       assert (List.mem x allfregs);
       Printf.fprintf oc "\tlw.s\t%s, %d(%s)\n" x (offset y) reg_sp
   
+  | NonTail(x), In -> Printf.fprintf oc "\tin\t%s\n" x
   | NonTail(_), Out(x) -> Printf.fprintf oc "\tout\t%s\n" x
   | NonTail(_), OutInt(x) -> Printf.fprintf oc "\toutint\t%s\n" x
   | NonTail(x), FAbs(y) -> Printf.fprintf oc "\tabs.s\t%s, %s\n" x y
@@ -248,7 +234,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       (* g' oc (NonTail(Id.gentmp Type.Unit), exp); *)
       g' oc (NonTail(Id.genid "Tunit"), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
-  | Tail, (Set _ | SetL _ | Mov _ | Neg _ | Add _ | Sub _ | Mul _ | Div _ | SLL _ | SRA _ | Ld _ | FTOI _ as exp) ->
+  | Tail, (Set _ | SetL _ | Mov _ | Add _ | Addi _ | Sub _ | Mul _ | Div _ | SLL _ | SRA _ | Ld _ | In | FTOI _ as exp) ->
       g' oc (NonTail(regs.(0)), exp);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
   | Tail, (FSetD _ | FMovD _ | FNegD _ | FAddD _ | FSubD _ | FMulD _ | FInv _ | LdDF _ | FAbs _ | FSqrt _ | ITOF _ as exp) ->
@@ -261,33 +247,17 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       | _ -> assert false);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
 
-  | Tail, IfEq(x, V(y), e1, e2) ->
-      g'_tail_if oc "beq" x y e1 e2
-  | Tail, IfEq(x, C(y), e1, e2) -> assert false
-  | Tail, IfLE(x, V(y), e1, e2) -> 
-      g'_tail_if oc "ble" x y e1 e2
-  | Tail, IfLE(x, C(y), e1, e2) -> assert false
-  | Tail, IfGE(x, V(y), e1, e2) -> 
-      g'_tail_if oc "bge" x y e1 e2
-  | Tail, IfGE(x, C(y), e1, e2) -> assert false
-  | Tail, IfFEq(x, y, e1, e2) ->
-      g'_tail_if oc "beq.s" x y e1 e2
-  | Tail, IfFLE(x, y, e1, e2) ->
-      g'_tail_if oc "ble.s" x y e1 e2
+  | Tail, IfEq(x, y, e1, e2) -> g'_tail_if oc "beq" x y e1 e2
+  | Tail, IfLE(x, y, e1, e2) -> g'_tail_if oc "ble" x y e1 e2
+  | Tail, IfGE(x, y, e1, e2) -> g'_tail_if oc "bge" x y e1 e2
+  | Tail, IfFEq(x, y, e1, e2) -> g'_tail_if oc "beq.s" x y e1 e2
+  | Tail, IfFLE(x, y, e1, e2) -> g'_tail_if oc "ble.s" x y e1 e2
 
-  | NonTail(z), IfEq(x, V(y), e1, e2) ->
-      g'_non_tail_if oc (NonTail(z)) "beq" x y e1 e2
-  | NonTail(z), IfEq(x, C(y), e1, e2) -> assert false
-  | NonTail(z), IfLE(x, V(y), e1, e2) -> 
-      g'_non_tail_if oc (NonTail(z)) "ble" x y e1 e2
-  | NonTail(z), IfLE(x, C(y), e1, e2) -> assert false
-  | NonTail(z), IfGE(x, V(y), e1, e2) -> 
-      g'_non_tail_if oc (NonTail(z)) "bge" x y e1 e2
-  | NonTail(z), IfGE(x, C(y), e1, e2) -> assert false
-  | NonTail(z), IfFEq(x, y, e1, e2) ->
-      g'_non_tail_if oc (NonTail(z)) "beq.s" x y e1 e2
-  | NonTail(z), IfFLE(x, y, e1, e2) ->
-      g'_non_tail_if oc (NonTail(z)) "ble.s" x y e1 e2
+  | NonTail(z), IfEq(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "beq" x y e1 e2
+  | NonTail(z), IfLE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "ble" x y e1 e2
+  | NonTail(z), IfGE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "bge" x y e1 e2
+  | NonTail(z), IfFEq(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "beq.s" x y e1 e2
+  | NonTail(z), IfFLE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "ble.s" x y e1 e2
 
   (* もとのsparcと要確認 *)
   (* 関数呼び出しの仮想命令の実装 (caml2html: emit_call) *)

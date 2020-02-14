@@ -1,6 +1,5 @@
 (* chahan assembly with a few virtual instructions *)
 
-type id_or_imm = V of Id.t | C of int
 type t = (* 命令の列 (caml2html: sparcasm_t) *)
   | Ans of exp
   | Let of (Id.t * Type.t) * exp * t
@@ -14,15 +13,15 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   | FSetD of float
   | SetL of Id.l
   | Mov of Id.t
-  | Neg of Id.t
-  | Add of Id.t * id_or_imm
-  | Sub of Id.t * id_or_imm
+  | Add of Id.t * Id.t
+  | Addi of Id.t * int  (* 即値は16ビット、すなわち-32768以上32768未満 *)
+  | Sub of Id.t * Id.t
   | Mul of Id.t * Id.t
   | Div of Id.t * Id.t
-  | SLL of Id.t * id_or_imm
+  | SLL of Id.t * int
   | SRA of Id.t * int
-  | Ld of Id.t * id_or_imm
-  | St of Id.t * Id.t * id_or_imm
+  | Ld of Id.t * int
+  | St of Id.t * Id.t * int
   | FMovD of Id.t
   | FNegD of Id.t
   | FAddD of Id.t * Id.t
@@ -30,12 +29,12 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   | FMulD of Id.t * Id.t
   (* | FDivD of Id.t * Id.t *)
   | FInv of Id.t
-  | LdDF of Id.t * id_or_imm
-  | StDF of Id.t * Id.t * id_or_imm
+  | LdDF of Id.t * int
+  | StDF of Id.t * Id.t * int
   (* virtual instructions *)
-  | IfEq of Id.t * id_or_imm * t * t
-  | IfLE of Id.t * id_or_imm * t * t
-  | IfGE of Id.t * id_or_imm * t * t (* 左右対称ではないので必要 *)
+  | IfEq of Id.t * Id.t * t * t
+  | IfLE of Id.t * Id.t * t * t
+  | IfGE of Id.t * Id.t * t * t (* 左右対称ではないので必要 *) (* 不要になりそう *)
       (* ↑ id_or_imm を Id.t に変更する。ゼロの特殊ケースver.を作る *)
   | IfFEq of Id.t * Id.t * t * t
   | IfFLE of Id.t * Id.t * t * t
@@ -45,6 +44,7 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 (caml2html: sparcasm_save) *)
   | Restore of Id.t (* スタック変数から値を復元 (caml2html: sparcasm_restore) *)
   (* もともとライブラリにあった命令 *)
+  | In
   | Out of Id.t
   | OutInt of Id.t
   | FAbs of Id.t
@@ -99,15 +99,11 @@ let rec remove_and_uniq xs = function
   | x :: ys -> x :: remove_and_uniq (S.add x xs) ys
 
 (* free variables in the order of use (for spilling) (caml2html: sparcasm_fv) *)
-let fv_id_or_imm = function V(x) -> [x] | _ -> []
 let rec fv_exp = function
-  | Nop | Set(_) | FSetD(_) | SetL(_) | Restore(_) -> []
-  | Mov(x) | Neg(x) | SRA(x, _) | FMovD(x) | FNegD(x) | FInv(x) | Save(x, _) | Out(x) | OutInt(x) | FAbs (x) | FSqrt (x) | FTOI(x) | ITOF(x) -> [x]
-  | Add(x, y') | Sub(x, y') | SLL(x, y') | Ld(x, y') | LdDF(x, y') -> x :: fv_id_or_imm y'
-  | St(x, y, z') | StDF(x, y, z') -> x :: y :: fv_id_or_imm z'
-  | Mul(x, y) | Div(x, y) | FAddD(x, y) | FSubD(x, y) | FMulD(x, y) -> [x; y]
-  | IfEq(x, y', e1, e2) | IfLE(x, y', e1, e2) | IfGE(x, y', e1, e2) -> x :: fv_id_or_imm y' @ remove_and_uniq S.empty (fv e1 @ fv e2) (* uniq here just for efficiency *)
-  | IfFEq(x, y, e1, e2) | IfFLE(x, y, e1, e2) -> x :: y :: remove_and_uniq S.empty (fv e1 @ fv e2) (* uniq here just for efficiency *)
+  | Nop | Set(_) | FSetD(_) | SetL(_) | Restore(_) | In -> []
+  | Mov(x) | Addi(x, _) | SLL(x, _) | SRA(x, _) | Ld(x, _) | FMovD(x) | FNegD(x) | FInv(x) | LdDF(x, _) | Save(x, _) | Out(x) | OutInt(x) | FAbs (x) | FSqrt (x) | FTOI(x) | ITOF(x) -> [x]
+  | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | St(x, y, _) | FAddD(x, y) | FSubD(x, y) | FMulD(x, y) | StDF(x, y, _)-> [x; y]
+  | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) | IfGE(x, y, e1, e2) | IfFEq(x, y, e1, e2) | IfFLE(x, y, e1, e2) -> x :: y :: remove_and_uniq S.empty (fv e1 @ fv e2)  (* uniq here just for efficiency *)
   | CallCls(x, ys, zs) -> x :: ys @ zs
   | CallDir(_, ys, zs) -> ys @ zs
 and fv = function

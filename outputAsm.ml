@@ -1,9 +1,5 @@
 open Asm
 
-let output_id_or_imm oc = function 
-  | V(x) -> OutputId.output_t oc x
-  | C(i) -> Printf.fprintf oc "%d" i
-
 let rec output_t' oc depth e =
   for i = 1 to depth do
     Printf.fprintf oc "\t"
@@ -43,21 +39,21 @@ and output_exp' oc depth exp =
       Printf.fprintf oc "Mov ";
       OutputId.output_t oc x;
       Printf.fprintf oc "\n"
-  | Neg(x) ->
-      Printf.fprintf oc "Neg ";
-      OutputId.output_t oc x;
-      Printf.fprintf oc "\n"
-  | Add(x, y') -> 
+  | Add(x, y) -> 
       Printf.fprintf oc "Add ";
       OutputId.output_t oc x;
       Printf.fprintf oc " ";
-      output_id_or_imm oc y';
+      OutputId.output_t oc y;
       Printf.fprintf oc "\n"
-  | Sub(x, y') -> 
+  | Addi(x, i) -> 
+      Printf.fprintf oc "Addi ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " %d\n" i
+  | Sub(x, y) -> 
       Printf.fprintf oc "Sub ";
       OutputId.output_t oc x;
       Printf.fprintf oc " ";
-      output_id_or_imm oc y';
+      OutputId.output_t oc y;
       Printf.fprintf oc "\n"
   | Mul(x, y) ->
       Printf.fprintf oc "Mul ";
@@ -71,30 +67,24 @@ and output_exp' oc depth exp =
       Printf.fprintf oc " ";
       OutputId.output_t oc y;
       Printf.fprintf oc "\n"
-  | SLL(x, y') -> 
+  | SLL(x, i) -> 
       Printf.fprintf oc "SLL ";
       OutputId.output_t oc x;
-      Printf.fprintf oc " ";
-      output_id_or_imm oc y';
-      Printf.fprintf oc "\n"
+      Printf.fprintf oc " %d\n" i
   | SRA(x, i) ->
       Printf.fprintf oc "SRA ";
       OutputId.output_t oc x;
       Printf.fprintf oc " %d\n" i
-  | Ld(x, y') -> 
+  | Ld(x, i) -> 
       Printf.fprintf oc "Ld ";
       OutputId.output_t oc x;
-      Printf.fprintf oc " ";
-      output_id_or_imm oc y';
-      Printf.fprintf oc "\n"
-  | St(x, y, z') -> 
+      Printf.fprintf oc " %d\n" i
+  | St(x, y, i) -> 
       Printf.fprintf oc "St ";
       OutputId.output_t oc x;
       Printf.fprintf oc " ";
       OutputId.output_t oc y;
-      Printf.fprintf oc " ";
-      output_id_or_imm oc z';
-      Printf.fprintf oc "\n"
+      Printf.fprintf oc " %d\n" i
   | FMovD(x) ->
       Printf.fprintf oc "FMovD ";
       OutputId.output_t oc x;
@@ -109,13 +99,13 @@ and output_exp' oc depth exp =
       Printf.fprintf oc " ";
       OutputId.output_t oc y;
       Printf.fprintf oc "\n"
-  | FSubD (x,y) -> 
+  | FSubD(x, y) -> 
       Printf.fprintf oc "FSubD ";
       OutputId.output_t oc x;
       Printf.fprintf oc " ";
       OutputId.output_t oc y;
       Printf.fprintf oc "\n"
-  | FMulD (x,y) -> 
+  | FMulD(x, y) -> 
       Printf.fprintf oc "FMulD ";
       OutputId.output_t oc x;
       Printf.fprintf oc " ";
@@ -126,41 +116,37 @@ and output_exp' oc depth exp =
       Printf.fprintf oc "FInv ";
       OutputId.output_t oc x;
       Printf.fprintf oc "\n"
-  | LdDF(x, y') -> 
+  | LdDF(x, i) -> 
       Printf.fprintf oc "LdDF ";
       OutputId.output_t oc x;
-      Printf.fprintf oc " ";
-      output_id_or_imm oc y';
-      Printf.fprintf oc "\n"
-  | StDF(x, y, z') -> 
+      Printf.fprintf oc " %d\n" i
+  | StDF(x, y, i) -> 
       Printf.fprintf oc "StDF ";
       OutputId.output_t oc x;
       Printf.fprintf oc " ";
       OutputId.output_t oc y;
-      Printf.fprintf oc " ";
-      output_id_or_imm oc z';
-      Printf.fprintf oc "\n"
-  | IfEq(x, y', e1, e2) -> 
+      Printf.fprintf oc " %d\n" i
+  | IfEq(x, y, e1, e2) -> 
       Printf.fprintf oc "IfEq ";
       OutputId.output_t oc x;
       Printf.fprintf oc " ";
-      output_id_or_imm oc y';
+      OutputId.output_t oc y;
       Printf.fprintf oc "\n";
       output_t' oc (depth + 1) e1;
       output_t' oc (depth + 1) e2
-  | IfLE(x, y', e1, e2) -> 
+  | IfLE(x, y, e1, e2) -> 
       Printf.fprintf oc "IfLE ";
       OutputId.output_t oc x;
       Printf.fprintf oc " ";
-      output_id_or_imm oc y';
+      OutputId.output_t oc y;
       Printf.fprintf oc "\n";
       output_t' oc (depth + 1) e1;
       output_t' oc (depth + 1) e2
-  | IfGE(x, y', e1, e2) ->
+  | IfGE(x, y, e1, e2) ->
       Printf.fprintf oc "IfGE ";
       OutputId.output_t oc x;
       Printf.fprintf oc " ";
-      output_id_or_imm oc y';
+      OutputId.output_t oc y;
       Printf.fprintf oc "\n";
       output_t' oc (depth + 1) e1;
       output_t' oc (depth + 1) e2
@@ -254,6 +240,8 @@ and output_exp' oc depth exp =
       Printf.fprintf oc "Restore ";
       OutputId.output_t oc x;
       Printf.fprintf oc "\n"
+  | In ->
+      Printf.fprintf oc "In\n"
   | Out(x) -> 
       Printf.fprintf oc "Out ";
       OutputId.output_t oc x;
