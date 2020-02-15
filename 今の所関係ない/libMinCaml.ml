@@ -3,6 +3,9 @@
 (* 予約語は他の意味で使えないルールで *)
 (* いや、型情報をtyping.mlではなく、ここで与えれば上手くいくのでは？？ *)
 
+(* notとかint_of_floatとかをlexerで消すこと *)
+
+
 (* float (1) *)
 let rec fequal x y = (x +. 0. = y) in    (* +0.0はx,y がfloatだと教えるため。最適化で消したい *)
 let rec fless x y = (x +. 0. < y) in
@@ -11,6 +14,7 @@ let rec fispos x = (x > 0.) in
 let rec fisneg x = (x < 0.) in
 let rec fiszero x = (x = 0.) in
 
+let rec not x = if x then false else true in
 let rec xor x y = if x then not y else y in
 
 (* float (2) *)

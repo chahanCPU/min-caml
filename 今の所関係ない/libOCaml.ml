@@ -1,3 +1,30 @@
+(* -compat-32 *)
+(* -nopervasives *)
+
+let (+) = Pervasives.(+)
+let (-) = Pervasives.(-)
+let ( * ) = Pervasives.( * )
+let (/) = Pervasives.(/)
+
+let (+.) = Pervasives.(+.)
+let (-.) = Pervasives.(-.)
+let ( *. ) = Pervasives.( *. )
+let (/.) = Pervasives.(/.)
+
+let (=) = Pervasives.(=)
+let (<>) = Pervasives.(<>)
+let (<) = Pervasives.(<)
+let (>) = Pervasives.(>)
+let (<=) = Pervasives.(<=)
+let (>=) = Pervasives.(>=)
+
+let fequal (x : float) (y : float) = (x = y)
+let fless (x: float) (y : float) = (x < y)
+
+let fispos x = (x > 0.)
+let fisneg x = (x < 0.)
+let fiszero x = (x = 0.)
+
 let print_char x = print_char (char_of_int x) in
 
 let buf = Buffer.create 16
