@@ -2,8 +2,6 @@
 
 open Closure
 
-(* let extenv = ref M.empty *)
-let extenv = ref Libtype.extenv  (* mainに合わせて書くべき?? ライブラリ実装をどうしようか *)
 let toplevel = ref []
 
 let rec g env = function  (* Closure.tの型検査 *)
@@ -36,7 +34,6 @@ let rec g env = function  (* Closure.tの型検査 *)
       assert (g env e1 = t1);
       g (M.add x t1 env) e2
   | Var(x) when M.mem x env -> M.find x env
-  (* | Var(x) when M.mem x !extenv -> M.find x env *)
   (* KNormal.mlとか見ると、ライブラリ関数のVarって作られないのか。Applyのときだけ *)
   (* KNormal.ExtArrayとか消したいので *)
   | Var(_) -> assert false
@@ -55,18 +52,6 @@ let rec g env = function  (* Closure.tの型検査 *)
       | _ -> assert false)
   | AppDir(l, ys) when List.exists (fun fundef -> fst fundef.name = l) !toplevel -> 
       (match snd (List.find (fun fundef -> fst fundef.name = l) !toplevel).name with Type.Fun(ts, t) ->
-        assert (List.map (fun y -> M.find y env) ys = ts);
-        t
-      | _ -> assert false)
-  | AppDir(Id.L("min_caml_create_array"), ys) ->
-      (match List.map (fun y -> M.find y env) ys with [Type.Int; t] when t <> Type.Float ->
-        Type.Array(t)
-      | _ -> assert false)
-  | AppDir(Id.L("min_caml_create_float_array"), ys) ->
-      assert (List.map (fun y -> M.find y env) ys = [Type.Int; Type.Float]);
-      Type.Array(Type.Float)
-  | AppDir(Id.L(x), ys) when String.sub x 0 9 = "min_caml_" ->  (* ライブラリ *)
-      (match M.find (String.sub x 9 ((String.length x) - 9)) !extenv with Type.Fun(ts, t) ->
         assert (List.map (fun y -> M.find y env) ys = ts);
         t
       | _ -> assert false)
@@ -113,7 +98,6 @@ let h { name = (Id.L(x), t); args = yts; formal_fv = zts; body = e } =  (* Closu
   assert (Type.Fun(List.map (fun (y, t) -> t) yts, g (M.add_list (zts @ yts) (M.singleton x t)) e) = t)
 
 let f (Prog(fundefs, e)) =  (* Closure.progの型検査 *)
-  (* extenv := Libtype.extenv;  mainに合わせて書くべき?? ライブラリ実装をどうしようか *)
   toplevel := fundefs;
   List.iter h fundefs;
   ignore (g M.empty e);

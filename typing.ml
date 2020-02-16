@@ -13,8 +13,6 @@
 
 open Syntax
 
-let extenv = ref M.empty  (* どうする？mainで指定しなくても *)
-
 let rec subst_type sigma = function  (* 型に型代入を実行する *)
   | Type.Unit | Type.Bool | Type.Int | Type.Float as t -> t
   | Type.Fun(ts, t) -> Type.Fun(List.map (subst_type sigma) ts, subst_type sigma t)
@@ -223,7 +221,6 @@ let rec infer env = function  (* 型推論ルーチン *)
   (* 外部関数は決まっているので、後でそう直したい *)
   (* envはenv->tysc, !extenvはenv->typeになってる *)
   (* 今は外部変数は単相型のみ *)
-  | Var(x, []) when M.mem x !extenv -> (Var(x, []), M.find x !extenv, M.empty)
   | Var(x, []) -> failwith (Printf.sprintf "Unbound variable: %s" x)
   | Var(_) -> assert false
   | LetRec({ name = (x, t); args = yts; body = e1 }, e2) ->  (* 多相関数 *)
@@ -482,7 +479,6 @@ let rec check env = function  (* 型検査 *)
       assert (check env e1 = t);
       check (M.add x t env) e2
   | Var(x, []) when M.mem x env -> M.find x env
-  | Var(x, []) when M.mem x !extenv -> M.find x !extenv
   | Var(_) -> assert false
   | LetRec({ name = (x, t); args = yts; body = e1 }, e2) -> 
       assert (Type.Fun(List.map (fun (y, t) -> t) yts, check (M.add_list ((x, t) :: yts) env) e1) = t);
