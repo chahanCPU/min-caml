@@ -26,7 +26,12 @@ type t =  (* MinCamlの構文を表現するデータ型 (caml2html: syntax_t) *
   | Array of t * t
   | Get of t * t
   | Put of t * t * t
+  | FAbs of t
+  | Sqrt of t
   | FTOI of t
   | ITOF of t
-  (* | Asm of Asm.exp * Type.t *)
+  | Out of t
+  | OutInt of t
+  | In
+  | BTOF of t  (* Bits (Binary) to Float *)
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }  (* nameのType.tは型スキーム *)

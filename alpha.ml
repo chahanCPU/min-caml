@@ -40,10 +40,17 @@ let rec g env = function (* α変換ルーチン本体 (caml2html: alpha_g) *)
       LetTuple(List.map (fun (x, t) -> (find x env', t)) xts,
                find y env,
                g env' e)
+  | Array(x, y) -> Array(find x env, find y env)
   | Get(x, y) -> Get(find x env, find y env)
   | Put(x, y, z) -> Put(find x env, find y env, find z env)
-  | ExtFunApp(x, ys) -> ExtFunApp(x, List.map (fun y -> find y env) ys)
+  (* | ExtFunApp(x, ys) -> ExtFunApp(x, List.map (fun y -> find y env) ys) *)
+  | FAbs(x) -> FAbs(find x env)
+  | Sqrt(x) -> Sqrt(find x env)
   | FTOI(x) -> FTOI(find x env)
   | ITOF(x) -> ITOF(find x env)
+  | Out(x) -> Out(find x env)
+  | OutInt(x) -> OutInt(find x env)
+  | In -> In
+  | BTOF(x) -> BTOF(find x env)
 
 let f = g M.empty

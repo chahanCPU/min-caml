@@ -22,17 +22,24 @@ type t = (* K正規化後の式 (caml2html: knormal_t) *)
   | App of Id.t * Id.t list
   | Tuple of Id.t list
   | LetTuple of (Id.t * Type.t) list * Id.t * t
+  | Array of Id.t * Id.t
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
+  | FAbs of Id.t
+  | Sqrt of Id.t
   | FTOI of Id.t
   | ITOF of Id.t
-  | ExtFunApp of Id.t * Id.t list
+  | Out of Id.t
+  | OutInt of Id.t
+  | In
+  | BTOF of Id.t
+  (* | ExtFunApp of Id.t * Id.t list *)
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
 let rec fv = function (* 式に出現する（自由な）変数 (caml2html: knormal_fv) *)
-  | Unit | Int(_) | Float(_) -> S.empty
+  | Unit | Int(_) | Float(_) | In -> S.empty
   | Neg(x) | FNeg(x) -> S.singleton x
-  | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
+  | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Array(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
   | Var(x) -> S.singleton x
@@ -40,10 +47,11 @@ let rec fv = function (* 式に出現する（自由な）変数 (caml2html: kno
       let zs = S.diff (fv e1) (S.of_list (List.map fst yts)) in
       S.diff (S.union zs (fv e2)) (S.singleton x)
   | App(x, ys) -> S.of_list (x :: ys)
-  | Tuple(xs) | ExtFunApp(_, xs) -> S.of_list xs
+  (* | Tuple(xs) | ExtFunApp(_, xs) -> S.of_list xs *)
+  | Tuple(xs) -> S.of_list xs
   | Put(x, y, z) -> S.of_list [x; y; z]
   | LetTuple(xs, y, e) -> S.add y (S.diff (fv e) (S.of_list (List.map fst xs)))
-  | FTOI(x) | ITOF(x) -> S.singleton x
+  | FAbs(x) | Sqrt(x) | FTOI(x) | ITOF(x) | Out(x) | OutInt(x) | BTOF(x) -> S.singleton x
 
 let id_of_type = function
   | Type.Unit -> "unit"
@@ -141,6 +149,7 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
       let e2', t2 = g env' e2 in
       let e1', t1 = g (M.add_list yts env') e1 in
       LetRec({ name = (x, t); args = yts; body = e1' }, e2'), t2
+  (*
   | Syntax.App(Syntax.Var(f, []), e2s) when not (M.mem f env) -> (* 外部関数の呼び出し (caml2html: knormal_extfunapp) *)
       (match M.find f !Typing.extenv with
       | Type.Fun(_, t) ->
@@ -151,6 +160,7 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
                   (fun x -> bind (xs @ [x]) e2s) in
           bind [] e2s (* left-to-right evaluation *)
       | _ -> assert false)
+  *)
   | Syntax.App(e1, e2s) ->
       (match g env e1 with
       | _, Type.Fun(_, t) as g_e1 ->
@@ -181,12 +191,7 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
         (fun x ->
           let _, t2 as g_e2 = g env e2 in
           insert_let g_e2
-            (fun y ->
-              let l =
-                match t2 with
-                | Type.Float -> "create_float_array"
-                | _ -> "create_array" in
-              ExtFunApp(l, [x; y]), Type.Array(t2)))
+            (fun y -> Array(x, y), Type.Array(t2)))
   | Syntax.Get(e1, e2) ->
       (match g env e1 with
       | _, Type.Array(t) as g_e1 ->
@@ -199,12 +204,28 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) 
         (fun x -> insert_let (g env e2)
             (fun y -> insert_let (g env e3)
                 (fun z -> Put(x, y, z), Type.Unit)))
+  | Syntax.FAbs(e) ->
+      insert_let (g env e)
+        (fun x -> FAbs(x), Type.Float)
+  | Syntax.Sqrt(e) ->
+      insert_let (g env e)
+        (fun x -> Sqrt(x), Type.Float)
   | Syntax.FTOI(e) ->
       insert_let (g env e)
         (fun x -> FTOI(x), Type.Int)
   | Syntax.ITOF(e) ->
       insert_let (g env e)
         (fun x -> ITOF(x), Type.Float)
+  | Syntax.Out(e) ->
+      insert_let (g env e)
+        (fun x -> Out(x), Type.Unit)
+  | Syntax.OutInt(e) ->
+      insert_let (g env e)
+        (fun x -> OutInt(x), Type.Unit)
+  | Syntax.In -> In, Type.Int
+  | Syntax.BTOF(e) ->
+      insert_let (g env e)
+        (fun x -> BTOF(x), Type.Float)
 
 let rec b2i_type = function  (* Type.BoolをType.Intに変換 *)
   | Type.Unit | Type.Int | Type.Float as t -> t

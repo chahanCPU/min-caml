@@ -5,17 +5,20 @@
 
 (* notとかint_of_floatとかをlexerで消すこと *)
 
+(* typing.ml参照 *)
+(* 外部関数に自由に出現する型は単相かつ型変数を含まないとする *)
+
 
 (* float (1) *)
-let rec fequal x y = (x +. 0. = y) in    (* +0.0はx,y がfloatだと教えるため。最適化で消したい *)
-let rec fless x y = (x +. 0. < y) in
+(* let rec fequal x y = (x +. 0. = y) in    (* +0.0はx,y がfloatだと教えるため。最適化で消したい *) *)
+(* let rec fless x y = (x +. 0. < y) in *)
 
 let rec fispos x = (x > 0.) in
 let rec fisneg x = (x < 0.) in
 let rec fiszero x = (x = 0.) in
 
-let rec not x = if x then false else true in
-let rec xor x y = if x then not y else y in
+(* let rec not x = if x then false else true in *)
+(* let rec xor x y = if x then not y else y in *)
 
 (* float (2) *)
 let rec fhalf x = x *. 0.5 in

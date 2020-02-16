@@ -20,11 +20,18 @@ type t =
   | App of Id.t * Id.t list
   | Tuple of Id.t list
   | LetTuple of (Id.t * Type.t) list * Id.t * t
+  | Array of Id.t * Id.t
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
+  | FAbs of Id.t
+  | Sqrt of Id.t
   | FTOI of Id.t
   | ITOF of Id.t
-  | ExtFunApp of Id.t * Id.t list
+  | Out of Id.t
+  | OutInt of Id.t
+  | In
+  | BTOF of Id.t
+  (* | ExtFunApp of Id.t * Id.t list *)
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
 val fv : t -> S.t

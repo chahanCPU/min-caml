@@ -7,13 +7,12 @@ let rec iter n e = (* 最適化処理をくりかえす (caml2html: main_iter) *
   if e = e' then e else
   iter (n - 1) e'
 
-let lexbuf debugchan outchan l lib = (* バッファをコンパイルしてチャンネルへ出力する (caml2html: main_lexbuf) *)
+let lexbuf debugchan outchan l = (* バッファをコンパイルしてチャンネルへ出力する (caml2html: main_lexbuf) *)
   Id.counter := 0;
   (* Typing.extenv := M.empty; *)
   Typing.extenv := Libtype.extenv;
   let hoge1 = Parser.exp Lexer.token l in Printf.fprintf debugchan "<****** Parser ******>\n"; OutputSyntax.output_t debugchan hoge1; Printf.fprintf debugchan "\n\n";
-  let hogelib = Parser.exp Lexer.token lib in
-  let hoge11 = CatLib.f hoge1 hogelib in (* Printf.fprintf debugchan "<****** CatLib ******>\n"; OutputSyntax.output_t debugchan hoge11; Printf.fprintf debugchan "\n\n"; *)
+  let hoge11 = CatLib.f hoge1 in (* Printf.fprintf debugchan "<****** CatLib ******>\n"; OutputSyntax.output_t debugchan hoge11; Printf.fprintf debugchan "\n\n"; *)
   let hoge2 = Typing.f hoge11 in Printf.fprintf debugchan "<****** Typing ******>\n"; OutputSyntax.output_t debugchan hoge2; Printf.fprintf debugchan "\n\n";
   let hoge3 = KNormal.f hoge2 in Printf.fprintf debugchan "<****** KNormal ******>\n"; OutputKNormal.output_t debugchan hoge3; Printf.fprintf debugchan "\n\n";
   let hoge4 = Alpha.f hoge3 in Printf.fprintf debugchan "<****** Alpha ******>\n"; OutputKNormal.output_t debugchan hoge4; Printf.fprintf debugchan "\n\n";
@@ -26,27 +25,16 @@ let lexbuf debugchan outchan l lib = (* バッファをコンパイルしてチ�
   let hoge9 = RegAlloc.f hoge8 in Printf.fprintf debugchan "<****** RegAlloc ******>\n"; OutputAsm.output_prog debugchan hoge9;
   Emit.f outchan hoge9
 
-let string s = (* 文字列をコンパイルして標準出力に表示する (caml2html: main_string) *)
-  let libchan = open_in "libmincaml.ml" in
-  (try
-     lexbuf stderr stdout (Lexing.from_string s) (Lexing.from_channel libchan)
-   with
-     | Failure s -> Printf.fprintf stderr "%s\n" s
-     | e -> Printf.fprintf stderr "%s\n" (Printexc.to_string e));
-  close_in libchan
-
 let file f = (* ファイルをコンパイルしてファイルに出力する (caml2html: main_file) *)
   let inchan = open_in (f ^ ".ml") in
-  let libchan = open_in "libmincaml.ml" in
   let debugchan = open_out (f ^ ".txt") in    (* 本当に.txtで良いの? *)
   let outchan = open_out (f ^ ".s") in
   (try
-     lexbuf debugchan outchan (Lexing.from_channel inchan) (Lexing.from_channel libchan)
+     lexbuf debugchan outchan (Lexing.from_channel inchan)
    with
      | Failure s -> Printf.fprintf debugchan "%s\n" s    (* debugchanで良いの? *)
      | e -> Printf.fprintf debugchan "%s\n" (Printexc.to_string e));    (* debugchanで良いの? *)
   close_in inchan; 
-  close_in libchan; 
   close_out debugchan; 
   close_out outchan
 

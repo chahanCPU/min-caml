@@ -30,8 +30,8 @@ rule token = parse
 (* let not = 1 in not を許したい *)
 (* 代わりにlibmincaml.mlに実装 *)
 (* 命令が長くなるので、後に要修正 *)
-| "not"
-    { NOT }
+(* | "not"
+    { NOT } *)
 | digit+ (* 整数を字句解析するルール (caml2html: lexer_int) *)
     { INT(int_of_string (Lexing.lexeme lexbuf)) }
 | digit+ ('.' digit*)? (['e' 'E'] ['+' '-']? digit+)?
@@ -81,7 +81,7 @@ rule token = parse
 | '_'
     { IDENT(Id.genid "Tunit") }
     (* { IDENT(Id.gentmp Type.Unit) } *)
-| "Array.create" | "Array.make" | "create_array" (* [XX] ad hoc *)
+| "Array.create" | "Array.make"  (* [XX] ad hoc *)
     { ARRAY_CREATE }
 | '.'
     { DOT }
@@ -89,10 +89,10 @@ rule token = parse
     { LESS_MINUS }
 | ';'
     { SEMICOLON }
-| "int_of_float" | "truncate"
-    { FTOI }
-| "float_of_int"
-    { ITOF }
+(* | "int_of_float" | "truncate"
+    { FTOI } *)
+(* | "float_of_int"
+    { ITOF } *)
 | eof
     { EOF }
 | lower (digit|lower|upper|'_')* (* 他の「予約語」より後でないといけない *)

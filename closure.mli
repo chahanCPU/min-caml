@@ -22,10 +22,17 @@ type t =
   | AppDir of Id.l * Id.t list
   | Tuple of Id.t list
   | LetTuple of (Id.t * Type.t) list * Id.t * t
+  | Array of Id.t * Id.t
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
+  | FAbs of Id.t
+  | Sqrt of Id.t
   | FTOI of Id.t
   | ITOF of Id.t
+  | Out of Id.t
+  | OutInt of Id.t
+  | In
+  | BTOF of Id.t
 type fundef = { name : Id.l * Type.t;
                 args : (Id.t * Type.t) list;
                 formal_fv : (Id.t * Type.t) list;

@@ -147,13 +147,30 @@ let rec output_t' oc depth e =
       Printf.fprintf oc "Put\n";
       output_t' oc (depth + 1) e1;
       output_t' oc (depth + 1) e2;
-			output_t' oc (depth + 1) e3
+      output_t' oc (depth + 1) e3
+  | FAbs(e) -> 
+      Printf.fprintf oc "FAbs\n";
+      output_t' oc (depth + 1) e
+  | Sqrt(e) -> 
+      Printf.fprintf oc "Sqrt\n";
+      output_t' oc (depth + 1) e
 	| FTOI(e) ->
 			Printf.fprintf oc "FTOI\n";
 			output_t' oc (depth + 1) e
 	| ITOF(e) ->
 			Printf.fprintf oc "ITOF\n";
-			output_t' oc (depth + 1) e
+      output_t' oc (depth + 1) e
+  | Out(e) ->
+			Printf.fprintf oc "Out\n";
+      output_t' oc (depth + 1) e
+  | OutInt(e) ->
+			Printf.fprintf oc "OutInt\n";
+      output_t' oc (depth + 1) e
+  | In ->
+      Printf.fprintf oc "In\n"
+  | BTOF(e) ->
+      Printf.fprintf oc "BTOF\n";
+      output_t' oc (depth + 1) e
 
 and output_fundef' oc depth { name = (x, t); args = yts; body = e } =
   for i = 1 to depth do

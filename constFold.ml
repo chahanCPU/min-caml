@@ -58,8 +58,11 @@ let rec g env = function (* 定数畳み込みルーチン本体 (caml2html: con
   | FDiv(x, y) when memf x env && findf x env = 0. -> Float(0.)
   | FDiv(x, y) when memf y env && findf y env = -1. -> FNeg(x)
   | FDiv(x, y) when memf y env && findf y env = 1. -> Var(x)
-  | FTOI(x) when memf x env -> Int(int_of_float(findf x env))
-  | ITOF(x) when memi x env -> Float(float_of_int(findi x env))
+  | FAbs(x) when memf x env -> Float(abs_float (findf x env))
+  | Sqrt(x) when memf x env -> Float(sqrt (findf x env))
+  | FTOI(x) when memf x env -> Int(int_of_float (findf x env))
+  | ITOF(x) when memi x env -> Float(float_of_int (findi x env))
+  (* | BTOF(x) when memi x env -> Float(Int32.float_of_bits (Int32.of_int (findi x env))) *)
   | IfEq(x, y, e1, e2) when memi x env && memi y env -> if findi x env = findi y env then g env e1 else g env e2
   | IfEq(x, y, e1, e2) when memf x env && memf y env -> if findf x env = findf y env then g env e1 else g env e2
   | IfEq(x, y, e1, e2) -> IfEq(x, y, g env e1, g env e2)
@@ -82,3 +85,8 @@ let rec g env = function (* 定数畳み込みルーチン本体 (caml2html: con
   | e -> e
 
 let f = g M.empty
+
+
+(* -compat-32 *)
+(* intで32bitの数を扱えるのか要検証 *)
+(* ゴミ集めのために1ビット使ってしまいそう *)

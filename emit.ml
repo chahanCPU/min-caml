@@ -381,11 +381,13 @@ let f oc (Prog(fundefs, e)) =
 
   (* Printf.fprintf oc ".section \".text\"\n"; *)
 
+(*
   let lib = open_in "libmincaml.S" in
   try
     while true do Printf.fprintf oc "%s\n" (input_line lib) done
   with End_of_file -> ();
   close_in lib;
+*)
 
 (*
   (* libに書くべし .sじゃなくて.mlの方が最適化できそう *)

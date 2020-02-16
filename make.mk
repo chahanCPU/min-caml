@@ -15,7 +15,7 @@ TRASH = $(TESTS:%=test/%.txt) $(TESTS:%=test/%.s) $(TESTS:%=test/%.bin) $(TESTS:
 # 	./$(RESULT) test/$*
 # 	@cp .tmp0.ml test/$*.ml
 # 	@rm -f .tmp0.ml .tmp.ml
-test/%.s: $(RESULT) libmincaml.S libmincaml.ml test/%.ml
+test/%.s: $(RESULT) libMinCaml.ml test/%.ml
 	./$(RESULT) test/$*
 # sed -i '1r libmincaml.ml' test/$*.ml
 # cp libmincaml.ml temp.ml

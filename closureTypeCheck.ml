@@ -75,6 +75,9 @@ let rec g env = function  (* Closure.tの型検査 *)
   | LetTuple(xts, y, e2) ->
       assert (M.find y env = Type.Tuple(List.map (fun (x, t) -> t) xts));
       g (M.add_list xts env) e2
+  | Array(x, y) -> 
+      assert (M.find x env = Type.Int);
+      Type.Array(M.find y env)
   | Get(x, y) -> 
       (match M.find x env with Type.Array(t) ->
         assert (M.find y env = Type.Int);
@@ -86,10 +89,20 @@ let rec g env = function  (* Closure.tの型検査 *)
         assert (M.find z env = t);
         Type.Unit
       | _ -> assert false)
+  | FAbs(x) | Sqrt(x) ->
+      assert (M.find x env = Type.Float);
+      Type.Float
   | FTOI(x) ->
       assert (M.find x env = Type.Float);
       Type.Int
   | ITOF(x) ->
+      assert (M.find x env = Type.Int);
+      Type.Float
+  | Out(x) | OutInt(x) ->
+      assert (M.find x env = Type.Int);
+      Type.Unit
+  | In -> Type.Int
+  | BTOF(x) ->
       assert (M.find x env = Type.Int);
       Type.Float
 

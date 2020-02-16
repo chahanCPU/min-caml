@@ -22,10 +22,17 @@ type t = (* クロージャ変換後の式 (caml2html: closure_t) *)
   | AppDir of Id.l * Id.t list
   | Tuple of Id.t list
   | LetTuple of (Id.t * Type.t) list * Id.t * t
+  | Array of Id.t * Id.t
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
+  | FAbs of Id.t
+  | Sqrt of Id.t
   | FTOI of Id.t
   | ITOF of Id.t
+  | Out of Id.t
+  | OutInt of Id.t
+  | In
+  | BTOF of Id.t
 type fundef = { name : Id.l * Type.t;
                 args : (Id.t * Type.t) list;
                 formal_fv : (Id.t * Type.t) list;
@@ -33,9 +40,9 @@ type fundef = { name : Id.l * Type.t;
 type prog = Prog of fundef list * t
 
 let rec fv = function
-  | Unit | Int(_) | Float(_) -> S.empty
+  | Unit | Int(_) | Float(_) | In -> S.empty
   | Neg(x) | FNeg(x) -> S.singleton x
-  | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
+  | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Array(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
   | Var(x) -> S.singleton x
@@ -44,7 +51,7 @@ let rec fv = function
   | AppDir(_, xs) | Tuple(xs) -> S.of_list xs
   | LetTuple(xts, y, e) -> S.add y (S.diff (fv e) (S.of_list (List.map fst xts)))
   | Put(x, y, z) -> S.of_list [x; y; z]
-  | FTOI(x) | ITOF(x) -> S.singleton x
+  | FAbs(x) | Sqrt(x) | FTOI(x) | ITOF(x) | Out(x) | OutInt(x) | BTOF(x) -> S.singleton x
 
 let toplevel : fundef list ref = ref []
 
@@ -101,11 +108,18 @@ let rec g env known = function (* クロージャ変換ルーチン本体 (caml2
   | KNormal.App(f, xs) -> AppCls(f, xs)
   | KNormal.Tuple(xs) -> Tuple(xs)
   | KNormal.LetTuple(xts, y, e) -> LetTuple(xts, y, g (M.add_list xts env) known e)
+  | KNormal.Array(x, y) -> Array(x, y)
   | KNormal.Get(x, y) -> Get(x, y)
   | KNormal.Put(x, y, z) -> Put(x, y, z)
-  | KNormal.ExtFunApp(x, ys) -> AppDir(Id.L("min_caml_" ^ x), ys)
+  (* | KNormal.ExtFunApp(x, ys) -> AppDir(Id.L("min_caml_" ^ x), ys) *)
+  | KNormal.FAbs(x) -> FAbs(x)
+  | KNormal.Sqrt(x) -> Sqrt(x)
   | KNormal.FTOI(x) -> FTOI(x)
   | KNormal.ITOF(x) -> ITOF(x)
+  | KNormal.Out(x) -> Out(x)
+  | KNormal.OutInt(x) -> OutInt(x)
+  | KNormal.In -> In
+  | KNormal.BTOF(x) -> BTOF(x)
 
 let f e =
   toplevel := [];

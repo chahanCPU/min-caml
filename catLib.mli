@@ -1,1 +1,1 @@
-val f : Syntax.t -> Syntax.t -> Syntax.t
+val f : Syntax.t -> Syntax.t

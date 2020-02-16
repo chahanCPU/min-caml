@@ -182,6 +182,12 @@ let rec output_t' oc depth e =
       OutputId.output_t oc y;
       Printf.fprintf oc "\n";
       output_t' oc depth e
+  | Array(x, y) ->
+      Printf.fprintf oc "Array ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc " ";
+      OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
   | Get(x, y) ->
       Printf.fprintf oc "Get ";
       OutputId.output_t oc x;
@@ -196,12 +202,34 @@ let rec output_t' oc depth e =
       Printf.fprintf oc " ";
       OutputId.output_t oc z;
       Printf.fprintf oc "\n"
+  | FAbs(x) ->
+      Printf.fprintf oc "FAbs ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
+  | Sqrt(x) ->
+      Printf.fprintf oc "Sqrt ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
   | FTOI(x) ->
       Printf.fprintf oc "FTOI ";
       OutputId.output_t oc x;
       Printf.fprintf oc "\n"
   | ITOF(x) ->
       Printf.fprintf oc "ITOF ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
+  | Out(x) ->
+      Printf.fprintf oc "Out ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
+  | OutInt(x) ->
+      Printf.fprintf oc "OutInt ";
+      OutputId.output_t oc x;
+      Printf.fprintf oc "\n"
+  | In ->
+      Printf.fprintf oc "In\n"
+  | BTOF(x) ->
+      Printf.fprintf oc "BTOF ";
       OutputId.output_t oc x;
       Printf.fprintf oc "\n"
   
