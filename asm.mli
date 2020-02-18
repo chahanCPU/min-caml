@@ -1,4 +1,4 @@
-(* type id_or_imm = V of Id.t | C of int *)
+type id_or_int = V of Id.t | C of int  (* intには定数レジスタの中身が入る *)
 type t =
   | Ans of exp
   | Let of (Id.t * Type.t) * exp * t
@@ -7,15 +7,15 @@ and exp =
   | Set of int
   | FSetD of float
   | SetL of Id.l
-  | Mov of Id.t
+  | Mov of id_or_int
   (* | Neg of Id.t *)
-  | Add of Id.t * Id.t
-  | Addi of Id.t * int  (* 即値は16ビット、すなわち-32768以上32768未満 *)
-  | Sub of Id.t * Id.t
-  | Mul of Id.t * Id.t
-  | Div of Id.t * Id.t
-  | SLL of Id.t * int
-  | SRA of Id.t * int
+  | Add of id_or_int * id_or_int
+  | Addi of id_or_int * int  (* 即値は16ビット、すなわち-32768以上32768未満 *)
+  | Sub of id_or_int * id_or_int
+  | Mul of id_or_int * id_or_int
+  | Div of id_or_int * id_or_int
+  | SLL of id_or_int * int
+  | SRA of id_or_int * int
   | Ld of Id.t * int
   | St of Id.t * Id.t * int
   | FMovD of Id.t
@@ -28,8 +28,8 @@ and exp =
   | LdDF of Id.t * int
   | StDF of Id.t * Id.t * int
   (* virtual instructions *)
-  | IfEq of Id.t * Id.t * t * t
-  | IfLE of Id.t * Id.t * t * t
+  | IfEq of id_or_int * id_or_int * t * t
+  | IfLE of id_or_int * id_or_int * t * t
   | IfFEq of Id.t * Id.t * t * t
   | IfFLE of Id.t * Id.t * t * t
   (* closure address, integer arguments, and float arguments *)
@@ -51,6 +51,7 @@ type prog = Prog of fundef list * t
 val fletd : Id.t * exp * t -> t (* shorthand of Let for float *)
 val seq : exp * t -> t (* shorthand of Let for unit *)
 
+val regs_const : (int * Id.t) list
 val regs : Id.t array
 val fregs : Id.t array
 val allregs : Id.t list

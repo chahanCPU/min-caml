@@ -1,5 +1,9 @@
 open Asm
 
+let output_id_or_int oc = function
+  | V(x) -> OutputId.output_t oc x
+  | C(i) -> Printf.fprintf oc "%d" i
+
 let rec output_t' oc depth e =
   for i = 1 to depth do
     Printf.fprintf oc "\t"
@@ -37,43 +41,43 @@ and output_exp' oc depth exp =
       Printf.fprintf oc "\n"
   | Mov(x) -> 
       Printf.fprintf oc "Mov ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc "\n"
   | Add(x, y) -> 
       Printf.fprintf oc "Add ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_int oc y;
       Printf.fprintf oc "\n"
   | Addi(x, i) -> 
       Printf.fprintf oc "Addi ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " %d\n" i
   | Sub(x, y) -> 
       Printf.fprintf oc "Sub ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_int oc y;
       Printf.fprintf oc "\n"
   | Mul(x, y) ->
       Printf.fprintf oc "Mul ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_int oc y;
       Printf.fprintf oc "\n"
   | Div(x, y) -> 
       Printf.fprintf oc "Div ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_int oc y;
       Printf.fprintf oc "\n"
   | SLL(x, i) -> 
       Printf.fprintf oc "SLL ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " %d\n" i
   | SRA(x, i) ->
       Printf.fprintf oc "SRA ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " %d\n" i
   | Ld(x, i) -> 
       Printf.fprintf oc "Ld ";
@@ -128,17 +132,17 @@ and output_exp' oc depth exp =
       Printf.fprintf oc " %d\n" i
   | IfEq(x, y, e1, e2) -> 
       Printf.fprintf oc "IfEq ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_int oc y;
       Printf.fprintf oc "\n";
       output_t' oc (depth + 1) e1;
       output_t' oc (depth + 1) e2
   | IfLE(x, y, e1, e2) -> 
       Printf.fprintf oc "IfLE ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_int oc y;
       Printf.fprintf oc "\n";
       output_t' oc (depth + 1) e1;
       output_t' oc (depth + 1) e2

@@ -4,7 +4,7 @@ open Asm
 (* [XXX] Callがあったら、そこから先は無意味というか逆効果なので追わない。
          そのために「Callがあったかどうか」を返り値の第1要素に含める。 *)
 let rec target' src (dest, t) = function
-  | Mov(x) when x = src && is_reg dest ->
+  | Mov(V(x)) when x = src && is_reg dest ->
       assert (t <> Type.Unit);
       assert (t <> Type.Float);
       false, [dest]
@@ -88,6 +88,10 @@ let find x t regenv =
   if is_reg x then x else
   try M.find x regenv
   with Not_found -> raise (NoReg(x, t))
+let find_id_or_int x regenv =
+  match x with
+  | V(x') -> V(find x' Type.Int regenv)
+  | c -> c
 
 let rec g dest cont regenv = function (* 命令列のレジスタ割り当て (caml2html: regalloc_g) *)
   | Ans(exp) -> g'_and_restore dest cont regenv exp
@@ -113,14 +117,14 @@ and g'_and_restore dest cont regenv exp = (* 使用される変数をスタッ�
      g dest cont regenv (Let((x, t), Restore(x), Ans(exp))))
 and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml2html: regalloc_gprime) *)
   | Nop | Set _ | FSetD _ | SetL _ | Restore _ as exp -> (Ans(exp), regenv)
-  | Mov(x) -> (Ans(Mov(find x Type.Int regenv)), regenv)
-  | Add(x, y) -> (Ans(Add(find x Type.Int regenv, find y Type.Int regenv)), regenv)
-  | Addi(x, i) -> (Ans(Addi(find x Type.Int regenv, i)), regenv)
-  | Sub(x, y) -> (Ans(Sub(find x Type.Int regenv, find y Type.Int regenv)), regenv)
-  | Mul(x, y) -> (Ans(Mul(find x Type.Int regenv, find y Type.Int regenv)), regenv)
-  | Div(x, y) -> (Ans(Div(find x Type.Int regenv, find y Type.Int regenv)), regenv)
-  | SLL(x, i) -> (Ans(SLL(find x Type.Int regenv, i)), regenv)
-  | SRA(x, i) -> (Ans(SRA(find x Type.Int regenv, i)), regenv)
+  | Mov(x) -> (Ans(Mov(find_id_or_int x regenv)), regenv)
+  | Add(x, y) -> (Ans(Add(find_id_or_int x regenv, find_id_or_int y regenv)), regenv)
+  | Addi(x, i) -> (Ans(Addi(find_id_or_int x regenv, i)), regenv)
+  | Sub(x, y) -> (Ans(Sub(find_id_or_int x regenv, find_id_or_int y regenv)), regenv)
+  | Mul(x, y) -> (Ans(Mul(find_id_or_int x regenv, find_id_or_int y regenv)), regenv)
+  | Div(x, y) -> (Ans(Div(find_id_or_int x regenv, find_id_or_int y regenv)), regenv)
+  | SLL(x, i) -> (Ans(SLL(find_id_or_int x regenv, i)), regenv)
+  | SRA(x, i) -> (Ans(SRA(find_id_or_int x regenv, i)), regenv)
   | Ld(x, i) -> (Ans(Ld(find x Type.Int regenv, i)), regenv)
   | St(x, y, i) -> (Ans(St(find x Type.Int regenv, find y Type.Int regenv, i)), regenv)
   | FMovD(x) -> (Ans(FMovD(find x Type.Float regenv)), regenv)
@@ -132,8 +136,8 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   | FInv(x) -> (Ans(FInv(find x Type.Float regenv)), regenv)
   | LdDF(x, i) -> (Ans(LdDF(find x Type.Int regenv, i)), regenv)
   | StDF(x, y, i) -> (Ans(StDF(find x Type.Float regenv, find y Type.Int regenv, i)), regenv)
-  | IfEq(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfEq(find x Type.Int regenv, find y Type.Int regenv, e1', e2')) e1 e2
-  | IfLE(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfLE(find x Type.Int regenv, find y Type.Int regenv, e1', e2')) e1 e2
+  | IfEq(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfEq(find_id_or_int x regenv, find_id_or_int y regenv, e1', e2')) e1 e2
+  | IfLE(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfLE(find_id_or_int x regenv, find_id_or_int y regenv, e1', e2')) e1 e2
   | IfFEq(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfFEq(find x Type.Float regenv, find y Type.Float regenv, e1', e2')) e1 e2
   | IfFLE(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfFLE(find x Type.Float regenv, find y Type.Float regenv, e1', e2')) e1 e2
   | CallCls(x, ys, zs) as exp ->
@@ -217,7 +221,7 @@ let h { name = Id.L(x); args = ys; fargs = zs; body = e; ret = t } = (* 関数�
     | Type.Unit -> Id.genid "Tunit"
     | Type.Float -> fregs.(0)
     | _ -> regs.(0) in
-  let (e', regenv') = g (a, t) (Ans(Mov(a))) regenv e in
+  let (e', regenv') = g (a, t) (Ans(Mov(V(a)))) regenv e in
   { name = Id.L(x); args = arg_regs; fargs = farg_regs; body = e'; ret = t }
 
 let f (Prog(fundefs, e)) = (* プログラム全体のレジスタ割り当て (caml2html: regalloc_f) *)

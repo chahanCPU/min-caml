@@ -102,7 +102,7 @@ let n_reflections = Array.make 1 0 in
 
 (*NOMINCAML open MiniMLRuntime;;*)
 (*NOMINCAML open Globals;;*)
-(*MINCAML*) let rec xor x y = if x then not y else y in
+(*MINCAML*) (* let rec xor x y = if x then not y else y in *)
 
 (******************************************************************************
    ユーティリティー

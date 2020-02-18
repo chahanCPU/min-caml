@@ -1,4 +1,4 @@
-let limit = ref 1000
+let limit = ref 100
 
 let rec iter n e = (* 最適化処理をくりかえす (caml2html: main_iter) *)
   Format.eprintf "iteration %d@." n;
@@ -6,6 +6,13 @@ let rec iter n e = (* 最適化処理をくりかえす (caml2html: main_iter) *
   let e' = Elim.f (ConstFold.f (Inline.f (Assoc.f (Beta.f e)))) in
   if e = e' then e else
   iter (n - 1) e'
+
+let rec iter_asm n e =
+  Format.eprintf "iteration_asm %d@." n;
+  if n = 0 then e else
+  let e' = AsmElim.f (AsmConstFold.f (ConstReg.f e)) in
+  if e = e' then e else
+  iter_asm (n - 1) e'
 
 let lexbuf debugchan outchan l = (* バッファをコンパイルしてチャンネルへ出力する (caml2html: main_lexbuf) *)
   Id.counter := 0;
@@ -19,7 +26,7 @@ let lexbuf debugchan outchan l = (* バッファをコンパイルしてチャ�
   let hoge6 = Closure.f hoge5 in Printf.fprintf debugchan "<****** Closure ******>\n"; OutputClosure.output_prog debugchan hoge6; Printf.fprintf debugchan "\n\n";
   let hoge6' = ClosureTypeCheck.f hoge6 in
   let hoge7 = Virtual.f hoge6' in Printf.fprintf debugchan "<****** Virtual ******>\n"; OutputAsm.output_prog debugchan hoge7; Printf.fprintf debugchan "\n\n";
-  let hoge8 = Simm.f hoge7 in Printf.fprintf debugchan "<****** Simm ******>\n"; OutputAsm.output_prog debugchan hoge8; Printf.fprintf debugchan "\n\n";
+  let hoge8 = iter_asm !limit hoge7 in Printf.fprintf debugchan "<****** iter_asm ******>\n"; OutputAsm.output_prog debugchan hoge8; Printf.fprintf debugchan "\n\n";
   let hoge9 = RegAlloc.f hoge8 in Printf.fprintf debugchan "<****** RegAlloc ******>\n"; OutputAsm.output_prog debugchan hoge9;
   Emit.f outchan hoge9
 

@@ -29,9 +29,9 @@ let offset x = 4 * List.hd (locate x)
 (* let stacksize () = align ((List.length !stackmap + 1) * 4) *)
 let stacksize () = (List.length !stackmap + 1) * 4
 
-(* let pp_id_or_imm = function
+let pp_id_or_int = function
   | V(x) -> x
-  | C(i) -> string_of_int i *)
+  | C(i) -> List.assoc i regs_const
 
 (* 関数呼び出しのために引数を並べ替える(register shuffling) (caml2html: emit_shuffle) *)
 let rec shuffle sw xys =
@@ -61,7 +61,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   (* 命令長 32bit *)
   (* 16bitで扱えるsigned数 : -2^15 から 2^15-1   -32678 32767 *)
   | NonTail(x), Set(i) when -32678 <= i && i < 32678 -> 
-      Printf.fprintf oc "\taddi\t%s, $zero, %d\n" x i  (* oriかaddi, addiが重そう *)
+      (* Printf.fprintf oc "\tli\t%s, %d\n" x i *)
+      Printf.fprintf oc "\taddi\t%s, $zero, %d\n" x i
       (* Printf.fprintf oc "\tori\t%s, $zero, %d\n" x i  (* oriかaddi *) *)
       (* ori, $2, $zero, -1 って、$2 <- 0xFFFFFFFF になるよな *)
       (* 即値16ビットやから、0x0000FFFF とはならんよな====願望 *)
@@ -144,8 +145,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       (* 関数呼び出しでもこれを用いることが判明。至急要修正 *)
     (* もともと外部配列だけだと思っていたが、関数のラベル(関数が返り値になることもあるじゃん)をスタックに保存したいときに使う *)
     (* そもそもラベル32bitだからだめじゃん、外部配列を使わないようにお願いします(raytracerで普通使ってるけど) *)
-  | NonTail(x), Mov(y) when x = y -> ()
-  | NonTail(x), Mov(y) -> Printf.fprintf oc "\tmv\t%s, %s\n" x y
+  | NonTail(x), Mov(V(y)) when x = y -> ()
+  | NonTail(x), Mov(y) -> Printf.fprintf oc "\tmv\t%s, %s\n" x (pp_id_or_int y)
   (* | NonTail(x), Mov(y) -> Printf.fprintf oc "\tor\t%s, $zero, %s\n" x y *)
   (* | NonTail(x), Add(y, z') -> Printf.fprintf oc "\tadd\t%s, %s, %s\n" y (pp_id_or_imm z') x
   | NonTail(x), Sub(y, z') -> Printf.fprintf oc "\tsub\t%s, %s, %s\n" y (pp_id_or_imm z') x
@@ -154,13 +155,13 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(_), St(x, y, z') -> Printf.fprintf oc "\tst\t%s, [%s + %s]\n" x y (pp_id_or_imm z') *)
   (* キャリー・オーバーフローとか全く気にしていないのですが、本当に大丈夫だろうか。
      シミュレータに要確認 *)
-  | NonTail(x), Add(y, z) -> Printf.fprintf oc "\tadd\t%s, %s, %s\n" x y z
-  | NonTail(x), Addi(y, i) -> Printf.fprintf oc "\taddi\t%s, %s, %d\n" x y i
-  | NonTail(x), Sub(y, z) -> Printf.fprintf oc "\tsub\t%s, %s, %s\n" x y z
-  | NonTail(x), Mul(y, z) -> Printf.fprintf oc "\tmult\t%s, %s, %s\n" x y z
-  | NonTail(x), Div(y, z) -> Printf.fprintf oc "\tdiv\t%s, %s, %s\n" x y z
-  | NonTail(x), SLL(y, i) -> Printf.fprintf oc "\tsll\t%s, %s, %d\n" x y i
-  | NonTail(x), SRA(y, i) -> Printf.fprintf oc "\tsra\t%s, %s, %d\n" x y i
+  | NonTail(x), Add(y, z) -> Printf.fprintf oc "\tadd\t%s, %s, %s\n" x (pp_id_or_int y) (pp_id_or_int z)
+  | NonTail(x), Addi(y, i) -> Printf.fprintf oc "\taddi\t%s, %s, %d\n" x (pp_id_or_int y) i
+  | NonTail(x), Sub(y, z) -> Printf.fprintf oc "\tsub\t%s, %s, %s\n" x (pp_id_or_int y) (pp_id_or_int z)
+  | NonTail(x), Mul(y, z) -> Printf.fprintf oc "\tmult\t%s, %s, %s\n" x (pp_id_or_int y) (pp_id_or_int z)
+  | NonTail(x), Div(y, z) -> Printf.fprintf oc "\tdiv\t%s, %s, %s\n" x (pp_id_or_int y) (pp_id_or_int z)
+  | NonTail(x), SLL(y, i) -> Printf.fprintf oc "\tsll\t%s, %s, %d\n" x (pp_id_or_int y) i
+  | NonTail(x), SRA(y, i) -> Printf.fprintf oc "\tsra\t%s, %s, %d\n" x (pp_id_or_int y) i
   | NonTail(x), Ld(y, i) -> Printf.fprintf oc "\tlw\t%s, %d(%s)\n" x i y 
   | NonTail(_), St(x, y, i) -> Printf.fprintf oc "\tsw\t%s, %d(%s)\n" x i y
   (* | NonTail(x), FMovD(y) when x = y -> ()
@@ -247,13 +248,13 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       | _ -> assert false);
       Printf.fprintf oc "\tjr\t%s\n" reg_ra
 
-  | Tail, IfEq(x, y, e1, e2) -> g'_tail_if oc "beq" x y e1 e2
-  | Tail, IfLE(x, y, e1, e2) -> g'_tail_if oc "ble" x y e1 e2
+  | Tail, IfEq(x, y, e1, e2) -> g'_tail_if oc "beq" (pp_id_or_int x) (pp_id_or_int y) e1 e2
+  | Tail, IfLE(x, y, e1, e2) -> g'_tail_if oc "ble" (pp_id_or_int x) (pp_id_or_int y) e1 e2
   | Tail, IfFEq(x, y, e1, e2) -> g'_tail_if oc "beq.s" x y e1 e2
   | Tail, IfFLE(x, y, e1, e2) -> g'_tail_if oc "ble.s" x y e1 e2
 
-  | NonTail(z), IfEq(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "beq" x y e1 e2
-  | NonTail(z), IfLE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "ble" x y e1 e2
+  | NonTail(z), IfEq(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "beq" (pp_id_or_int x) (pp_id_or_int y) e1 e2
+  | NonTail(z), IfLE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "ble" (pp_id_or_int x) (pp_id_or_int y) e1 e2
   | NonTail(z), IfFEq(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "beq.s" x y e1 e2
   | NonTail(z), IfFLE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "ble.s" x y e1 e2
 

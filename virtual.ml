@@ -5,6 +5,9 @@
 
 open Asm
 
+let create_array_appears = ref false
+let create_float_array_appears = ref false
+
 let classify xts ini addf addi =
   List.fold_left
     (fun acc (x, t) ->
@@ -48,13 +51,11 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           l in
       let x = Id.genid "l" in
       Let((x, Type.Int), SetL(l), Ans(LdDF(x, C(0)))) *)
-  | Closure.Neg(x) -> 
-      let y = Id.genid "Tint" in
-      Let((y, Type.Int), Set(0), Ans(Sub(y, x)))
-  | Closure.Add(x, y) -> Ans(Add(x, y))
-  | Closure.Sub(x, y) -> Ans(Sub(x, y))
-  | Closure.Mul(x, y) -> Ans(Mul(x, y))
-  | Closure.Div(x, y) -> Ans(Div(x, y))
+  | Closure.Neg(x) -> Ans(Sub(C(0), V(x)))
+  | Closure.Add(x, y) -> Ans(Add(V(x), V(y)))
+  | Closure.Sub(x, y) -> Ans(Sub(V(x), V(y)))
+  | Closure.Mul(x, y) -> Ans(Mul(V(x), V(y)))
+  | Closure.Div(x, y) -> Ans(Div(V(x), V(y)))
   | Closure.FNeg(x) -> Ans(FNegD(x))
   | Closure.FAdd(x, y) -> Ans(FAddD(x, y))
   | Closure.FSub(x, y) -> Ans(FSubD(x, y))
@@ -66,12 +67,12 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       Let((z, Type.Float), FInv(y), Ans(FMulD(x, z)))
   | Closure.IfEq(x, y, e1, e2) ->
       (match M.find x env with
-      | Type.Bool | Type.Int -> Ans(IfEq(x, y, g env e1, g env e2))
+      | Type.Bool | Type.Int -> Ans(IfEq(V(x), V(y), g env e1, g env e2))
       | Type.Float -> Ans(IfFEq(x, y, g env e1, g env e2))
       | _ -> assert false)  (* equality supported only for bool, int, and float *)
   | Closure.IfLE(x, y, e1, e2) ->
       (match M.find x env with
-      | Type.Bool | Type.Int -> Ans(IfLE(x, y, g env e1, g env e2))
+      | Type.Bool | Type.Int -> Ans(IfLE(V(x), V(y), g env e1, g env e2))
       | Type.Float -> Ans(IfFLE(x, y, g env e1, g env e2))
       | _ -> assert false)  (* inequality supported only for bool, int, and float *)
   | Closure.Let((x, t1), e1, e2) ->
@@ -82,7 +83,7 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       (match M.find x env with
       | Type.Unit -> Ans(Nop)
       | Type.Float -> Ans(FMovD(x))
-      | _ -> Ans(Mov(x)))
+      | _ -> Ans(Mov(V(x))))
   | Closure.MakeCls((x, t), { Closure.entry = l; Closure.actual_fv = ys }, e2) -> (* クロージャの生成 (caml2html: virtual_makecls) *)
       (* Closureのアドレスをセットしてから、自由変数の値をストア *)
       let e2' = g (M.add x t env) e2 in
@@ -92,10 +93,10 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           (4, e2')
           (fun y offset store_fv -> seq(StDF(y, x, offset), store_fv))
           (fun y _ offset store_fv -> seq(St(y, x, offset), store_fv)) in
-      Let((x, t), Mov(reg_hp),
+      Let((x, t), Mov(V(reg_hp)),
         (* Let((reg_hp, Type.Int), Add(reg_hp, C(align offset)), *)
         (* offsetの大小評価 *)
-        Let((reg_hp, Type.Int), Addi(reg_hp, offset),
+        Let((reg_hp, Type.Int), Addi(V(reg_hp), offset),
           let z = Id.genid "l" in
           Let((z, Type.Int), SetL(l),
             seq(St(z, x, 0),
@@ -104,40 +105,20 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
       Ans(CallCls(x, int, float))
   | Closure.AppDir(Id.L(x), ys) ->
-  (* int_of_float等、ライブラリ関数の型が正しいか確かめないといけない *)
-  (* int_of_floatの引数がintかもしれない *)
-      (match x with
-      | "min_caml_print_newline" ->
-          (* (match ys with [y] -> let z = Id.gentmp Type.Int in Let((z, Type.Int), Set(10), Ans(Out(z)))  yの型がunitだと確かめてない *)
-          (match ys with [y] -> let z = Id.genid "Tint" in Let((z, Type.Int), Set(10), Ans(Out(z)))  (* yの型がunitだと確かめてない *)
-          | _ -> failwith "print_newline has invalid arguments")
-      | "min_caml_print_char" ->
-          (match ys with [y] -> Ans(Out(y)) 
-          | _ -> failwith "print_char has invalid arguments")
-      | "min_caml_print_int" ->
-          (match ys with [y] -> Ans(OutInt(y)) 
-          | _ -> failwith "print_int has invalid arguments")
-      | "min_caml_abs_float" ->
-          (match ys with [y] -> Ans(FAbs(y)) 
-          | _ -> failwith "abs_float has invalid arguments")
-      | "min_caml_sqrt" ->
-          (match ys with [y] -> Ans(FSqrt(y)) 
-          | _ -> failwith "sqrt has invalid arguments")
-      | x ->
-          let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
-          Ans(CallDir(Id.L(x), int, float)))
+      let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
+      Ans(CallDir(Id.L(x), int, float))
   | Closure.Tuple(xs) -> (* 組の生成 (caml2html: virtual_tuple) *)
       let y = Id.genid "t" in
       let (offset, store) =
         expand
           (List.map (fun x -> (x, M.find x env)) xs)
-          (0, Ans(Mov(y)))
+          (0, Ans(Mov(V(y))))
           (fun x offset store -> seq(StDF(x, y, offset), store))
           (fun x _ offset store -> seq(St(x, y, offset), store)) in
-      Let((y, Type.Tuple(List.map (fun x -> M.find x env) xs)), Mov(reg_hp),
+      Let((y, Type.Tuple(List.map (fun x -> M.find x env) xs)), Mov(V(reg_hp)),
         (* Let((reg_hp, Type.Int), Add(reg_hp, C(align offset)), *)
         (* offsetの大小評価 *)
-        Let((reg_hp, Type.Int), Addi(reg_hp, offset),
+        Let((reg_hp, Type.Int), Addi(V(reg_hp), offset),
           store))
   | Closure.LetTuple(xts, y, e2) ->
       let s = Closure.fv e2 in
@@ -157,13 +138,15 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       (match M.find y env with
       | Type.Unit -> Ans(Nop)
       | Type.Float -> 
-          Let((return_address, Type.Array(Type.Float)), Mov(reg_hp),
+          create_float_array_appears := true;
+          Let((return_address, Type.Array(Type.Float)), Mov(V(reg_hp)),
             seq(CallDir(Id.L("create_float_array_loop"), [x], [y]),
-              Ans(Mov(return_address))))
+              Ans(Mov(V(return_address)))))
       | t ->
-          Let((return_address, Type.Array(t)), Mov(reg_hp),
+          create_array_appears := true;
+          Let((return_address, Type.Array(t)), Mov(V(reg_hp)),
             seq(CallDir(Id.L("create_array_loop"), [x; y], []),
-              Ans(Mov(return_address)))))
+              Ans(Mov(V(return_address))))))
   | Closure.Get(x, y) -> (* 配列の読み出し (caml2html: virtual_get) *)
       let offset = Id.genid "o" in
       let abs_address = Id.genid "abs_address" in
@@ -173,14 +156,14 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           (* Let((offset, Type.Int), SLL(y, C(3)), *)
           (* Let((offset, Type.Int), SLL(y, C(2)),
               Ans(LdDF(x, V(offset)))) *)
-          Let((offset, Type.Int), SLL(y, 2),
-            Let((abs_address, Type.Int), Add(x, offset),
+          Let((offset, Type.Int), SLL(V(y), 2),
+            Let((abs_address, Type.Int), Add(V(x), V(offset)),
               Ans(LdDF(abs_address, 0))))
       | Type.Array(_) ->
           (* Let((offset, Type.Int), SLL(y, C(2)),
               Ans(Ld(x, V(offset)))) *)
-          Let((offset, Type.Int), SLL(y, 2),
-            Let((abs_address, Type.Int), Add(x, offset),
+          Let((offset, Type.Int), SLL(V(y), 2),
+            Let((abs_address, Type.Int), Add(V(x), V(offset)),
               Ans(Ld(abs_address, 0))))
       | _ -> assert false)
   | Closure.Put(x, y, z) ->
@@ -192,14 +175,14 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           (* Let((offset, Type.Int), SLL(y, C(3)), *)
           (* Let((offset, Type.Int), SLL(y, C(2)),
               Ans(StDF(z, x, V(offset)))) *)
-          Let((offset, Type.Int), SLL(y, 2),
-            Let((abs_address, Type.Int), Add(x, offset),
+          Let((offset, Type.Int), SLL(V(y), 2),
+            Let((abs_address, Type.Int), Add(V(x), V(offset)),
               Ans(StDF(z, abs_address, 0))))
       | Type.Array(_) ->
           (* Let((offset, Type.Int), SLL(y, C(2)),
               Ans(St(z, x, V(offset)))) *)
-          Let((offset, Type.Int), SLL(y, 2),
-            Let((abs_address, Type.Int), Add(x, offset),
+          Let((offset, Type.Int), SLL(V(y), 2),
+            Let((abs_address, Type.Int), Add(V(x), V(offset)),
               Ans(St(z, abs_address, 0))))
       | _ -> assert false)
   | Closure.FAbs(x) -> Ans(FAbs(x))
@@ -211,6 +194,7 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
   | Closure.In -> Ans(In)
   | Closure.BTOF(x) ->
       seq(St(x, "$zero", 16), Ans(LdDF("$zero", 16)))  (* 16???? *) (* 上手く行くのか。$zeroをregAlloc等でそのままにしてくれるか *)
+      (* reg_zero *)
 
 (* 関数の仮想マシンコード生成 (caml2html: virtual_h) *)
 let h { Closure.name = (Id.L(x), t); Closure.args = yts; Closure.formal_fv = zts; Closure.body = e } =
@@ -230,39 +214,37 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts; Closure.formal_fv = zts
 let create_array_loop_fundef =
   let n = Id.genid "n" in
   let x = Id.genid "x" in
-  let zero = Id.genid "zero" in
   let m = Id.genid "m" in
   { name = Id.L("create_array_loop");
     args = [n; x];
     fargs = [];
-    body = Let((zero, Type.Int), Set(0),
-             Ans(IfEq(n, zero, 
-               Ans(Nop),
-               seq(St(x, reg_hp, 0),
-                 Let((m, Type.Int), Addi(n, -1),
-                   Let((reg_hp, Type.Int), Addi(reg_hp, 4),
-                     Ans(CallDir(Id.L("create_array_loop"), [m; x], [])))))))); 
+    body = Ans(IfEq(V(n), C(0), 
+             Ans(Nop),
+             seq(St(x, reg_hp, 0),
+               Let((m, Type.Int), Addi(V(n), -1),
+                 Let((reg_hp, Type.Int), Addi(V(reg_hp), 4),
+                   Ans(CallDir(Id.L("create_array_loop"), [m; x], []))))))); 
     ret = Type.Unit }
 let create_float_array_loop_fundef =
   let n = Id.genid "n" in
   let x = Id.genid "x" in
-  let zero = Id.genid "zero" in
   let m = Id.genid "m" in
   { name = Id.L("create_float_array_loop");
     args = [n];
     fargs = [x];
-    body = Let((zero, Type.Int), Set(0),
-             Ans(IfEq(n, zero, 
-               Ans(Nop),
-               seq(StDF(x, reg_hp, 0),
-                 Let((m, Type.Int), Addi(n, -1),
-                   Let((reg_hp, Type.Int), Addi(reg_hp, 4),
-                     Ans(CallDir(Id.L("create_float_array_loop"), [m], [x])))))))); 
+    body = Ans(IfEq(V(n), C(0), 
+             Ans(Nop),
+             seq(StDF(x, reg_hp, 0),
+               Let((m, Type.Int), Addi(V(n), -1),
+                 Let((reg_hp, Type.Int), Addi(V(reg_hp), 4),
+                   Ans(CallDir(Id.L("create_float_array_loop"), [m], [x]))))))); 
     ret = Type.Unit }
 
 (* プログラム全体の仮想マシンコード生成 (caml2html: virtual_f) *)
 let f (Closure.Prog(fundefs, e)) =
-  let fundefs = create_array_loop_fundef :: create_float_array_loop_fundef :: List.map h fundefs in
-  let e = g M.empty e in
-  (* let e = concat e (Id.genid "main", Type.Unit) (Ans(Nop)) in *)    (* コア係より末尾にNopが欲しい *)
-  Prog(fundefs, e)
+  let fundefs' = List.map h fundefs in
+  let e' = g M.empty e in
+  let fundefs'' = (if !create_array_appears then [create_array_loop_fundef] else []) @
+                  (if !create_float_array_appears then [create_float_array_loop_fundef] else []) @
+                  fundefs' in
+  Prog(fundefs'', e')
