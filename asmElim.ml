@@ -19,7 +19,8 @@ let rec g = function  (* 命令列の不要定義削除 *)
       if effect_exp exp' || List.mem x (fv e') 
         || x = reg_hp  (* is_reg????????  代替として、IncrHP命令を作るべき？ これには破壊的代入がされる *)
       then Let((x, t), exp', e') else
-      e'
+      (Format.eprintf "[AsmElim] eliminating variable %s@." x;
+       e')
 and g' = function  (* 各命令の不要定義削除 *)
   | IfEq(x, y, e1, e2) -> IfEq(x, y, g e1, g e2)
   | IfLE(x, y, e1, e2) -> IfLE(x, y, g e1, g e2)

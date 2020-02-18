@@ -56,24 +56,24 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
   | Closure.Sub(x, y) -> Ans(Sub(V(x), V(y)))
   | Closure.Mul(x, y) -> Ans(Mul(V(x), V(y)))
   | Closure.Div(x, y) -> Ans(Div(V(x), V(y)))
-  | Closure.FNeg(x) -> Ans(FNegD(x))
-  | Closure.FAdd(x, y) -> Ans(FAddD(x, y))
-  | Closure.FSub(x, y) -> Ans(FSubD(x, y))
-  | Closure.FMul(x, y) -> Ans(FMulD(x, y))
+  | Closure.FNeg(x) -> Ans(FNegD(W(x)))
+  | Closure.FAdd(x, y) -> Ans(FAddD(W(x), W(y)))
+  | Closure.FSub(x, y) -> Ans(FSubD(W(x), W(y)))
+  | Closure.FMul(x, y) -> Ans(FMulD(W(x), W(y)))
   (* | Closure.FDiv(x, y) -> Ans(FDivD(x, y)) *)
   | Closure.FDiv(x, y) ->
       (* let z = Id.gentmp Type.Float in *)
       let z = Id.genid "Tfloat" in
-      Let((z, Type.Float), FInv(y), Ans(FMulD(x, z)))
+      Let((z, Type.Float), FInv(W(y)), Ans(FMulD(W(x), W(z))))
   | Closure.IfEq(x, y, e1, e2) ->
       (match M.find x env with
       | Type.Bool | Type.Int -> Ans(IfEq(V(x), V(y), g env e1, g env e2))
-      | Type.Float -> Ans(IfFEq(x, y, g env e1, g env e2))
+      | Type.Float -> Ans(IfFEq(W(x), W(y), g env e1, g env e2))
       | _ -> assert false)  (* equality supported only for bool, int, and float *)
   | Closure.IfLE(x, y, e1, e2) ->
       (match M.find x env with
       | Type.Bool | Type.Int -> Ans(IfLE(V(x), V(y), g env e1, g env e2))
-      | Type.Float -> Ans(IfFLE(x, y, g env e1, g env e2))
+      | Type.Float -> Ans(IfFLE(W(x), W(y), g env e1, g env e2))
       | _ -> assert false)  (* inequality supported only for bool, int, and float *)
   | Closure.Let((x, t1), e1, e2) ->
       let e1' = g env e1 in
@@ -82,7 +82,7 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
   | Closure.Var(x) ->
       (match M.find x env with
       | Type.Unit -> Ans(Nop)
-      | Type.Float -> Ans(FMovD(x))
+      | Type.Float -> Ans(FMovD(W(x)))
       | _ -> Ans(Mov(V(x))))
   | Closure.MakeCls((x, t), { Closure.entry = l; Closure.actual_fv = ys }, e2) -> (* クロージャの生成 (caml2html: virtual_makecls) *)
       (* Closureのアドレスをセットしてから、自由変数の値をストア *)
@@ -185,12 +185,12 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
             Let((abs_address, Type.Int), Add(V(x), V(offset)),
               Ans(St(z, abs_address, 0))))
       | _ -> assert false)
-  | Closure.FAbs(x) -> Ans(FAbs(x))
-  | Closure.Sqrt(x) -> Ans(FSqrt(x))
-  | Closure.FTOI(x) -> Ans(FTOI(x))
-  | Closure.ITOF(x) -> Ans(ITOF(x))
-  | Closure.Out(x) -> Ans(Out(x))
-  | Closure.OutInt(x) -> Ans(OutInt(x))
+  | Closure.FAbs(x) -> Ans(FAbs(W(x)))
+  | Closure.Sqrt(x) -> Ans(FSqrt(W(x)))
+  | Closure.FTOI(x) -> Ans(FTOI(W(x)))
+  | Closure.ITOF(x) -> Ans(ITOF(V(x)))
+  | Closure.Out(x) -> Ans(Out(V(x)))
+  | Closure.OutInt(x) -> Ans(OutInt(V(x)))
   | Closure.In -> Ans(In)
   | Closure.BTOF(x) ->
       seq(St(x, "$zero", 16), Ans(LdDF("$zero", 16)))  (* 16???? *) (* 上手く行くのか。$zeroをregAlloc等でそのままにしてくれるか *)

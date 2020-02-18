@@ -7,11 +7,17 @@ let memi x env = match x with
   | C(_) -> true
 (* findじゃなくてfind_optなのは、$gpとか最初envに入ってなさそうなので *)
 (* fundefの引数もそうか *)
+let memf x env = match x with
+  | W(x') -> (match M.find_opt x' env with Some(FSetD(_)) -> true | _ -> false)
+  | D(_) -> true
 
 let findi x env = match x with
   | V(x') -> (match M.find_opt x' env with Some(Set(i)) -> i | _ -> raise Not_found)
   | C(i) -> i
-  
+let findf x env = match x with
+  | W(x') -> (match M.find_opt x' env with Some(FSetD(f)) -> f | _ -> assert false)
+  | D(f) -> f
+
 let rec g env = function  (* 命令列の定数畳み込み *)
   | Ans(exp) -> g' env exp
   | Let((x, t) as xt, exp, e) ->
@@ -169,29 +175,34 @@ and g' env = function  (* 各命令の定数畳み込み *)
   | IfEq(x, y, e1, e2) -> Ans(IfEq(x, y, g env e1, g env e2))
   | IfLE(x, y, e1, e2) when memi x env && memi y env -> if findi x env <= findi y env then g env e1 else g env e2
   | IfLE(x, y, e1, e2) -> Ans(IfLE(x, y, g env e1, g env e2))
+  | IfFEq(x, y, e1, e2) when memf x env && memf y env -> if findf x env = findf y env then g env e1 else g env e2
   | IfFEq(x, y, e1, e2) -> Ans(IfFEq(x, y, g env e1, g env e2))
+  | IfFLE(x, y, e1, e2) when memf x env && memf y env -> if findf x env <= findf y env then g env e1 else g env e2
   | IfFLE(x, y, e1, e2) -> Ans(IfFLE(x, y, g env e1, g env e2))
-(*
-  | FNeg(x) when memf x env -> FSetD(-.(findf x env))
-  | FAddD(x, y) when memf x env && memf y env -> FSetD(findf x env +. findf y env)
-  | FAddD(x, y) when memf x env && findf x env = 0. -> FMovD(y)
-  | FAddD(x, y) when memf y env && findf y env = 0. -> FMovD(x)
-  | FSubD(x, y) when memf x env && memf y env -> FSetD(findf x env -. findf y env)
-  | FSubD(x, y) when memf x env && findf x env = 0. -> FNegD(y)
-  | FSubD(x, y) when memf y env && findf y env = 0. -> FMovD(x)
-  | FMulD(x, y) when memf x env && memf y env -> FSetD(findf x env *. findf y env)
-  | FMulD(x, y) when memf x env && findf x env = -1. -> FNegD(y)
-  | FMulD(x, y) when memf x env && findf x env = 0. -> FSetD(0.)
-  | FMulD(x, y) when memf x env && findf x env = 1. -> FMovD(y)
-  | FMulD(x, y) when memf y env && findf y env = -1. -> FNegD(x)
-  | FMulD(x, y) when memf y env && findf y env = 0. -> FSetD(0.)
-  | FMulD(x, y) when memf y env && findf y env = 1. -> FMovD(x)
 
-  | FAbs(x) when memf x env -> FSetD(abs_float (findf x env))
-  | FSqrt(x) when memf x env -> FSetD(sqrt (findf x env))
-  | FTOI(x) when memf x env -> Set(int_of_float (findf x env))
-  | ITOF(x) when memi x env -> FSetD(float_of_int (findi x env))
-*)
+  | FMovD(x) when memf x env -> Ans(FSetD(findf x env))
+  | FNegD(x) when memf x env -> Ans(FSetD(-.(findf x env)))
+  | FAddD(x, y) when memf x env && memf y env -> Ans(FSetD(findf x env +. findf y env))
+  | FAddD(x, y) when memf x env && findf x env = 0. -> Ans(FMovD(y))
+  | FAddD(x, y) when memf y env && findf y env = 0. -> Ans(FMovD(x))
+  | FSubD(x, y) when memf x env && memf y env -> Ans(FSetD(findf x env -. findf y env))
+  | FSubD(x, y) when memf x env && findf x env = 0. -> Ans(FNegD(y))
+  | FSubD(x, y) when memf y env && findf y env = 0. -> Ans(FMovD(x))
+  | FMulD(x, y) when memf x env && memf y env -> Ans(FSetD(findf x env *. findf y env))
+  | FMulD(x, y) when memf x env && findf x env = -1. -> Ans(FNegD(y))
+  | FMulD(x, y) when memf x env && findf x env = 0. -> Ans(FSetD(0.))
+  | FMulD(x, y) when memf x env && findf x env = 1. -> Ans(FMovD(y))
+  | FMulD(x, y) when memf y env && findf y env = -1. -> Ans(FNegD(x))
+  | FMulD(x, y) when memf y env && findf y env = 0. -> Ans(FSetD(0.))
+  | FMulD(x, y) when memf y env && findf y env = 1. -> Ans(FMovD(x))
+  | FInv(x) when memf x env && findf x env = 0. -> failwith "Division by zero"
+  | FInv(x) when memf x env -> Ans(FSetD(1. /. findf x env))
+
+  | FAbs(x) when memf x env -> Ans(FSetD(abs_float (findf x env)))
+  | FSqrt(x) when memf x env -> Ans(FSetD(sqrt (findf x env)))
+  | FTOI(x) when memf x env -> Ans(Set(int_of_float (findf x env)))
+  | ITOF(x) when memi x env -> Ans(FSetD(float_of_int (findi x env)))
+
   | exp -> Ans(exp)
 
 let h { name = l; args = xs; fargs = ys; body = e; ret = t } =  (* トップレベル関数の定数畳み込み *)

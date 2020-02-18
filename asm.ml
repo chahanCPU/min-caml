@@ -1,6 +1,7 @@
 (* chahan assembly with a few virtual instructions *)
 
 type id_or_int = V of Id.t | C of int  (* intには定数レジスタの中身が入る *)
+type id_or_float = W of Id.t | D of float  (* 倍精度になるけど、いいかぁ *)
 type t = (* 命令の列 (caml2html: sparcasm_t) *)
   | Ans of exp
   | Let of (Id.t * Type.t) * exp * t
@@ -23,21 +24,21 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   | SRA of id_or_int * int
   | Ld of Id.t * int
   | St of Id.t * Id.t * int
-  | FMovD of Id.t
-  | FNegD of Id.t
-  | FAddD of Id.t * Id.t
-  | FSubD of Id.t * Id.t
-  | FMulD of Id.t * Id.t
+  | FMovD of id_or_float
+  | FNegD of id_or_float
+  | FAddD of id_or_float * id_or_float
+  | FSubD of id_or_float * id_or_float
+  | FMulD of id_or_float * id_or_float
   (* | FDivD of Id.t * Id.t *)
-  | FInv of Id.t
+  | FInv of id_or_float
   | LdDF of Id.t * int
   | StDF of Id.t * Id.t * int
   (* virtual instructions *)
   | IfEq of id_or_int * id_or_int * t * t
   | IfLE of id_or_int * id_or_int * t * t
       (* ↑ id_or_imm を Id.t に変更する。ゼロの特殊ケースver.を作る *)
-  | IfFEq of Id.t * Id.t * t * t
-  | IfFLE of Id.t * Id.t * t * t
+  | IfFEq of id_or_float * id_or_float * t * t
+  | IfFLE of id_or_float * id_or_float * t * t
   (* closure address, integer arguments, and float arguments *)
   | CallCls of Id.t * Id.t list * Id.t list
   | CallDir of Id.l * Id.t list * Id.t list
@@ -45,12 +46,12 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   | Restore of Id.t (* スタック変数から値を復元 (caml2html: sparcasm_restore) *)
   (* もともとライブラリにあった命令 *)
   | In
-  | Out of Id.t
-  | OutInt of Id.t
-  | FAbs of Id.t
-  | FSqrt of Id.t
-  | FTOI of Id.t
-  | ITOF of Id.t
+  | Out of id_or_int
+  | OutInt of id_or_int
+  | FAbs of id_or_float
+  | FSqrt of id_or_float
+  | FTOI of id_or_float
+  | ITOF of id_or_int
 type fundef = { name : Id.l; args : Id.t list; fargs : Id.t list; body : t; ret : Type.t }
 (* プログラム全体 = トップレベル関数 + メインの式 (caml2html: sparcasm_prog) *)
 type prog = Prog of fundef list * t
@@ -59,8 +60,12 @@ let fletd(x, e1, e2) = Let((x, Type.Float), e1, e2)
 let seq(e1, e2) = Let((Id.genid "Tunit", Type.Unit), e1, e2)
 (* let seq(e1, e2) = Let((Id.gentmp Type.Unit, Type.Unit), e1, e2) *)
 
+(* 定数レジスタの代入命令を書かなくちゃ *)
+(* 本当はデータフロー解析とか、コントロール解析で勝手にやってほしいのだが *)
 let regs_const =  (* 定数レジスタ *)
   [(0, "$zero")]
+let fregs_const =
+  [(0., "$f0")]
 let regs = (* Array.init 16 (fun i -> Printf.sprintf "%%r%d" i) *)  (* 汎用レジスタ *)
   [| "$1"; "$2"; "$3"; 
      "$4"; "$5"; "$6"; "$7"; 
@@ -102,16 +107,21 @@ let rec remove_and_uniq xs = function
 
 (* free variables in the order of use (for spilling) (caml2html: sparcasm_fv) *)
 let fv_id_or_int = function V(x) -> [x] | C(_) -> []
+let fv_id_or_float = function W(x) -> [x] | D(_) -> []
 let rec fv_exp = function
   | Nop | Set(_) | FSetD(_) | SetL(_) | Restore(_) | In -> []
   | Mov(x) | Addi(x, _) | SLL(x, _) | SRA(x, _) -> fv_id_or_int x
   | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) -> fv_id_or_int x @ fv_id_or_int y
-  | Ld(x, _) | FMovD(x) | FNegD(x) | FInv(x) | LdDF(x, _) | Save(x, _) | Out(x) | OutInt(x) | FAbs (x) | FSqrt (x) | FTOI(x) | ITOF(x) -> [x]
-  | St(x, y, _) | FAddD(x, y) | FSubD(x, y) | FMulD(x, y) | StDF(x, y, _)-> [x; y]
+  | Ld(x, _) | LdDF(x, _) | Save(x, _) -> [x]
+  | St(x, y, _) | StDF(x, y, _)-> [x; y]
+  | FMovD(x) | FNegD(x) | FInv(x) -> fv_id_or_float x
+  | FAddD(x, y) | FSubD(x, y) | FMulD(x, y) -> fv_id_or_float x @ fv_id_or_float y
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> fv_id_or_int x @ fv_id_or_int y @ remove_and_uniq S.empty (fv e1 @ fv e2)
-  | IfFEq(x, y, e1, e2) | IfFLE(x, y, e1, e2) -> x :: y :: remove_and_uniq S.empty (fv e1 @ fv e2)  (* uniq here just for efficiency *)
+  | IfFEq(x, y, e1, e2) | IfFLE(x, y, e1, e2) -> fv_id_or_float x @ fv_id_or_float y @ remove_and_uniq S.empty (fv e1 @ fv e2)  (* uniq here just for efficiency *)
   | CallCls(x, ys, zs) -> x :: ys @ zs
   | CallDir(_, ys, zs) -> ys @ zs
+  | Out(x) | OutInt(x) | ITOF(x) -> fv_id_or_int x
+  | FAbs(x) | FSqrt(x) | FTOI(x) -> fv_id_or_float x
 and fv = function
   | Ans(exp) -> fv_exp exp
   | Let((x, t), exp, e) ->

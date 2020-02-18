@@ -31,7 +31,12 @@ let stacksize () = (List.length !stackmap + 1) * 4
 
 let pp_id_or_int = function
   | V(x) -> x
-  | C(i) -> List.assoc i regs_const
+  | C(i) when List.mem_assoc i regs_const -> List.assoc i regs_const
+  | _ -> assert false
+let pp_id_or_float = function
+  | W(x) -> x
+  | D(f) when List.mem_assoc f fregs_const -> List.assoc f fregs_const
+  | _ -> assert false
 
 (* 関数呼び出しのために引数を並べ替える(register shuffling) (caml2html: emit_shuffle) *)
 let rec shuffle sw xys =
@@ -177,9 +182,9 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(x), FDivD(y, z) -> Printf.fprintf oc "\tfdivd\t%s, %s, %s\n" y z x
   | NonTail(x), LdDF(y, z') -> Printf.fprintf oc "\tldd\t[%s + %s], %s\n" y (pp_id_or_imm z') x
   | NonTail(_), StDF(x, y, z') -> Printf.fprintf oc "\tstd\t%s, [%s + %s]\n" x y (pp_id_or_imm z') *)
-  | NonTail(x), FMovD(y) when x = y -> ()
+  | NonTail(x), FMovD(W(y)) when x = y -> ()
   | NonTail(x), FMovD(y) ->
-      Printf.fprintf oc "\tmv.s\t%s, %s\n" x y     
+      Printf.fprintf oc "\tmv.s\t%s, %s\n" x (pp_id_or_float y)     
       (*
       Printf.fprintf oc "\tadd.s\t%s, $f0, %s\n" x y 
       *)
@@ -187,12 +192,12 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       (* Printf.fprintf oc "\tfmovs\t%s, %s\n" (co_freg y) (co_freg x) *)
   | NonTail(x), FNegD(y) ->
       (* Printf.fprintf oc "\tsub.s\t%s, $zero, %s\n" x y    (* (float)0は、bit列でも全0 *) *)
-      Printf.fprintf oc "\tneg.s\t%s, %s\n" x y
+      Printf.fprintf oc "\tneg.s\t%s, %s\n" x (pp_id_or_float y)
       (* Printf.fprintf oc "\tfnegs\t%s, %s\n" y x; *)
       (* if x <> y then Printf.fprintf oc "\tfmovs\t%s, %s\n" (co_freg y) (co_freg x) *)
-  | NonTail(x), FAddD(y, z) -> Printf.fprintf oc "\tadd.s\t%s, %s, %s\n" x y z
-  | NonTail(x), FSubD(y, z) -> Printf.fprintf oc "\tsub.s\t%s, %s, %s\n" x y z
-  | NonTail(x), FMulD(y, z) -> Printf.fprintf oc "\tmul.s\t%s, %s, %s\n" x y z
+  | NonTail(x), FAddD(y, z) -> Printf.fprintf oc "\tadd.s\t%s, %s, %s\n" x (pp_id_or_float y) (pp_id_or_float z)
+  | NonTail(x), FSubD(y, z) -> Printf.fprintf oc "\tsub.s\t%s, %s, %s\n" x (pp_id_or_float y) (pp_id_or_float z)
+  | NonTail(x), FMulD(y, z) -> Printf.fprintf oc "\tmul.s\t%s, %s, %s\n" x (pp_id_or_float y) (pp_id_or_float z)
   (* 
   | NonTail(x), FDivD(y, z) -> 
 			(* $f0はゼロ、$f1は$atのノリで使ってる *)
@@ -200,7 +205,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tinv.s\t$f1, %s\n" z;    (* $atを浮動小数点数用に使うのはあり!? --> なし *)
       Printf.fprintf oc "\tmul.s\t%s, %s, $f1\n" x y
   *)
-  | NonTail(x), FInv(y) -> Printf.fprintf oc "\tinv.s\t%s, %s\n" x y
+  | NonTail(x), FInv(y) -> Printf.fprintf oc "\tinv.s\t%s, %s\n" x (pp_id_or_float y)
   | NonTail(x), LdDF(y, i) -> Printf.fprintf oc "\tlw.s\t%s, %d(%s)\n" x i y 
   | NonTail(_), StDF(x, y, i) -> Printf.fprintf oc "\tsw.s\t%s, %d(%s)\n" x i y
 
@@ -223,12 +228,12 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tlw.s\t%s, %d(%s)\n" x (offset y) reg_sp
   
   | NonTail(x), In -> Printf.fprintf oc "\tin\t%s\n" x
-  | NonTail(_), Out(x) -> Printf.fprintf oc "\tout\t%s\n" x
-  | NonTail(_), OutInt(x) -> Printf.fprintf oc "\toutint\t%s\n" x
-  | NonTail(x), FAbs(y) -> Printf.fprintf oc "\tabs.s\t%s, %s\n" x y
-  | NonTail(x), FSqrt(y) -> Printf.fprintf oc "\tsqrt.s\t%s, %s\n" x y
-  | NonTail(x), FTOI(y) -> Printf.fprintf oc "\tftoi\t%s, %s\n" x y
-  | NonTail(x), ITOF(y) -> Printf.fprintf oc "\titof\t%s, %s\n" x y
+  | NonTail(_), Out(x) -> Printf.fprintf oc "\tout\t%s\n" (pp_id_or_int x)
+  | NonTail(_), OutInt(x) -> Printf.fprintf oc "\toutint\t%s\n" (pp_id_or_int x)
+  | NonTail(x), FAbs(y) -> Printf.fprintf oc "\tabs.s\t%s, %s\n" x (pp_id_or_float y)
+  | NonTail(x), FSqrt(y) -> Printf.fprintf oc "\tsqrt.s\t%s, %s\n" x (pp_id_or_float y)
+  | NonTail(x), FTOI(y) -> Printf.fprintf oc "\tftoi\t%s, %s\n" x (pp_id_or_float y)
+  | NonTail(x), ITOF(y) -> Printf.fprintf oc "\titof\t%s, %s\n" x (pp_id_or_int y)
 
   (* 末尾だったら計算結果を第一レジスタにセットしてリターン (caml2html: emit_tailret) *)
   | Tail, (Nop | St _ | StDF _ | Save _ | Out _ | OutInt _ as exp) ->
@@ -250,23 +255,23 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
 
   | Tail, IfEq(x, y, e1, e2) -> g'_tail_if oc "beq" (pp_id_or_int x) (pp_id_or_int y) e1 e2
   | Tail, IfLE(x, y, e1, e2) -> g'_tail_if oc "ble" (pp_id_or_int x) (pp_id_or_int y) e1 e2
-  | Tail, IfFEq(x, y, e1, e2) -> g'_tail_if oc "beq.s" x y e1 e2
-  | Tail, IfFLE(x, y, e1, e2) -> g'_tail_if oc "ble.s" x y e1 e2
+  | Tail, IfFEq(x, y, e1, e2) -> g'_tail_if oc "beq.s" (pp_id_or_float x) (pp_id_or_float y) e1 e2
+  | Tail, IfFLE(x, y, e1, e2) -> g'_tail_if oc "ble.s" (pp_id_or_float x) (pp_id_or_float y) e1 e2
 
   | NonTail(z), IfEq(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "beq" (pp_id_or_int x) (pp_id_or_int y) e1 e2
   | NonTail(z), IfLE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "ble" (pp_id_or_int x) (pp_id_or_int y) e1 e2
-  | NonTail(z), IfFEq(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "beq.s" x y e1 e2
-  | NonTail(z), IfFLE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "ble.s" x y e1 e2
+  | NonTail(z), IfFEq(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "beq.s" (pp_id_or_float x) (pp_id_or_float y) e1 e2
+  | NonTail(z), IfFLE(x, y, e1, e2) -> g'_non_tail_if oc (NonTail(z)) "ble.s" (pp_id_or_float x) (pp_id_or_float y) e1 e2
 
   (* もとのsparcと要確認 *)
   (* 関数呼び出しの仮想命令の実装 (caml2html: emit_call) *)
   | Tail, CallCls(x, ys, zs) -> (* 末尾呼び出し (caml2html: emit_tailcall) *)
       g'_args oc [(x, reg_cl)] ys zs;
       Printf.fprintf oc "\tlw\t%s, 0(%s)\n" reg_sw reg_cl;
-      Printf.fprintf oc "\tjr\t%s\n" reg_sw;
+      Printf.fprintf oc "\tjr\t%s\n" reg_sw
   | Tail, CallDir(Id.L(x), ys, zs) -> (* 末尾呼び出し *)
       g'_args oc [] ys zs;
-      Printf.fprintf oc "\tj\t%s\n" x;
+      Printf.fprintf oc "\tj\t%s\n" x
   | NonTail(a), CallCls(x, ys, zs) ->
       g'_args oc [(x, reg_cl)] ys zs;
       let ss = stacksize () in  (* ssがそんなに大きくないことが前提 *)

@@ -4,6 +4,10 @@ let output_id_or_int oc = function
   | V(x) -> OutputId.output_t oc x
   | C(i) -> Printf.fprintf oc "%d" i
 
+let output_id_or_float oc = function
+  | W(x) -> OutputId.output_t oc x
+  | D(f) -> Printf.fprintf oc "%f" f
+
 let rec output_t' oc depth e =
   for i = 1 to depth do
     Printf.fprintf oc "\t"
@@ -91,34 +95,34 @@ and output_exp' oc depth exp =
       Printf.fprintf oc " %d\n" i
   | FMovD(x) ->
       Printf.fprintf oc "FMovD ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc "\n"
   | FNegD(x) ->
       Printf.fprintf oc "FNegD ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc "\n"
   | FAddD(x, y) -> 
       Printf.fprintf oc "FAddD ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_float oc y;
       Printf.fprintf oc "\n"
   | FSubD(x, y) -> 
       Printf.fprintf oc "FSubD ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_float oc y;
       Printf.fprintf oc "\n"
   | FMulD(x, y) -> 
       Printf.fprintf oc "FMulD ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_float oc y;
       Printf.fprintf oc "\n"
   (* | FDivD (x,y) -> op2 "FDivD" x y *)
   | FInv(x) -> 
       Printf.fprintf oc "FInv ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc "\n"
   | LdDF(x, i) -> 
       Printf.fprintf oc "LdDF ";
@@ -148,17 +152,17 @@ and output_exp' oc depth exp =
       output_t' oc (depth + 1) e2
   | IfFEq (x, y, e1, e2) -> 
       Printf.fprintf oc "IfFEq ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_float oc y;
       Printf.fprintf oc "\n";
       output_t' oc (depth + 1) e1;
       output_t' oc (depth + 1) e2
   | IfFLE(x, y, e1, e2) -> 
       Printf.fprintf oc "IfFLE ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_float oc y;
       Printf.fprintf oc "\n";
       output_t' oc (depth + 1) e1;
       output_t' oc (depth + 1) e2
@@ -240,27 +244,27 @@ and output_exp' oc depth exp =
       Printf.fprintf oc "In\n"
   | Out(x) -> 
       Printf.fprintf oc "Out ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc "\n"
   | OutInt(x) ->
       Printf.fprintf oc "OutInt ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc "\n"
   | FAbs(x) -> 
       Printf.fprintf oc "FAbs ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc "\n"
   | FSqrt(x) ->
       Printf.fprintf oc "FSqrt ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc "\n"
   | FTOI(x) -> 
       Printf.fprintf oc "FTOI ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc "\n"
   | ITOF(x) ->
       Printf.fprintf oc "ITOF ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc "\n"
 
 let output_fundef' oc depth { name = Id.L(x); args = ys; fargs = zs; body = e; ret = t } = 

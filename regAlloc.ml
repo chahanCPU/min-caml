@@ -8,7 +8,7 @@ let rec target' src (dest, t) = function
       assert (t <> Type.Unit);
       assert (t <> Type.Float);
       false, [dest]
-  | FMovD(x) when x = src && is_reg dest ->
+  | FMovD(W(x)) when x = src && is_reg dest ->
       assert (t = Type.Float);
       false, [dest]
   | IfEq(_, _, e1, e2) | IfLE(_, _, e1, e2) | IfFEq(_, _, e1, e2) | IfFLE(_, _, e1, e2) ->
@@ -88,10 +88,14 @@ let find x t regenv =
   if is_reg x then x else
   try M.find x regenv
   with Not_found -> raise (NoReg(x, t))
-let find_id_or_int x regenv =
+let find_id_or_int x regenv = 
   match x with
   | V(x') -> V(find x' Type.Int regenv)
-  | c -> c
+  | C(_) -> x
+let find_id_or_float x regenv = 
+  match x with
+  | W(x') -> W(find x' Type.Float regenv)
+  | D(_) -> x
 
 let rec g dest cont regenv = function (* 命令列のレジスタ割り当て (caml2html: regalloc_g) *)
   | Ans(exp) -> g'_and_restore dest cont regenv exp
@@ -127,19 +131,19 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   | SRA(x, i) -> (Ans(SRA(find_id_or_int x regenv, i)), regenv)
   | Ld(x, i) -> (Ans(Ld(find x Type.Int regenv, i)), regenv)
   | St(x, y, i) -> (Ans(St(find x Type.Int regenv, find y Type.Int regenv, i)), regenv)
-  | FMovD(x) -> (Ans(FMovD(find x Type.Float regenv)), regenv)
-  | FNegD(x) -> (Ans(FNegD(find x Type.Float regenv)), regenv)
-  | FAddD(x, y) -> (Ans(FAddD(find x Type.Float regenv, find y Type.Float regenv)), regenv)
-  | FSubD(x, y) -> (Ans(FSubD(find x Type.Float regenv, find y Type.Float regenv)), regenv)
-  | FMulD(x, y) -> (Ans(FMulD(find x Type.Float regenv, find y Type.Float regenv)), regenv)
+  | FMovD(x) -> (Ans(FMovD(find_id_or_float x regenv)), regenv)
+  | FNegD(x) -> (Ans(FNegD(find_id_or_float x regenv)), regenv)
+  | FAddD(x, y) -> (Ans(FAddD(find_id_or_float x regenv, find_id_or_float y regenv)), regenv)
+  | FSubD(x, y) -> (Ans(FSubD(find_id_or_float x regenv, find_id_or_float y regenv)), regenv)
+  | FMulD(x, y) -> (Ans(FMulD(find_id_or_float x regenv, find_id_or_float y regenv)), regenv)
   (* | FDivD(x, y) -> (Ans(FDivD(find x Type.Float regenv, find y Type.Float regenv)), regenv) *)
-  | FInv(x) -> (Ans(FInv(find x Type.Float regenv)), regenv)
+  | FInv(x) -> (Ans(FInv(find_id_or_float x regenv)), regenv)
   | LdDF(x, i) -> (Ans(LdDF(find x Type.Int regenv, i)), regenv)
   | StDF(x, y, i) -> (Ans(StDF(find x Type.Float regenv, find y Type.Int regenv, i)), regenv)
   | IfEq(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfEq(find_id_or_int x regenv, find_id_or_int y regenv, e1', e2')) e1 e2
   | IfLE(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfLE(find_id_or_int x regenv, find_id_or_int y regenv, e1', e2')) e1 e2
-  | IfFEq(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfFEq(find x Type.Float regenv, find y Type.Float regenv, e1', e2')) e1 e2
-  | IfFLE(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfFLE(find x Type.Float regenv, find y Type.Float regenv, e1', e2')) e1 e2
+  | IfFEq(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfFEq(find_id_or_float x regenv, find_id_or_float y regenv, e1', e2')) e1 e2
+  | IfFLE(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfFLE(find_id_or_float x regenv, find_id_or_float y regenv, e1', e2')) e1 e2
   | CallCls(x, ys, zs) as exp ->
       if List.length ys > Array.length regs - 2 || List.length zs > Array.length fregs - 1 then
         failwith (Format.sprintf "cannot allocate registers for arugments to %s" x)
@@ -154,12 +158,12 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   (* 例えば、FTOIの出力先レジスタが整数レジスタになるって決まってますか? *)
   (* 型検査しないとまずそう *)
   | In -> (Ans(In), regenv)
-  | Out(x) -> (Ans(Out(find x Type.Int regenv)), regenv)
-  | OutInt(x) -> (Ans(OutInt(find x Type.Int regenv)), regenv)
-  | FAbs(x) -> (Ans(FAbs(find x Type.Float regenv)), regenv)
-  | FSqrt(x) -> (Ans(FSqrt(find x Type.Float regenv)), regenv)
-  | FTOI(x) -> (Ans(FTOI(find x Type.Float regenv)), regenv)
-  | ITOF(x) -> (Ans(ITOF(find x Type.Int regenv)), regenv)
+  | Out(x) -> (Ans(Out(find_id_or_int x regenv)), regenv)
+  | OutInt(x) -> (Ans(OutInt(find_id_or_int x regenv)), regenv)
+  | FAbs(x) -> (Ans(FAbs(find_id_or_float x regenv)), regenv)
+  | FSqrt(x) -> (Ans(FSqrt(find_id_or_float x regenv)), regenv)
+  | FTOI(x) -> (Ans(FTOI(find_id_or_float x regenv)), regenv)
+  | ITOF(x) -> (Ans(ITOF(find_id_or_int x regenv)), regenv)
 and g'_if dest cont regenv exp constr e1 e2 = (* ifのレジスタ割り当て (caml2html: regalloc_if) *)
   let (e1', regenv1) = g dest cont regenv e1 in
   let (e2', regenv2) = g dest cont regenv e2 in
