@@ -63,21 +63,15 @@ let seq(e1, e2) = Let((Id.genid "Tunit", Type.Unit), e1, e2)
 (* 定数レジスタの代入命令を書かなくちゃ *)
 (* 本当はデータフロー解析とか、コントロール解析で勝手にやってほしいのだが *)
 let regs_const =  (* 定数レジスタ *)
-  [(0, "$zero")]
+  [(0, "$0"); (1, "$1"); (2, "$2"); (3, "$3"); (4, "$4"); (5, "$5"); (255, "$6"); (-1, "$7")]
 let fregs_const =
   [(0., "$f0")]
 let regs = (* Array.init 16 (fun i -> Printf.sprintf "%%r%d" i) *)  (* 汎用レジスタ *)
-  [| "$1"; "$2"; "$3"; 
-     "$4"; "$5"; "$6"; "$7"; 
-     "$8"; "$9"; "$10"; "$11"; "$12"; "$13"; "$14"; "$15";
-     "$16"; "$17"; "$18"; "$19"; "$20"; "$21"; "$22"; "$23";
-     "$24"; "$25"; 
-     "$26"; "$27";
-     "$30" |]
+  Array.init 53 (fun i -> Printf.sprintf "$%d" (i + 8))
 (* よく考えて *)
 (* $f0はゼロ、$f1は$atのノリで使ってる *)
 let fregs = (* Array.init 16 (fun i -> Printf.sprintf "%%f%d" (i * 2)) *)
-  Array.init 31 (fun i -> Printf.sprintf "$f%d" (i + 1))
+  Array.init 63 (fun i -> Printf.sprintf "$f%d" (i + 1))
 (* 浮動小数は班員と要相談 *)
 let allregs = Array.to_list regs
 let allfregs = Array.to_list fregs

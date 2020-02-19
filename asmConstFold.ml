@@ -24,7 +24,7 @@ let rec g env = function  (* 命令列の定数畳み込み *)
   (* concat *)
       let rec insert = function
         | Ans(exp') -> 
-            if x = reg_hp (* is_reg x???? *) then Let(xt, exp', g env e)  (* 破壊的代入が行われる変数は環境に加えない *)
+            if is_reg x then Let(xt, exp', g env e)  (* 破壊的代入が行われる変数は環境に加えない *)
             else Let(xt, exp', g (M.add x exp' env) e)
         | Let(yt, exp2, e2) -> Let(yt, exp2, insert e2) in
       insert (g' env exp)

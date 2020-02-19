@@ -66,8 +66,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   (* 命令長 32bit *)
   (* 16bitで扱えるsigned数 : -2^15 から 2^15-1   -32678 32767 *)
   | NonTail(x), Set(i) when -32678 <= i && i < 32678 -> 
-      (* Printf.fprintf oc "\tli\t%s, %d\n" x i *)
-      Printf.fprintf oc "\taddi\t%s, $zero, %d\n" x i
+      Printf.fprintf oc "\tli\t%s, %d\n" x i
+      (* Printf.fprintf oc "\taddi\t%s, $zero, %d\n" x i *)
       (* Printf.fprintf oc "\tori\t%s, $zero, %d\n" x i  (* oriかaddi *) *)
       (* ori, $2, $zero, -1 って、$2 <- 0xFFFFFFFF になるよな *)
       (* 即値16ビットやから、0x0000FFFF とはならんよな====願望 *)
@@ -374,6 +374,9 @@ let f oc (Prog(fundefs, e)) =
 
   Printf.fprintf oc "min_caml_start:\n";    (* "main"の方が良い? *)
 
+  (* List.iter (fun (i, reg) -> Printf.fprintf oc "\tli\t%s, %d\n" reg i) regs_const; *)
+  (* fregs_const版も *)
+  
   (* 値は適当に決めて → simulatorが決めてくれそう *)
   (* Printf.fprintf oc "\tori\t$sp, $zero, 16\n"; *)
   (* Printf.fprintf oc "\tlui\t$gp, 1\n";   *)

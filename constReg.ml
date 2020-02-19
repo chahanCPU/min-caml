@@ -33,7 +33,7 @@ let rec g env = function  (* 命令列の定数レジスタ活用 *)
   | Ans(exp) -> Ans(g' env exp)
   | Let((x, t), exp, e) ->
       let exp' = g' env exp in
-      let e' = if x = reg_hp (* is_reg x ????, 破壊的代入される変数 *) then g env e  (* 破壊的代入される変数は環境に加えない *)
+      let e' = if is_reg x (* x = reg_hp *) (* is_reg x ????, 破壊的代入される変数 *) then g env e  (* 破壊的代入される変数は環境に加えない *)
                else g (M.add x exp' env) e in
       Let((x, t), exp', e')
 

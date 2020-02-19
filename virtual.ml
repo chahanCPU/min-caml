@@ -247,4 +247,10 @@ let f (Closure.Prog(fundefs, e)) =
   let fundefs'' = (if !create_array_appears then [create_array_loop_fundef] else []) @
                   (if !create_float_array_appears then [create_float_array_loop_fundef] else []) @
                   fundefs' in
-  Prog(fundefs'', e')
+  let e'' = List.fold_right 
+              (fun (i, reg) e -> concat (Ans(Set(i))) (reg, Type.Int) e) 
+              regs_const 
+              (List.fold_right (fun (f, freg) e -> concat (Ans(FSetD(f))) (freg, Type.Float) e) fregs_const e') in  (* 定数レジスタの設定 *)
+  (* レジスタはこの後の最適化で消えないようにしている *)
+  (* 使わない定数レジスタを最適化で消したい *)
+  Prog(fundefs'', e'')

@@ -27,7 +27,7 @@ test/%.s: $(RESULT) libMinCaml.ml test/%.ml
 # 実行後にはもとのtest/*.mlに戻ってる
 # makefileでリダイレクト・パイプを使うと上手く行かない
 test/%.res: test/%.s 
-	make -C simulator TESTS=../$<
+	make -C simulator TEST=../$<
 	@rm -f $(*:%=test/%.s.binary)
 	@mv $(*:%=test/%.s.bintext) $(*:%=test/%.bin)
 	@mv $(*:%=test/%.s.ppm) $(*:%=test/%.res)
