@@ -5,6 +5,8 @@
 
 open Asm
 
+let globals : (Type.t * int) M.t ref = ref M.empty
+
 let create_array_appears = ref false
 let create_float_array_appears = ref false
 
@@ -75,6 +77,58 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       | Type.Bool | Type.Int -> Ans(IfLE(V(x), V(y), g env e1, g env e2))
       | Type.Float -> Ans(IfFLE(W(x), W(y), g env e1, g env e2))
       | _ -> assert false)  (* inequality supported only for bool, int, and float *)
+  | Closure.Let((x, t1), (Closure.GlobalTuple(_) as e1), e2) 
+  | Closure.Let((x, t1), (Closure.GlobalArray(_) as e1), e2) ->
+      let e1' = g env e1 in
+      let rec get_addr = function
+        | Ans(Set(i)) -> i
+        | Ans(Nop) -> -100
+        | Let(yt, exp, e) -> get_addr e
+        | _ -> assert false in
+      globals := M.add x (t1, get_addr e1') !globals;
+      let e2' = g (M.add x t1 env) e2 in
+      concat e1' (x, t1) e2'
+  (* | Closure.Let((x, t), Closure.GlobalTuple(ys), e) ->
+      let z = Id.genid "glbtup" in
+      let x_address = !init_hp in
+      globals := M.add x (t, x_address) !globals;
+      let (offset, store) = 
+        expand
+          (List.map (fun y -> (y, M.find y env)) ys)
+          (0, Ans(Mov(V(z))))
+          (fun y offset store -> seq(StDF(y, z, offset), store))
+          (fun y _ offset store -> seq(St(y, z, offset), store)) in
+      init_hp := !init_hp + offset;
+      concat (Let((z, t), Set(x_address), store))
+             (x, t)
+             (g (M.add x t env) e) *)
+  (* | Closure.Let((x, t), Closure.GlobalArray(i, y), e) ->
+      let z = Id.genid "glbarr" in
+      let x_address = !init_hp in
+      globals := M.add x (t, x_address) !globals;
+      (match t with
+      | Type.Array(Type.Unit) -> 
+          concat (Ans(Nop))
+                 (x, t)
+                 (g (M.add x t env) e)
+      | Type.Array(Type.Float) ->
+          init_hp := !init_hp + 4 * i;
+          let rec store j = 
+            if j = 0 then Ans(Mov(V(z))) else
+            seq(StDF(y, z, 4 * (j - 1)), store (j - 1)) in
+          concat (Let((z, t), Set(x_address), store i)) 
+                 (x, t) 
+                 (g (M.add x t env) e)
+      | Type.Array(t') ->
+          init_hp := !init_hp + 4 * i;
+          let rec store j =
+            if j = 0 then Ans(Mov(V(z))) else
+            seq(St(y, z, 4 * (j - 1)), store (j - 1)) in
+          concat (Let((z, t), Set(x_address), store i))
+                 (x, t)
+                 (g (M.add x t env) e)
+      | _ -> assert false) *)
+  (* Globalは、let "GLOBAL..." = Global in しかありえないという設定 *)
   | Closure.Let((x, t1), e1, e2) ->
       let e1' = g env e1 in
       let e2' = g (M.add x t1 env) e2 in
@@ -108,7 +162,7 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
       Ans(CallDir(Id.L(x), int, float))
   | Closure.Tuple(xs) -> (* 組の生成 (caml2html: virtual_tuple) *)
-      let y = Id.genid "t" in
+      let y = Id.genid "tup" in
       let (offset, store) =
         expand
           (List.map (fun x -> (x, M.find x env)) xs)
@@ -120,6 +174,18 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
         (* offsetの大小評価 *)
         Let((reg_hp, Type.Int), Addi(V(reg_hp), offset),
           store))
+  | Closure.GlobalTuple(xs) -> 
+      let y = Id.genid "glbtup" in
+      let addr = !init_hp in
+      let (offset, store) =
+        expand
+          (List.map (fun x -> (x, M.find x env)) xs)
+          (0, Ans(Set(addr)))
+          (fun x offset store -> seq(StDF(x, y, offset), store))
+          (fun x _ offset store -> seq(St(x, y, offset), store)) in
+      Let((y, Type.Tuple(List.map (fun x -> M.find x env) xs)), Set(addr),
+        let () = init_hp := !init_hp + offset in
+          store)
   | Closure.LetTuple(xts, y, e2) ->
       let s = Closure.fv e2 in
       let (offset, load) =
@@ -147,8 +213,27 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           Let((return_address, Type.Array(t)), Mov(V(reg_hp)),
             seq(CallDir(Id.L("create_array_loop"), [x; y], []),
               Ans(Mov(V(return_address))))))
+  | Closure.GlobalArray(i, y) ->
+      let z = Id.genid "glbarr" in
+      let addr = !init_hp in
+      (match M.find y env with
+      | Type.Unit -> Ans(Nop)
+      | Type.Float ->
+          init_hp := !init_hp + 4 * i;
+          let rec store j =
+            if j = 0 then Ans(Set(addr)) else
+            seq(StDF(y, z, 4 * (j - 1)), store (j - 1)) in
+          Let((z, Type.Array(Type.Float)), Set(addr),
+            store i)
+      | t ->
+          init_hp := !init_hp + 4 * i;
+          let rec store j =
+            if j = 0 then Ans(Set(addr)) else
+            seq(St(y, z, 4 * (j - 1)), store (j - 1)) in
+          Let((z, Type.Array(t)), Set(addr),
+            store i))
   | Closure.Get(x, y) -> (* 配列の読み出し (caml2html: virtual_get) *)
-      let offset = Id.genid "o" in
+      let offset = Id.genid "getoffset" in
       let abs_address = Id.genid "abs_address" in
       (match M.find x env with
       | Type.Array(Type.Unit) -> Ans(Nop)
@@ -167,7 +252,7 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
               Ans(Ld(abs_address, 0))))
       | _ -> assert false)
   | Closure.Put(x, y, z) ->
-      let offset = Id.genid "o" in
+      let offset = Id.genid "putoffset" in
       let abs_address = Id.genid "abs_address" in
       (match M.find x env with
       | Type.Array(Type.Unit) -> Ans(Nop)
@@ -202,12 +287,16 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts; Closure.formal_fv = zts
   let (offset, load) =
     expand
       zts
-      (4, g (M.add x t (M.add_list yts (M.add_list zts M.empty))) e)
+      (4, g (M.add x t (M.add_list yts (M.add_list zts (M.map fst !globals)))) e)  (* globalsの型一覧を追加 *)
       (fun z offset load -> fletd(z, LdDF(x, offset), load))
       (fun z t offset load -> Let((z, t), Ld(x, offset), load)) in
   match t with
   | Type.Fun(_, t2) ->
-      { name = Id.L(x); args = int; fargs = float; body = load; ret = t2 }
+      { name = Id.L(x); 
+        args = int; 
+        fargs = float; 
+        body = M.fold (fun x (t, addr) e -> concat (Ans(Set(addr))) (x, t) e) !globals load;  (* 先頭にglobalsのアドレス一覧を挿入 *)
+        ret = t2 }
   | _ -> assert false
 
 (* Array用の関数 *)
@@ -242,15 +331,17 @@ let create_float_array_loop_fundef =
 
 (* プログラム全体の仮想マシンコード生成 (caml2html: virtual_f) *)
 let f (Closure.Prog(fundefs, e)) =
-  let fundefs' = List.map h fundefs in
-  let e' = g M.empty e in
-  let fundefs'' = (if !create_array_appears then [create_array_loop_fundef] else []) @
-                  (if !create_float_array_appears then [create_float_array_loop_fundef] else []) @
-                  fundefs' in
-  let e'' = List.fold_right 
-              (fun (i, reg) e -> concat (Ans(Set(i))) (reg, Type.Int) e) 
-              regs_const 
-              (List.fold_right (fun (f, freg) e -> concat (Ans(FSetD(f))) (freg, Type.Float) e) fregs_const e') in  (* 定数レジスタの設定 *)
+  (* eにはGlobal.....があるが、fundefにはない。
+     したがって、先にeを評価して、globalsを求める。
+     fundefはglobalsを含めて評価することになる。 *)
+  let e = g M.empty e in
+  let fundefs = List.map h fundefs in
+  let e = List.fold_right (fun (f, freg) e -> concat (Ans(FSetD(f))) (freg, Type.Float) e) fregs_const e in  (* 定数レジスタの設定 *)
+  let e = List.fold_right (fun (i, reg) e -> concat (Ans(Set(i))) (reg, Type.Int) e) regs_const e in
+  let e = Let((reg_hp, Type.Int), Set(!init_hp), e) in  (* reg_hpの設定 *)
   (* レジスタはこの後の最適化で消えないようにしている *)
   (* 使わない定数レジスタを最適化で消したい *)
-  Prog(fundefs'', e'')
+  let fundefs = (if !create_array_appears then [create_array_loop_fundef] else []) @
+                (if !create_float_array_appears then [create_float_array_loop_fundef] else []) @
+                fundefs in
+  Prog(fundefs, e)

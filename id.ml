@@ -25,3 +25,6 @@ let gentmp typ =
   incr counter;
   Printf.sprintf "T%s%d" (id_of_typ typ) !counter
 *)
+
+let global_of x = "GLOBAL" ^ x
+let is_global x = String.length x > 6 && String.sub x 0 6 = "GLOBAL"

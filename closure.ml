@@ -21,8 +21,10 @@ type t = (* クロージャ変換後の式 (caml2html: closure_t) *)
   | AppCls of Id.t * Id.t list
   | AppDir of Id.l * Id.t list
   | Tuple of Id.t list
+  | GlobalTuple of Id.t list
   | LetTuple of (Id.t * Type.t) list * Id.t * t
   | Array of Id.t * Id.t
+  | GlobalArray of int * Id.t
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
   | FAbs of Id.t
@@ -41,17 +43,19 @@ type prog = Prog of fundef list * t
 
 let rec fv = function
   | Unit | Int(_) | Float(_) | In -> S.empty
-  | Neg(x) | FNeg(x) -> S.singleton x
+  | Neg(x) | FNeg(x) | GlobalArray(_, x) -> S.singleton x
   | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Array(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
   | Var(x) -> S.singleton x
   | MakeCls((x, t), { entry = l; actual_fv = ys }, e) -> S.remove x (S.union (S.of_list ys) (fv e))
   | AppCls(x, ys) -> S.of_list (x :: ys)
-  | AppDir(_, xs) | Tuple(xs) -> S.of_list xs
+  | AppDir(_, xs) | Tuple(xs) | GlobalTuple(xs) -> S.of_list xs
   | LetTuple(xts, y, e) -> S.add y (S.diff (fv e) (S.of_list (List.map fst xts)))
   | Put(x, y, z) -> S.of_list [x; y; z]
   | FAbs(x) | Sqrt(x) | FTOI(x) | ITOF(x) | Out(x) | OutInt(x) | BTOF(x) -> S.singleton x
+let fv e = S.filter (fun x -> not (Id.is_global x)) (fv e)  (* KNormalと異なる。本当に?????? *)
+(* GLOBALを抜く代わりに、この後の処理が面倒 *)
 
 let toplevel : fundef list ref = ref []
 
@@ -107,8 +111,10 @@ let rec g env known = function (* クロージャ変換ルーチン本体 (caml2
       AppDir(Id.L(x), ys)
   | KNormal.App(f, xs) -> AppCls(f, xs)
   | KNormal.Tuple(xs) -> Tuple(xs)
+  | KNormal.GlobalTuple(xs) -> GlobalTuple(xs)
   | KNormal.LetTuple(xts, y, e) -> LetTuple(xts, y, g (M.add_list xts env) known e)
   | KNormal.Array(x, y) -> Array(x, y)
+  | KNormal.GlobalArray(i, x) -> GlobalArray(i, x)
   | KNormal.Get(x, y) -> Get(x, y)
   | KNormal.Put(x, y, z) -> Put(x, y, z)
   (* | KNormal.ExtFunApp(x, ys) -> AppDir(Id.L("min_caml_" ^ x), ys) *)

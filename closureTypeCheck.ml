@@ -2,7 +2,8 @@
 
 open Closure
 
-let toplevel = ref []
+let toplevel : fundef list ref = ref []
+let globalenv : Type.t M.t ref = ref M.empty
 
 let rec g env = function  (* Closure.tの型検査 *)
   | Unit -> Type.Unit
@@ -30,10 +31,16 @@ let rec g env = function  (* Closure.tの型検査 *)
         assert (t1 = t2);
         t1
       | _ -> assert false)
+  | Let((x, t1), (GlobalTuple(_) as e1), e2) | Let((x, t1), (GlobalArray(_) as e1), e2) ->
+      assert (g env e1 = t1);
+      globalenv := M.add x t1 !globalenv;
+      g (M.add x t1 env) e2
   | Let((x, t1), e1, e2) ->
       assert (g env e1 = t1);
       g (M.add x t1 env) e2
-  | Var(x) when M.mem x env -> M.find x env
+  (* | Var(x) when Id.is_glb x ->
+      M.find x !glbenv *)
+  | Var(x) when M.mem x env -> M.find x env  (* GLOBALは? *)
   (* KNormal.mlとか見ると、ライブラリ関数のVarって作られないのか。Applyのときだけ *)
   (* KNormal.ExtArrayとか消したいので *)
   | Var(_) -> assert false
@@ -56,13 +63,14 @@ let rec g env = function  (* Closure.tの型検査 *)
         t
       | _ -> assert false)
   | AppDir(_) -> assert false
-  | Tuple(xs) -> Type.Tuple(List.map (fun x -> M.find x env) xs)
+  | Tuple(xs) | GlobalTuple(xs) -> Type.Tuple(List.map (fun x -> M.find x env) xs)
   | LetTuple(xts, y, e2) ->
       assert (M.find y env = Type.Tuple(List.map (fun (x, t) -> t) xts));
       g (M.add_list xts env) e2
   | Array(x, y) -> 
       assert (M.find x env = Type.Int);
       Type.Array(M.find y env)
+  | GlobalArray(i, x) -> Type.Array(M.find x env)
   | Get(x, y) -> 
       (match M.find x env with Type.Array(t) ->
         assert (M.find y env = Type.Int);
@@ -95,10 +103,10 @@ let h { name = (Id.L(x), t); args = yts; formal_fv = zts; body = e } =  (* Closu
   (* assert (Type.Fun(List.map (fun (y, t) -> t) yts, g (M.add_list (zts @ yts) M.empty) e) = t) *)
   (* test/cls-bug2.ml参照 *)
   (* 最初から型環境に {x : t} を加えておく *)
-  assert (Type.Fun(List.map (fun (y, t) -> t) yts, g (M.add_list (zts @ yts) (M.singleton x t)) e) = t)
+  assert (Type.Fun(List.map snd yts, g (M.add_list ((x, t) :: zts @ yts) !globalenv) e) = t)
 
 let f (Prog(fundefs, e)) =  (* Closure.progの型検査 *)
   toplevel := fundefs;
+  ignore (g M.empty e);  (* globalenvの関係で、先に検査 *)
   List.iter h fundefs;
-  ignore (g M.empty e);
   Prog(fundefs, e)

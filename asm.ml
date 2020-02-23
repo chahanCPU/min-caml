@@ -92,6 +92,7 @@ let is_reg x = (x.[0] = '$')
   done;
   ht
 let co_freg freg = Hashtbl.find co_freg_table freg (* "companion" freg *) *)
+let init_hp = ref 32
 
 (* super-tenuki *)
 let rec remove_and_uniq xs = function

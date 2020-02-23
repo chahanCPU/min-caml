@@ -117,6 +117,16 @@ let rec output_t' oc depth e =
         | _ -> ()
       done;
       Printf.fprintf oc ")\n"
+  | GlobalTuple(xs) ->
+      Printf.fprintf oc "GlobalTuple(";
+      let tmp = ref xs in
+      while !tmp <> [] do
+        match !tmp with
+        | [x] -> OutputId.output_t oc x; tmp := []
+        | x :: xs -> OutputId.output_t oc x; Printf.fprintf oc ", "; tmp := xs
+        | _ -> ()
+      done;
+      Printf.fprintf oc ")\n"
   | LetTuple(xts, y, e) ->
       Printf.fprintf oc "LetTuple\n";
       for i = 1 to depth + 1 do
@@ -151,6 +161,10 @@ let rec output_t' oc depth e =
       OutputId.output_t oc x;
       Printf.fprintf oc " ";
       OutputId.output_t oc y;
+      Printf.fprintf oc "\n"
+  | GlobalArray(i, x) ->
+      Printf.fprintf oc "GlobalArray %d " i;
+      OutputId.output_t oc x;
       Printf.fprintf oc "\n"
   | Get(x, y) ->
       Printf.fprintf oc "Get ";

@@ -21,8 +21,10 @@ type t =
   | AppCls of Id.t * Id.t list
   | AppDir of Id.l * Id.t list
   | Tuple of Id.t list
+  | GlobalTuple of Id.t list
   | LetTuple of (Id.t * Type.t) list * Id.t * t
   | Array of Id.t * Id.t
+  | GlobalArray of int * Id.t
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
   | FAbs of Id.t

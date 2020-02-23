@@ -4,7 +4,7 @@ let rec effect = function (* 副作用の有無 (caml2html: elim_effect) *)
   | Let(_, e1, e2) | IfEq(_, _, e1, e2) | IfLE(_, _, e1, e2) -> effect e1 || effect e2
   | LetRec(_, e) | LetTuple(_, _, e) -> effect e
   (* | App _ | Put _ | ExtFunApp _ -> true *)
-  | App _ | Put _ | Out _ | OutInt _ | In (* | Array _ *) -> true
+  | App _ | Put _ | Out _ | OutInt _ | In (* | Array _ *) (* | GlbArray _ | GlbTuple _ *) -> true  (* 本当に?? KNormal.fvとともに考える。今はGlobalあってもなくても同じ扱い *)
   | _ -> false
 
 let rec f = function (* 不要定義削除ルーチン本体 (caml2html: elim_f) *)
