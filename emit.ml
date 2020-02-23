@@ -167,8 +167,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(x), Div(y, z) -> Printf.fprintf oc "\tdiv\t%s, %s, %s\n" x (pp_id_or_int y) (pp_id_or_int z)
   | NonTail(x), SLL(y, i) -> Printf.fprintf oc "\tsll\t%s, %s, %d\n" x (pp_id_or_int y) i
   | NonTail(x), SRA(y, i) -> Printf.fprintf oc "\tsra\t%s, %s, %d\n" x (pp_id_or_int y) i
-  | NonTail(x), Ld(y, i) -> Printf.fprintf oc "\tlw\t%s, %d(%s)\n" x i y 
-  | NonTail(_), St(x, y, i) -> Printf.fprintf oc "\tsw\t%s, %d(%s)\n" x i y
+  | NonTail(x), Ld(y, i) -> Printf.fprintf oc "\tlw\t%s, %d(%s)\n" x i (pp_id_or_int y) 
+  | NonTail(_), St(x, y, i) -> Printf.fprintf oc "\tsw\t%s, %d(%s)\n" (pp_id_or_int x) i (pp_id_or_int y)
   (* | NonTail(x), FMovD(y) when x = y -> ()
   | NonTail(x), FMovD(y) ->
       Printf.fprintf oc "\tfmovs\t%s, %s\n" y x;
@@ -206,8 +206,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tmul.s\t%s, %s, $f1\n" x y
   *)
   | NonTail(x), FInv(y) -> Printf.fprintf oc "\tinv.s\t%s, %s\n" x (pp_id_or_float y)
-  | NonTail(x), LdDF(y, i) -> Printf.fprintf oc "\tlw.s\t%s, %d(%s)\n" x i y 
-  | NonTail(_), StDF(x, y, i) -> Printf.fprintf oc "\tsw.s\t%s, %d(%s)\n" x i y
+  | NonTail(x), LdDF(y, i) -> Printf.fprintf oc "\tlw.s\t%s, %d(%s)\n" x i (pp_id_or_int y) 
+  | NonTail(_), StDF(x, y, i) -> Printf.fprintf oc "\tsw.s\t%s, %d(%s)\n" (pp_id_or_float x) i (pp_id_or_int y)
 
   (* 要確認　もとのsparcと *)
   (* 退避の仮想命令の実装 (caml2html: emit_save) *)

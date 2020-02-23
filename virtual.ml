@@ -144,15 +144,15 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
         expand
           (List.map (fun y -> (y, M.find y env)) ys)
           (4, e2')
-          (fun y offset store_fv -> seq(StDF(y, x, offset), store_fv))
-          (fun y _ offset store_fv -> seq(St(y, x, offset), store_fv)) in
+          (fun y offset store_fv -> seq(StDF(W(y), V(x), offset), store_fv))
+          (fun y _ offset store_fv -> seq(St(V(y), V(x), offset), store_fv)) in
       Let((x, t), Mov(V(reg_hp)),
         (* Let((reg_hp, Type.Int), Add(reg_hp, C(align offset)), *)
         (* offsetの大小評価 *)
         Let((reg_hp, Type.Int), Addi(V(reg_hp), offset),
           let z = Id.genid "l" in
           Let((z, Type.Int), SetL(l),
-            seq(St(z, x, 0),
+            seq(St(V(z), V(x), 0),
               store_fv))))
   | Closure.AppCls(x, ys) ->
       let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
@@ -166,8 +166,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
         expand
           (List.map (fun x -> (x, M.find x env)) xs)
           (0, Ans(Mov(V(y))))
-          (fun x offset store -> seq(StDF(x, y, offset), store))
-          (fun x _ offset store -> seq(St(x, y, offset), store)) in
+          (fun x offset store -> seq(StDF(W(x), V(y), offset), store))
+          (fun x _ offset store -> seq(St(V(x), V(y), offset), store)) in
       Let((y, Type.Tuple(List.map (fun x -> M.find x env) xs)), Mov(V(reg_hp)),
         (* Let((reg_hp, Type.Int), Add(reg_hp, C(align offset)), *)
         (* offsetの大小評価 *)
@@ -180,8 +180,8 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
         expand
           (List.map (fun x -> (x, M.find x env)) xs)
           (0, Ans(Set(addr)))
-          (fun x offset store -> seq(StDF(x, y, offset), store))
-          (fun x _ offset store -> seq(St(x, y, offset), store)) in
+          (fun x offset store -> seq(StDF(W(x), V(y), offset), store))
+          (fun x _ offset store -> seq(St(V(x), V(y), offset), store)) in
       Let((y, Type.Tuple(List.map (fun x -> M.find x env) xs)), Set(addr),
         let () = init_hp := !init_hp + offset in
           store)
@@ -193,10 +193,10 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           (0, g (M.add_list xts env) e2)
           (fun x offset load ->
             if not (S.mem x s) then load else (* [XX] a little ad hoc optimization *)
-            fletd(x, LdDF(y, offset), load))
+            fletd(x, LdDF(V(y), offset), load))
           (fun x t offset load ->
             if not (S.mem x s) then load else (* [XX] a little ad hoc optimization *)
-            Let((x, t), Ld(y, offset), load)) in
+            Let((x, t), Ld(V(y), offset), load)) in
       load
   | Closure.Array(x, y) ->
       let return_address = Id.genid "arr" in
@@ -221,14 +221,14 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
           init_hp := !init_hp + 4 * i;
           let rec store j =
             if j = 0 then Ans(Set(addr)) else
-            seq(StDF(y, z, 4 * (j - 1)), store (j - 1)) in
+            seq(StDF(W(y), V(z), 4 * (j - 1)), store (j - 1)) in
           Let((z, Type.Array(Type.Float)), Set(addr),
             store i)
       | t ->
           init_hp := !init_hp + 4 * i;
           let rec store j =
             if j = 0 then Ans(Set(addr)) else
-            seq(St(y, z, 4 * (j - 1)), store (j - 1)) in
+            seq(St(V(y), V(z), 4 * (j - 1)), store (j - 1)) in
           Let((z, Type.Array(t)), Set(addr),
             store i))
   | Closure.Get(x, y) -> (* 配列の読み出し (caml2html: virtual_get) *)
@@ -242,13 +242,13 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
               Ans(LdDF(x, V(offset)))) *)
           Let((offset, Type.Int), SLL(V(y), 2),
             Let((abs_address, Type.Int), Add(V(x), V(offset)),
-              Ans(LdDF(abs_address, 0))))
+              Ans(LdDF(V(abs_address), 0))))
       | Type.Array(_) ->
           (* Let((offset, Type.Int), SLL(y, C(2)),
               Ans(Ld(x, V(offset)))) *)
           Let((offset, Type.Int), SLL(V(y), 2),
             Let((abs_address, Type.Int), Add(V(x), V(offset)),
-              Ans(Ld(abs_address, 0))))
+              Ans(Ld(V(abs_address), 0))))
       | _ -> assert false)
   | Closure.Put(x, y, z) ->
       let offset = Id.genid "putoffset" in
@@ -261,13 +261,13 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
               Ans(StDF(z, x, V(offset)))) *)
           Let((offset, Type.Int), SLL(V(y), 2),
             Let((abs_address, Type.Int), Add(V(x), V(offset)),
-              Ans(StDF(z, abs_address, 0))))
+              Ans(StDF(W(z), V(abs_address), 0))))
       | Type.Array(_) ->
           (* Let((offset, Type.Int), SLL(y, C(2)),
               Ans(St(z, x, V(offset)))) *)
           Let((offset, Type.Int), SLL(V(y), 2),
             Let((abs_address, Type.Int), Add(V(x), V(offset)),
-              Ans(St(z, abs_address, 0))))
+              Ans(St(V(z), V(abs_address), 0))))
       | _ -> assert false)
   | Closure.FAbs(x) -> Ans(FAbs(W(x)))
   | Closure.Sqrt(x) -> Ans(FSqrt(W(x)))
@@ -277,7 +277,7 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
   | Closure.OutInt(x) -> Ans(OutInt(V(x)))
   | Closure.In -> Ans(In)
   | Closure.BTOF(x) ->
-      seq(St(x, "$zero", 16), Ans(LdDF("$zero", 16)))  (* 16???? *) (* 上手く行くのか。$zeroをregAlloc等でそのままにしてくれるか *)
+      seq(St(V(x), C(0), 16), Ans(LdDF(C(0), 16)))  (* 16???? *) (* 上手く行くのか。$zeroをregAlloc等でそのままにしてくれるか *)
       (* reg_zero *)
 
 (* 関数の仮想マシンコード生成 (caml2html: virtual_h) *)
@@ -287,8 +287,8 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts; Closure.formal_fv = zts
     expand
       zts
       (4, g (M.add x t (M.add_list yts (M.add_list zts (M.map fst !globals)))) e)  (* globalsの型一覧を追加 *)
-      (fun z offset load -> fletd(z, LdDF(x, offset), load))
-      (fun z t offset load -> Let((z, t), Ld(x, offset), load)) in
+      (fun z offset load -> fletd(z, LdDF(V(x), offset), load))
+      (fun z t offset load -> Let((z, t), Ld(V(x), offset), load)) in
   match t with
   | Type.Fun(_, t2) ->
       { name = Id.L(x); 
@@ -308,7 +308,7 @@ let create_array_loop_fundef =
     fargs = [];
     body = Ans(IfEq(V(n), C(0), 
              Ans(Nop),
-             seq(St(x, reg_hp, 0),
+             seq(St(V(x), V(reg_hp), 0),
                Let((m, Type.Int), Addi(V(n), -1),
                  Let((reg_hp, Type.Int), Addi(V(reg_hp), 4),
                    Ans(CallDir(Id.L("create_array_loop"), [m; x], []))))))); 
@@ -322,7 +322,7 @@ let create_float_array_loop_fundef =
     fargs = [x];
     body = Ans(IfEq(V(n), C(0), 
              Ans(Nop),
-             seq(StDF(x, reg_hp, 0),
+             seq(StDF(W(x), V(reg_hp), 0),
                Let((m, Type.Int), Addi(V(n), -1),
                  Let((reg_hp, Type.Int), Addi(V(reg_hp), 4),
                    Ans(CallDir(Id.L("create_float_array_loop"), [m], [x]))))))); 

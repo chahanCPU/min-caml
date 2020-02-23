@@ -1,5 +1,7 @@
 open Asm
 
+let is16bits n = (-32678 <= n && n < 32768)  (* 符号付き整数で、16ビットで表せるか *)
+
 let rec pow2 n = if n = 0 then 1 else 2 * pow2 (n - 1)  (* 2のべき乗 *)
 
 let memi x env = match x with
@@ -54,15 +56,15 @@ and g' env = function  (* 各命令の定数畳み込み *)
   | Mov(x) when memi x env -> Ans(Set(findi x env))
   | Add(x, y) when memi x env && memi y env -> Ans(Set(findi x env + findi y env))
   | Add(x, y) when memi x env && findi x env = 0 -> Ans(Mov(y))
-  | Add(x, y) when memi x env && -32768 <= findi x env && findi x env < 32768 -> Ans(Addi(y, findi x env))
+  | Add(x, y) when memi x env && is16bits (findi x env) -> Ans(Addi(y, findi x env))
   | Add(x, y) when memi y env && findi y env = 0 -> Ans(Mov(x))
-  | Add(x, y) when memi y env && -32768 <= findi y env && findi y env < 32768 -> Ans(Addi(x, findi y env))
+  | Add(x, y) when memi y env && is16bits (findi y env) -> Ans(Addi(x, findi y env))
   | Addi(x, i) when memi x env -> Ans(Set(findi x env + i))
   | Addi(x, 0) -> Ans(Mov(x))
   | Sub(x, y) when memi x env && memi y env -> Ans(Set(findi x env - findi y env))
   (* | Sub(x, y) when memi x env && findi x env = 0 -> Sub(C(0), y) *)
   | Sub(x, y) when memi y env && findi y env = 0 -> Ans(Mov(x))
-  | Sub(x, y) when memi y env && -32768 <= -(findi y env) && -(findi y env) < 32768 -> Ans(Addi(x, -(findi y env)))
+  | Sub(x, y) when memi y env && is16bits (-(findi y env)) -> Ans(Addi(x, -(findi y env)))
   | Mul(x, y) when memi x env && memi y env -> Ans(Set(findi x env * findi y env))
   | Mul(x, y) when memi x env && findi x env = -1 -> Ans(Sub(C(0), y))
   | Mul(x, y) when memi x env && findi x env = 0 -> Ans(Set(0))
@@ -171,6 +173,8 @@ and g' env = function  (* 各命令の定数畳み込み *)
   | SLL(x, i) when memi x env -> Ans(Set((findi x env) lsl i))
   | SRA(x, i) when memi x env -> Ans(Set((findi x env) asr i))
   (* Ld, St は???? *)
+  | Ld(x, i) when memi x env && is16bits (findi x env + i) -> Ans(Ld(C(0), findi x env + i))
+  | St(x, y, i) when memi y env && is16bits (findi y env + i) -> Ans(St(x, C(0), findi y env + i))
   | IfEq(x, y, e1, e2) when memi x env && memi y env -> if findi x env = findi y env then g env e1 else g env e2
   | IfEq(x, y, e1, e2) -> Ans(IfEq(x, y, g env e1, g env e2))
   | IfLE(x, y, e1, e2) when memi x env && memi y env -> if findi x env <= findi y env then g env e1 else g env e2
@@ -197,6 +201,8 @@ and g' env = function  (* 各命令の定数畳み込み *)
   | FMulD(x, y) when memf y env && findf y env = 1. -> Ans(FMovD(x))
   | FInv(x) when memf x env && findf x env = 0. -> failwith "Division by zero"
   | FInv(x) when memf x env -> Ans(FSetD(1. /. findf x env))
+  | LdDF(x, i) when memi x env && is16bits (findi x env + i) -> Ans(LdDF(C(0), findi x env + i))
+  | StDF(x, y, i) when memi y env && is16bits (findi y env + i) -> Ans(StDF(x, C(0), findi y env + i))
 
   | FAbs(x) when memf x env -> Ans(FSetD(abs_float (findf x env)))
   | FSqrt(x) when memf x env -> Ans(FSetD(sqrt (findf x env)))

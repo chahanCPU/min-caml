@@ -22,8 +22,8 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   | Div of id_or_int * id_or_int
   | SLL of id_or_int * int
   | SRA of id_or_int * int
-  | Ld of Id.t * int
-  | St of Id.t * Id.t * int
+  | Ld of id_or_int * int
+  | St of id_or_int * id_or_int * int
   | FMovD of id_or_float
   | FNegD of id_or_float
   | FAddD of id_or_float * id_or_float
@@ -31,8 +31,8 @@ and exp = (* 一つ一つの命令に対応する式 (caml2html: sparcasm_exp) *
   | FMulD of id_or_float * id_or_float
   (* | FDivD of Id.t * Id.t *)
   | FInv of id_or_float
-  | LdDF of Id.t * int
-  | StDF of Id.t * Id.t * int
+  | LdDF of id_or_int * int
+  | StDF of id_or_float * id_or_int * int
   (* virtual instructions *)
   | IfEq of id_or_int * id_or_int * t * t
   | IfLE of id_or_int * id_or_int * t * t
@@ -105,10 +105,10 @@ let fv_id_or_int = function V(x) -> [x] | C(_) -> []
 let fv_id_or_float = function W(x) -> [x] | D(_) -> []
 let rec fv_exp = function
   | Nop | Set(_) | FSetD(_) | SetL(_) | Restore(_) | In -> []
-  | Mov(x) | Addi(x, _) | SLL(x, _) | SRA(x, _) -> fv_id_or_int x
-  | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) -> fv_id_or_int x @ fv_id_or_int y
-  | Ld(x, _) | LdDF(x, _) | Save(x, _) -> [x]
-  | St(x, y, _) | StDF(x, y, _)-> [x; y]
+  | Mov(x) | Addi(x, _) | SLL(x, _) | SRA(x, _) | Ld(x, _) | LdDF(x, _) -> fv_id_or_int x
+  | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | St(x, y, _) -> fv_id_or_int x @ fv_id_or_int y
+  | Save(x, _) -> [x]
+  | StDF(x, y, _) -> fv_id_or_float x @ fv_id_or_int y
   | FMovD(x) | FNegD(x) | FInv(x) -> fv_id_or_float x
   | FAddD(x, y) | FSubD(x, y) | FMulD(x, y) -> fv_id_or_float x @ fv_id_or_float y
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> fv_id_or_int x @ fv_id_or_int y @ remove_and_uniq S.empty (fv e1 @ fv e2)

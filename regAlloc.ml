@@ -129,8 +129,8 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   | Div(x, y) -> (Ans(Div(find_id_or_int x regenv, find_id_or_int y regenv)), regenv)
   | SLL(x, i) -> (Ans(SLL(find_id_or_int x regenv, i)), regenv)
   | SRA(x, i) -> (Ans(SRA(find_id_or_int x regenv, i)), regenv)
-  | Ld(x, i) -> (Ans(Ld(find x Type.Int regenv, i)), regenv)
-  | St(x, y, i) -> (Ans(St(find x Type.Int regenv, find y Type.Int regenv, i)), regenv)
+  | Ld(x, i) -> (Ans(Ld(find_id_or_int x regenv, i)), regenv)
+  | St(x, y, i) -> (Ans(St(find_id_or_int x regenv, find_id_or_int y regenv, i)), regenv)
   | FMovD(x) -> (Ans(FMovD(find_id_or_float x regenv)), regenv)
   | FNegD(x) -> (Ans(FNegD(find_id_or_float x regenv)), regenv)
   | FAddD(x, y) -> (Ans(FAddD(find_id_or_float x regenv, find_id_or_float y regenv)), regenv)
@@ -138,8 +138,8 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   | FMulD(x, y) -> (Ans(FMulD(find_id_or_float x regenv, find_id_or_float y regenv)), regenv)
   (* | FDivD(x, y) -> (Ans(FDivD(find x Type.Float regenv, find y Type.Float regenv)), regenv) *)
   | FInv(x) -> (Ans(FInv(find_id_or_float x regenv)), regenv)
-  | LdDF(x, i) -> (Ans(LdDF(find x Type.Int regenv, i)), regenv)
-  | StDF(x, y, i) -> (Ans(StDF(find x Type.Float regenv, find y Type.Int regenv, i)), regenv)
+  | LdDF(x, i) -> (Ans(LdDF(find_id_or_int x regenv, i)), regenv)
+  | StDF(x, y, i) -> (Ans(StDF(find_id_or_float x regenv, find_id_or_int y regenv, i)), regenv)
   | IfEq(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfEq(find_id_or_int x regenv, find_id_or_int y regenv, e1', e2')) e1 e2
   | IfLE(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfLE(find_id_or_int x regenv, find_id_or_int y regenv, e1', e2')) e1 e2
   | IfFEq(x, y, e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfFEq(find_id_or_float x regenv, find_id_or_float y regenv, e1', e2')) e1 e2

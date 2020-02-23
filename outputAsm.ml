@@ -85,13 +85,13 @@ and output_exp' oc depth exp =
       Printf.fprintf oc " %d\n" i
   | Ld(x, i) -> 
       Printf.fprintf oc "Ld ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " %d\n" i
   | St(x, y, i) -> 
       Printf.fprintf oc "St ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_int oc y;
       Printf.fprintf oc " %d\n" i
   | FMovD(x) ->
       Printf.fprintf oc "FMovD ";
@@ -126,13 +126,13 @@ and output_exp' oc depth exp =
       Printf.fprintf oc "\n"
   | LdDF(x, i) -> 
       Printf.fprintf oc "LdDF ";
-      OutputId.output_t oc x;
+      output_id_or_int oc x;
       Printf.fprintf oc " %d\n" i
   | StDF(x, y, i) -> 
       Printf.fprintf oc "StDF ";
-      OutputId.output_t oc x;
+      output_id_or_float oc x;
       Printf.fprintf oc " ";
-      OutputId.output_t oc y;
+      output_id_or_int oc y;
       Printf.fprintf oc " %d\n" i
   | IfEq(x, y, e1, e2) -> 
       Printf.fprintf oc "IfEq ";

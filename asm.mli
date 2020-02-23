@@ -17,8 +17,8 @@ and exp =
   | Div of id_or_int * id_or_int
   | SLL of id_or_int * int
   | SRA of id_or_int * int
-  | Ld of Id.t * int
-  | St of Id.t * Id.t * int
+  | Ld of id_or_int * int
+  | St of id_or_int * id_or_int * int
   | FMovD of id_or_float
   | FNegD of id_or_float
   | FAddD of id_or_float * id_or_float
@@ -26,8 +26,8 @@ and exp =
   | FMulD of id_or_float * id_or_float
   (* | FDivD of Id.t * Id.t *)
   | FInv of id_or_float
-  | LdDF of Id.t * int
-  | StDF of Id.t * Id.t * int
+  | LdDF of id_or_int * int
+  | StDF of id_or_float * id_or_int * int
   (* virtual instructions *)
   | IfEq of id_or_int * id_or_int * t * t
   | IfLE of id_or_int * id_or_int * t * t
