@@ -10,7 +10,7 @@ let rec iter n e = (* 最適化処理をくりかえす (caml2html: main_iter) *
 let rec iter_asm n e =
   Format.eprintf "iteration_asm %d@." n;
   if n = 0 then e else
-  let e' = AsmElim.f (AsmConstFold.f (ConstReg.f e)) in
+  let e' = AsmElim.f (Peephole.f (AsmConstFold.f (ConstReg.f e))) in
   if e = e' then e else
   iter_asm (n - 1) e'
 
@@ -54,7 +54,7 @@ let () = (* ここからコンパイラの実行が開始される (caml2html: m
     [("-inline", Arg.Int(fun i -> Inline.threshold := i), "maximum size of functions inlined");
      ("-iter", Arg.Int(fun i -> limit := i), "maximum number of optimizations iterated")]
     (fun s -> files := !files @ [s])
-    ("Min-Caml Compiler\n" ^  (* どうやったらこれが出力される? *)
+    ("Min-Caml Compiler\n" ^  (* どうやったらこれが出力される?  ./min-caml --help *)
      Printf.sprintf "usage: %s [-inline m] [-iter n] ...filenames without \".ml\"..." Sys.argv.(0));
   List.iter
     (fun f -> ignore (file f))

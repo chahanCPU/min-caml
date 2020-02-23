@@ -242,13 +242,13 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
               Ans(LdDF(x, V(offset)))) *)
           Let((offset, Type.Int), SLL(V(y), 2),
             Let((abs_address, Type.Int), Add(V(x), V(offset)),
-              Ans(LdDF(V(abs_address), 0))))
+              Ans(LdDF(V(abs_address), 0))))  (* yが定数のときに覗き穴最適化したい *)
       | Type.Array(_) ->
           (* Let((offset, Type.Int), SLL(y, C(2)),
               Ans(Ld(x, V(offset)))) *)
           Let((offset, Type.Int), SLL(V(y), 2),
             Let((abs_address, Type.Int), Add(V(x), V(offset)),
-              Ans(Ld(V(abs_address), 0))))
+              Ans(Ld(V(abs_address), 0))))  (* yが定数のときに覗き穴最適化したい *)
       | _ -> assert false)
   | Closure.Put(x, y, z) ->
       let offset = Id.genid "putoffset" in
@@ -261,13 +261,13 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
               Ans(StDF(z, x, V(offset)))) *)
           Let((offset, Type.Int), SLL(V(y), 2),
             Let((abs_address, Type.Int), Add(V(x), V(offset)),
-              Ans(StDF(W(z), V(abs_address), 0))))
+              Ans(StDF(W(z), V(abs_address), 0))))  (* yが定数のときに覗き穴最適化したい *)
       | Type.Array(_) ->
           (* Let((offset, Type.Int), SLL(y, C(2)),
               Ans(St(z, x, V(offset)))) *)
           Let((offset, Type.Int), SLL(V(y), 2),
             Let((abs_address, Type.Int), Add(V(x), V(offset)),
-              Ans(St(V(z), V(abs_address), 0))))
+              Ans(St(V(z), V(abs_address), 0))))  (* yが定数のときに覗き穴最適化したい *)
       | _ -> assert false)
   | Closure.FAbs(x) -> Ans(FAbs(W(x)))
   | Closure.Sqrt(x) -> Ans(FSqrt(W(x)))
