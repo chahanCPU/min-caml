@@ -31,13 +31,11 @@ let rec g env = function  (* Closure.tの型検査 *)
         assert (t1 = t2);
         t1
       | _ -> assert false)
-  | Let((x, t1), (GlobalTuple(_) as e1), e2) | Let((x, t1), (GlobalArray(_) as e1), e2) ->
-      assert (g env e1 = t1);
-      globalenv := M.add x t1 !globalenv;
-      g (M.add x t1 env) e2
   | Let((x, t1), e1, e2) ->
       assert (g env e1 = t1);
+      if Id.is_global x then globalenv := M.add x t1 !globalenv;
       g (M.add x t1 env) e2
+  (* let "GLOBALxxxx" = GlobalTuple() in または let "GLOBALxxxx" = GlobalArray() in しかないという設定 *)
   (* | Var(x) when Id.is_glb x ->
       M.find x !glbenv *)
   | Var(x) when M.mem x env -> M.find x env  (* GLOBALは? *)

@@ -77,12 +77,12 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       | Type.Bool | Type.Int -> Ans(IfLE(V(x), V(y), g env e1, g env e2))
       | Type.Float -> Ans(IfFLE(W(x), W(y), g env e1, g env e2))
       | _ -> assert false)  (* inequality supported only for bool, int, and float *)
-  | Closure.Let((x, t1), (Closure.GlobalTuple(_) as e1), e2) 
-  | Closure.Let((x, t1), (Closure.GlobalArray(_) as e1), e2) ->
+  (* Globalは、let "GLOBAL..." = Global in しかありえないという設定 *)
+  | Closure.Let((x, t1), e1, e2) when Id.is_global x ->
       let e1' = g env e1 in
       let rec get_addr = function
         | Ans(Set(i)) -> i
-        | Ans(Nop) -> -100
+        | Ans(Nop) -> -100  (* 何でも大丈夫 *)
         | Let(yt, exp, e) -> get_addr e
         | _ -> assert false in
       globals := M.add x (t1, get_addr e1') !globals;
@@ -128,7 +128,6 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
                  (x, t)
                  (g (M.add x t env) e)
       | _ -> assert false) *)
-  (* Globalは、let "GLOBAL..." = Global in しかありえないという設定 *)
   | Closure.Let((x, t1), e1, e2) ->
       let e1' = g env e1 in
       let e2' = g (M.add x t1 env) e2 in
