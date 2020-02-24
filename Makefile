@@ -29,7 +29,7 @@ libAsm.ml \
 syntax.ml outputSyntax.mli outputSyntax.ml parser.mly lexer.mll typing.mli typing.ml kNormal.mli kNormal.ml \
 alpha.mli alpha.ml beta.mli beta.ml assoc.mli assoc.ml \
 inline.mli inline.ml constFold.mli constFold.ml elim.mli elim.ml \
-global.mli global.ml \
+global.mli global.ml if.mli if.ml \
 outputKNormal.mli outputKNormal.ml commonSubexpressionElimination.mli commonSubexpressionElimination.ml \
 closureTypeCheck.mli closureTypeCheck.ml \
 closure.mli closure.ml asm.mli asm.ml virtual.mli virtual.ml \
