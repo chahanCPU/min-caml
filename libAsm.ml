@@ -43,9 +43,9 @@ let fundefs = [
   { name = ("print_char", Type.Fun([Type.Int], Type.Unit));
     args = [("x", Type.Int)]; 
     body = Out(var("x")) };
-  { name = ("print_int", Type.Fun([Type.Int], Type.Unit));
+  (* { name = ("print_int", Type.Fun([Type.Int], Type.Unit));
     args = [("x", Type.Int)]; 
-    body = OutInt(var("x")) };
+    body = OutInt(var("x")) }; *)
   
   { name = ("read_int", Type.Fun([Type.Unit], Type.Int));
     args = [(Id.genid "Tunit", Type.Unit)];

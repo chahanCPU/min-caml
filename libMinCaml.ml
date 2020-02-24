@@ -73,4 +73,11 @@ let rec atan x =
   x *. (1.0 -. x2 *. (0.3333333333 -. x2 *. (0.2 -. x2 *. 0.1428571429)))
 in
 
+(* 3桁以内の非負整数のみに対応 *)
+let rec print_int x =
+  if x < 10 then print_char (x + 48) else
+  if x < 100 then (let y = x / 10 in print_char (y + 48); print_char (x - y * 10 + 48)) else 
+  (let y = x / 100 in let z = x - y * 100 in let w = z / 10 in let u = z - w * 10 in print_char (y + 48); print_char (w + 48); print_char (u + 48))
+in
+
 ()
