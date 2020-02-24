@@ -33,7 +33,7 @@ global.mli global.ml \
 outputKNormal.mli outputKNormal.ml commonSubexpressionElimination.mli commonSubexpressionElimination.ml \
 closureTypeCheck.mli closureTypeCheck.ml \
 closure.mli closure.ml asm.mli asm.ml virtual.mli virtual.ml \
-constReg.mli constReg.ml asmConstFold.mli asmConstFold.ml \
+asmBeta.mli asmBeta.ml constReg.mli constReg.ml asmConstFold.mli asmConstFold.ml \
 peephole.mli peephole.ml asmElim.mli asmElim.ml \
 regAlloc.mli regAlloc.ml emit.mli emit.ml \
 outputClosure.mli outputClosure.ml outputAsm.mli outputAsm.ml \

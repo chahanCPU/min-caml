@@ -10,7 +10,7 @@ let rec iter n e = (* 最適化処理をくりかえす (caml2html: main_iter) *
 let rec iter_asm n e =
   Format.eprintf "iteration_asm %d@." n;
   if n = 0 then e else
-  let e' = AsmElim.f (Peephole.f (AsmConstFold.f (ConstReg.f e))) in
+  let e' = AsmElim.f (Peephole.f (AsmConstFold.f (ConstReg.f (AsmBeta.f e)))) in
   if e = e' then e else
   iter_asm (n - 1) e'
 
