@@ -7,6 +7,10 @@ let rec g = function  (* 命令列の覗き穴最適化 *)
       Let((x, tx), Addi(y, i), Let((z, tz), Ld(y, i), g e))
   | Let((x, tx), Addi(y, i), Let((z, tz), LdDF(x', 0), e)) when V(x) = x' ->
       Let((x, tx), Addi(y, i), Let((z, tz), LdDF(y, i), g e))
+  | Let((x, tx), Addi(y, i), Let((u, tu), St(z, x', 0), e)) when V(x) = x' ->
+      Let((x, tx), Addi(y, i), Let((u, tu), St(z, y, i), g e))
+  | Let((x, tx), Addi(y, i), Let((u, tu), StDF(z, x', 0), e)) when V(x) = x' ->
+      Let((x, tx), Addi(y, i), Let((u, tu), StDF(z, y, i), g e))
   | Ans(exp) -> Ans(g' exp)
   | Let(xt, exp, e) -> Let(xt, g' exp, g e)
 
