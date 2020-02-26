@@ -82,7 +82,7 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
       let e1' = g env e1 in
       let rec get_addr = function
         | Ans(Set(i)) -> i
-        | Ans(Nop) -> -100  (* 何でも大丈夫 *)
+        | Ans(Nop) -> !init_hp  (* 何でも大丈夫 *)
         | Let(yt, exp, e) -> get_addr e
         | _ -> assert false in
       globals := M.add x (t1, get_addr e1') !globals;
@@ -294,7 +294,7 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts; Closure.formal_fv = zts
       { name = Id.L(x); 
         args = int; 
         fargs = float; 
-        body = M.fold (fun x (t, addr) e -> concat (Ans(Set(addr))) (x, t) e) !globals load;  (* 先頭にglobalsのアドレス一覧を挿入 *)
+        body = M.fold (fun x (t, addr) e -> if List.mem x (fv e) then concat (Ans(Set(addr))) (x, t) e else e) !globals load;  (* 先頭にglobalsのアドレス一覧を挿入 *)
         ret = t2 }
   | _ -> assert false
 

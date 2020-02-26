@@ -33,10 +33,19 @@ let rec f = function
 (* let a = 1 in let rec f x = let b = 1 in x + b in f a が *)
 (* let a = 1 in let rec f x = x + a in f a とクロージャが必要になりそう *)
 
+(* let memif x env = 
+let mem0 x env = match M.find x env with Int(_) -> true | 
 
-(* let rec g env = function
+let rec g env = function
   | IfEq(x, y, e1, e2) when -> 
       (match M.find x env with
-      | IfEq(z, w, e3, e4) when M.find y env = e3 -> IfEq(z, w, f e1, f e2)
+      | IfEq(z, w, e3, e4) when M.find y env = e3 -> IfEq(z, w, g env e1, g env e2)
+      | IfEq(z, w, e3, e4) when M.find y env = e4 -> IfEq(z, w, g env e1, g env e2)
       | )
-  | Let((x, t), IfEq(y, z, e1, e2)) *)
+  
+
+  | LetRec({ name = xt; args = yts; body = e1 }, e2) -> LetRec({ name = xt; args = yts; body = g env e1 }, g env e2)
+  | LetTuple(xts, y, e) -> LetTuple(xts, y, f e)
+  | e -> e
+
+let f e = g M.empty e *)
